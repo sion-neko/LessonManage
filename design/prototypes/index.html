@@ -1,0 +1,180 @@
+<title>LessonManage デザイン案</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap">
+<style>
+/* 1カラムの読み物。各案はスクショの横並び＋その場で触れるプロトタイプ */
+:root {
+  --bg: #f6f6f3; --paper: #ffffff; --fg: #1f2421; --muted: #6c736f; --line: #e3e4df; --accent: #b07d00; --good: #2f7d4f; --bad: #b3423a; --mid: #8a6d1c;
+  --head: "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  --body: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #171917; --paper: #212421; --fg: #ecefea; --muted: #a0a8a2; --line: #343834; --accent: #e3b341; --good: #6cc48e; --bad: #f08a80; --mid: #d9b75a; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #171917; --paper: #212421; --fg: #ecefea; --muted: #a0a8a2; --line: #343834; --accent: #e3b341; --good: #6cc48e; --bad: #f08a80; --mid: #d9b75a; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.75; }
+.wrap { max-width: 880px; margin: 0 auto; padding-block: 40px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--head); text-wrap: balance; line-height: 1.35; }
+h1 { font-size: 32px; font-weight: 900; margin: 0 0 8px; }
+h2 { font-size: 22px; font-weight: 900; margin: 56px 0 12px; }
+h3 { font-size: 18px; font-weight: 700; margin: 0; }
+p { margin: 8px 0; max-width: 68ch; }
+.lead { color: var(--muted); }
+.box { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+.rec { border-color: var(--accent); }
+.rec b { color: var(--accent); }
+ul.tight { margin: 6px 0; padding-left: 20px; }
+ul.tight li { margin: 3px 0; }
+.tbl { overflow-x: auto; margin-top: 12px; }
+table { border-collapse: collapse; width: 100%; min-width: 640px; background: var(--paper); border-radius: 12px; overflow: hidden; font-size: 14px; }
+th, td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: center; }
+th:first-child, td:first-child { text-align: left; }
+thead th { font-weight: 700; background: var(--bg); }
+td.n { font-variant-numeric: tabular-nums; }
+.o { color: var(--good); font-weight: 700; } .x { color: var(--bad); font-weight: 700; } .t { color: var(--mid); font-weight: 700; }
+.note { font-size: 13px; color: var(--muted); margin-top: 6px; }
+.prop { margin-top: 28px; background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 20px; }
+.prop-h { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; justify-content: space-between; }
+.prop-h .ref { color: var(--muted); font-size: 13px; }
+.letter { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: var(--fg); color: var(--bg); font-family: var(--head); font-weight: 900; margin-right: 8px; font-size: 16px; }
+.shots { display: flex; gap: 12px; overflow-x: auto; padding: 14px 0 6px; scroll-snap-type: x mandatory; }
+.shots figure { margin: 0; flex: 0 0 196px; scroll-snap-align: start; }
+.shots img { width: 196px; height: auto; border-radius: 18px; border: 1px solid var(--line); display: block; }
+.shots figcaption { font-size: 12px; color: var(--muted); text-align: center; margin-top: 4px; }
+.pc { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 10px; }
+.pc > div { min-width: 0; }
+.pc h4 { margin: 0 0 2px; font-size: 13px; letter-spacing: .04em; }
+.pc .g h4 { color: var(--good); } .pc .b h4 { color: var(--bad); }
+@media (max-width: 620px) { .pc { grid-template-columns: 1fr; } }
+.try { margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 22px; background: var(--fg); color: var(--bg); font: 700 14px var(--body); border: 0; cursor: pointer; }
+.try:focus-visible, .close:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.modal { position: fixed; inset: 0; background: rgba(10,12,10,.6); z-index: 50; display: grid; place-items: center; padding: 16px; }
+.modal[hidden] { display: none; }
+.phone { position: relative; width: 393px; height: 852px; border-radius: 44px; overflow: hidden; background: #000; box-shadow: 0 0 0 8px #111; transform-origin: center; }
+.phone iframe { width: 393px; height: 852px; border: 0; display: block; }
+.close { position: fixed; top: calc(14px + env(safe-area-inset-top, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); z-index: 51; padding: 8px 16px; border-radius: 20px; border: 0; background: #fff; color: #111; font: 700 14px var(--body); cursor: pointer; }
+.findings li { margin: 8px 0; }
+code { font-size: 13px; background: var(--bg); padding: 1px 5px; border-radius: 5px; }
+</style>
+
+<div class="wrap">
+  <h1>LessonManage デザイン案</h1>
+  <p class="lead">レッスン記録アプリの画面を6案作り、実際に操作して比べた結果です。各案の「触ってみる」で、その場でプロトタイプを動かせます（録音は時間が進むだけの疑似動作です）。データは例として入れたものです。</p>
+
+  <div class="box rec" style="margin-top:20px">
+    <p style="margin-top:0"><b>私のおすすめ：F（Aの見た目＋Eの曲ページ）</b></p>
+    <ul class="tight">
+      <li>見た目はA（iPhoneのメモに近い形）。白いまとまりとグレーの地の組み合わせで、毎日開いても疲れにくい。</li>
+      <li>曲ページはE（メッセージのように、メモ・録音・レッスンが日付順に1本で積み上がる）。いつのメモの頃にどんな音だったかを、上から下へ追える。</li>
+      <li>曲ページから録った録音は、既定で「直近のレッスン後の個人練」としてつながる。要件の「1つの録音をレッスンと曲の両方に出す」を、選ぶ手間なしで満たせる。</li>
+    </ul>
+    <p class="note">タップ数は案ごとの差が1〜2回しかなく、決め手になりませんでした。差が出たのは「最初の画面で何が見えるか」「録音中に何ができるか」「曲の履歴がどう並ぶか」の3点です。</p>
+  </div>
+
+  <h2>検証したこと</h2>
+  <p>同じサンプルデータで、次の3つの操作を全案で自動実行し、タップ数と結果を確かめました（文字入力とEnterは数えていません）。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>操作</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th></tr></thead>
+    <tbody>
+      <tr><td>新しいレッスンを作り、録音しながら学んだこと2つ・宿題1つを書いて録音を止める</td><td class="n">7</td><td class="n">7</td><td class="n">7</td><td class="n">6<sup>※</sup></td><td class="n">8</td><td class="n">7</td></tr>
+      <tr><td>ホームから個人練を録り、曲と一言をつけて保存</td><td class="n">5</td><td class="n">5</td><td class="n">5</td><td class="n">6</td><td class="n">4</td><td class="n">5</td></tr>
+      <tr><td>曲を開いてメモを1つ足す</td><td class="n">4</td><td class="n">4</td><td class="n">4</td><td class="n">4</td><td class="n">3</td><td class="n">4</td></tr>
+      <tr><td>最初の画面で両方の種類の宿題が見える</td><td class="t">△</td><td class="t">△</td><td class="x">×</td><td class="o">○</td><td class="o">○</td><td class="t">△</td></tr>
+      <tr><td>レッスンの録音中にメモを書ける</td><td class="o">○</td><td class="o">○</td><td class="o">○</td><td class="x">×</td><td class="o">○</td><td class="o">○</td></tr>
+      <tr><td>曲のメモと録音が日付順に1本で読める</td><td class="x">×</td><td class="o">○</td><td class="x">×</td><td class="x">×</td><td class="o">○</td><td class="o">○</td></tr>
+      <tr><td>曲から録った録音が、レッスン後の個人練につながる</td><td class="x">×</td><td class="x">×</td><td class="x">×</td><td class="o">○</td><td class="o">○</td><td class="o">○</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">※ Dは録音を止めてからレッスンのページができるので、メモは録音のあとに書くことになります。△：A・Fは2つ目の種類がスクロールの先、Bは横にスワイプした先にあります。</p>
+
+  <h3 style="margin-top:28px">触っていて気づいて、全案に入れたこと</h3>
+  <ul class="findings">
+    <li><b>個人練中の「譜面台」画面。</b>最初の作りでは、個人練の録音シートが画面を覆って宿題が見えなくなっていました。個人練をしている間こそ宿題を見たいはずなので、録音中は宿題を大きく、学んだことをその下に出す画面にしました（Aの4枚目）。</li>
+    <li><b>箇条書きの二重登録を直しました。</b>Enterで次の行へ進むと、同じ項目が2回入る不具合が自動実行で見つかりました。</li>
+    <li><b>レッスンの録音は「メモを書く」で小さくたためる。</b>録音を続けたままレッスンのページに戻り、上部の赤い帯とダイナミックアイランドに経過時間が出ます。帯の「停止」で保存されます。</li>
+  </ul>
+
+  <h2>各案</h2>
+
+  <section class="prop" id="a">
+    <div class="prop-h"><h3><span class="letter">A</span>純正メモ風</h3><span class="ref">参考：iPhoneのメモ・ボイスメモ・設定</span></div>
+    <p>グレーの地に白いまとまりを置く、iPhone標準アプリの形。ホームは種類ごとに直近レッスンのカード。下のタブで「ホーム・レッスン・曲」を切り替えます。</p>
+    <div class="shots"><figure><img src="shots/a-home.png" alt="Aのホーム" loading="lazy"><figcaption>ホーム</figcaption></figure><figure><img src="shots/a-lesson.png" alt="Aのレッスンページ" loading="lazy"><figcaption>レッスン</figcaption></figure><figure><img src="shots/a-song.png" alt="Aの曲ページ" loading="lazy"><figcaption>曲</figcaption></figure><figure><img src="shots/a-stand.png" alt="個人練の録音中の画面" loading="lazy"><figcaption>個人練の録音中</figcaption></figure></div>
+    <div class="pc"><div class="g"><h4>良いところ</h4><ul class="tight"><li>見慣れた形で、どこを押せばいいか迷わない</li><li>文字が大きく、行間が広くて読みやすい</li></ul></div><div class="b"><h4>気になるところ</h4><ul class="tight"><li>ホームが縦に長く、ボイトレは下までスクロールしないと見えない</li><li>曲ページはメモと録音が別の段で、どのメモの頃の録音か追いにくい</li></ul></div></div>
+    <button class="try" data-src="a-notes.html">触ってみる</button>
+  </section>
+
+  <section class="prop" id="b">
+    <div class="prop-h"><h3><span class="letter">B</span>スレッド</h3><span class="ref">参考：Day One・ジャーナルのタイムライン</span></div>
+    <p>レッスンを親、個人練をその下に返信のようにつなぐ形。上に各種類の宿題を横に並べ、下はレッスンの流れを新しい順に並べます。</p>
+    <div class="shots"><figure><img src="shots/b-home.png" alt="Bのホーム" loading="lazy"><figcaption>ホーム</figcaption></figure><figure><img src="shots/b-feed.png" alt="Bのホームをスクロール" loading="lazy"><figcaption>ホーム（下）</figcaption></figure><figure><img src="shots/b-lesson.png" alt="Bのレッスンページ" loading="lazy"><figcaption>レッスン</figcaption></figure><figure><img src="shots/b-song.png" alt="Bの曲ページ" loading="lazy"><figcaption>曲</figcaption></figure></div>
+    <div class="pc"><div class="g"><h4>良いところ</h4><ul class="tight"><li>レッスン→個人練→次のレッスンの流れが線でつながって見える</li><li>曲ページも1本の流れで読める</li></ul></div><div class="b"><h4>気になるところ</h4><ul class="tight"><li>上の宿題カードと下の流れに同じレッスンが2回出る（入口の重複）</li><li>情報が多く、画面が詰まって見える</li></ul></div></div>
+    <button class="try" data-src="b-thread.html">触ってみる</button>
+  </section>
+
+  <section class="prop" id="c">
+    <div class="prop-h"><h3><span class="letter">C</span>大きいボタン</h3><span class="ref">参考：Duolingo</span></div>
+    <p>種類ごとに1画面。上のタブで種類を切り替え、宿題を大きく出して、その下に厚みのある「個人練をはじめる」ボタン。ボタンはときどきひとりでに沈みます。種類ごとに色が変わります。</p>
+    <div class="shots"><figure><img src="shots/c-home.png" alt="Cのホーム" loading="lazy"><figcaption>ホーム（バイオリン）</figcaption></figure><figure><img src="shots/c-voice.png" alt="Cのホーム ボイトレ" loading="lazy"><figcaption>ホーム（ボイトレ）</figcaption></figure><figure><img src="shots/c-lesson.png" alt="Cのレッスンページ" loading="lazy"><figcaption>レッスン</figcaption></figure><figure><img src="shots/c-song.png" alt="Cの曲ページ" loading="lazy"><figcaption>曲</figcaption></figure></div>
+    <div class="pc"><div class="g"><h4>良いところ</h4><ul class="tight"><li>個人練の入口がはっきりしていて、押したくなる</li><li>色で今どの種類を見ているか分かる</li></ul></div><div class="b"><h4>気になるところ</h4><ul class="tight"><li>一度に1種類しか見えない</li><li>枠とボタンが多く、記録帳としては画面が重い</li></ul></div></div>
+    <button class="try" data-src="c-button.html">触ってみる</button>
+  </section>
+
+  <section class="prop" id="d">
+    <div class="prop-h"><h3><span class="letter">D</span>録音が先</h3><span class="ref">参考：ボイスメモ</span></div>
+    <p>下の大きな録音ボタンでとにかく録り、止めてから「何の録音？」（個人練・新しいレッスン・曲だけ）を選ぶ形。ホームは宿題のまとめと、録音の一覧。夜の紺とはちみつ色。</p>
+    <div class="shots"><figure><img src="shots/d-home.png" alt="Dのホーム" loading="lazy"><figcaption>ホーム</figcaption></figure><figure><img src="shots/d-classify.png" alt="何の録音かを選ぶ画面" loading="lazy"><figcaption>録音のあと</figcaption></figure><figure><img src="shots/d-lesson.png" alt="Dのレッスンページ" loading="lazy"><figcaption>レッスン</figcaption></figure><figure><img src="shots/d-song.png" alt="Dの曲ページ" loading="lazy"><figcaption>曲</figcaption></figure></div>
+    <div class="pc"><div class="g"><h4>良いところ</h4><ul class="tight"><li>何も考えずにすぐ録れる</li><li>両方の宿題が最初の画面に収まる</li></ul></div><div class="b"><h4>気になるところ</h4><ul class="tight"><li>レッスン中にメモを書けない（録音を止めるまでページがない）</li><li>毎回「何の録音？」を選ぶ手間がある</li></ul></div></div>
+    <button class="try" data-src="d-record.html">触ってみる</button>
+  </section>
+
+  <section class="prop" id="e">
+    <div class="prop-h"><h3><span class="letter">E</span>曲が軸</h3><span class="ref">参考：メッセージ・ミュージックのライブラリ</span></div>
+    <p>ホームは宿題のまとめと、曲のカード。曲ページはメッセージのように、メモ・録音・レッスンが日付順に積み上がります。曲カードのマイクから録ると、直近のレッスン後の個人練として自動でつながります。</p>
+    <div class="shots"><figure><img src="shots/e-home.png" alt="Eのホーム" loading="lazy"><figcaption>ホーム</figcaption></figure><figure><img src="shots/e-song.png" alt="Eの曲ページ" loading="lazy"><figcaption>曲</figcaption></figure><figure><img src="shots/e-songrec.png" alt="曲から録ったあと" loading="lazy"><figcaption>曲から録ったあと</figcaption></figure><figure><img src="shots/e-lesson.png" alt="Eのレッスンページ" loading="lazy"><figcaption>レッスン</figcaption></figure></div>
+    <div class="pc"><div class="g"><h4>良いところ</h4><ul class="tight"><li>曲ページで、メモと録音の移り変わりが上から下へ追える</li><li>個人練が最短（4タップ）で録れる</li></ul></div><div class="b"><h4>気になるところ</h4><ul class="tight"><li>ホームに学んだことが出ていない（要件とずれている）</li><li>曲が増えるとホームが長くなる</li></ul></div></div>
+    <button class="try" data-src="e-songs.html">触ってみる</button>
+  </section>
+
+  <section class="prop" id="f">
+    <div class="prop-h"><h3><span class="letter">F</span>組み合わせ（A＋E）</h3><span class="ref">おすすめ</span></div>
+    <p>Aのホーム・レッスンページに、Eの曲ページと「曲から録る」流れを組み合わせた案。</p>
+    <div class="shots"><figure><img src="shots/f-home.png" alt="Fのホーム" loading="lazy"><figcaption>ホーム</figcaption></figure><figure><img src="shots/f-lessonrec.png" alt="レッスン録音中にメモ" loading="lazy"><figcaption>録音しながらメモ</figcaption></figure><figure><img src="shots/f-lesson.png" alt="Fのレッスンページ" loading="lazy"><figcaption>レッスン</figcaption></figure><figure><img src="shots/f-song.png" alt="Fの曲ページ" loading="lazy"><figcaption>曲</figcaption></figure></div>
+    <div class="pc"><div class="g"><h4>良いところ</h4><ul class="tight"><li>Aの読みやすさと、Eの曲ページの追いやすさの両方</li><li>要件をすべて満たしている</li></ul></div><div class="b"><h4>気になるところ</h4><ul class="tight"><li>ホームが縦に長い点はAのまま（ボイトレはスクロールの先）</li></ul></div></div>
+    <button class="try" data-src="f-mix.html">触ってみる</button>
+  </section>
+
+  <h2>次に決めたいこと</h2>
+  <ul class="tight">
+    <li>見た目の方向：純正寄り（A・F）／白地に色（B・E）／ポップ（C）／暗め（D）</li>
+    <li>ホームに2種類をどう並べるか：縦に積む（A・F）／宿題だけ上にまとめる（D・E）／種類ごとに切り替える（C）</li>
+    <li>曲ページ：日付順に1本（B・E・F）／メモ・録音・レッスンの段に分ける（A・C・D）</li>
+    <li>個人練の「譜面台」画面を採用するか</li>
+  </ul>
+  <p class="note">プロトタイプはリポジトリの <code>design/prototypes/</code> にあります。録音・再生は時間が進むだけの疑似動作で、入力した内容はページを閉じると消えます。</p>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <button class="close" id="close">閉じる</button>
+  <div class="phone" id="phone"><iframe id="frame" title="プロトタイプ"></iframe></div>
+</div>
+
+<script>
+(function () {
+  const modal = document.getElementById('modal');
+  const frame = document.getElementById('frame');
+  const phone = document.getElementById('phone');
+  const fit = () => {
+    const s = Math.min(1, (window.innerHeight - 90) / 852, (window.innerWidth - 32) / 393);
+    phone.style.transform = 'scale(' + s + ')';
+    phone.style.margin = (-(852 * (1 - s)) / 2) + 'px ' + (-(393 * (1 - s)) / 2) + 'px';
+  };
+  document.querySelectorAll('.try').forEach((b) => b.addEventListener('click', () => {
+    frame.src = b.dataset.src; modal.hidden = false; fit();
+  }));
+  const close = () => { modal.hidden = true; frame.src = 'about:blank'; };
+  document.getElementById('close').addEventListener('click', close);
+  modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) close(); });
+  window.addEventListener('resize', () => { if (!modal.hidden) fit(); });
+})();
+</script>
