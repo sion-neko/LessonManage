@@ -53,7 +53,7 @@
     const lesson = o.lesson;
     const songs = lesson ? lesson.songIds.map(D.song) : [];
     const others = D.songsOf(o.typeId || (lesson && lesson.typeId)).filter((s) => !songs.includes(s));
-    let pick = o.songId || (songs.length === 1 ? songs[0].id : null);
+    let pick = o.songId || null; // 曲は自動で選ばない
     sheet(host, (el, close) => {
       const chips = (arr) => arr.map((s) => '<button class="chip press' + (pick === s.id ? ' on' : '') + '" data-song="' + s.id + '">' + esc(s.title) + '</button>').join('');
       const draw = () => {
