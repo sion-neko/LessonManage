@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>C 大きいボタン</title>
+<link rel="stylesheet" href="core.css">
+<link rel="stylesheet" href="flows.css">
+<style>
+/* C：種類ごとに1画面。厚みのある大きいボタンで個人練を始める。種類ごとに淡い色 */
+:root {
+  --desk: #e4e8ee; --bg: #f7f9fc; --card: #ffffff; --fg: #26303b; --muted: #8592a0; --line: #e1e6ed;
+  --accent: #3d8bfd; --accent-d: #2a6bd1; --tint: #eaf2ff; --on-accent: #fff; --rec: #f0525a; --field: #ffffff; --sheet: #f7f9fc; --bullet: var(--accent);
+}
+#app[data-t="t2"] { --accent: #ef6f9b; --accent-d: #c94f7a; --tint: #fdebf2; }
+#app[data-t="other"] { --accent: #8b6fd6; --accent-d: #6a50b3; --tint: #f0ebfb; }
+.head { padding: 54px 18px 6px; }
+.types { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.types::-webkit-scrollbar { display: none; }
+.types button { flex: none; padding: 9px 16px; border-radius: 22px; font-weight: 700; font-size: 15px; background: var(--card); color: var(--muted); border: 2px solid var(--line); }
+.types button.on { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 3px 0 var(--accent-d); }
+.hero { margin: 14px 18px 0; padding: 18px; border-radius: 22px; background: var(--tint); }
+.hero .hd { display: flex; justify-content: space-between; align-items: baseline; }
+.hero .hd b { font-size: 15px; color: var(--accent-d); }
+.hero .hd button { font-size: 14px; color: var(--accent-d); display: flex; align-items: center; }
+.hero h2 { margin: 8px 0 4px; font-size: 13px; color: var(--muted); font-weight: 700; letter-spacing: .05em; }
+.hw { list-style: none; margin: 0; padding: 0; }
+.hw li { background: var(--card); border-radius: 14px; padding: 12px 14px; margin-top: 8px; font-size: 16px; font-weight: 600; line-height: 1.45; border: 2px solid var(--line); border-bottom-width: 4px; }
+.lr { list-style: none; margin: 0; padding: 0; }
+.lr li { padding: 5px 0 5px 18px; position: relative; font-size: 15px; line-height: 1.5; }
+.lr li::before { content: ""; position: absolute; left: 4px; top: 13px; width: 7px; height: 7px; border-radius: 3px; background: var(--accent); opacity: .6; }
+.go { display: block; width: calc(100% - 36px); margin: 18px 18px 0; height: 64px; border-radius: 20px; background: var(--accent); color: #fff; font-size: 18px; font-weight: 800; letter-spacing: .04em; box-shadow: 0 6px 0 var(--accent-d); transition: transform .12s ease, box-shadow .12s ease; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.go:active, .go.poke { transform: translateY(6px); box-shadow: 0 0 0 var(--accent-d); }
+.go svg { width: 24px; height: 24px; }
+.sub { padding: 22px 18px 6px; display: flex; justify-content: space-between; align-items: baseline; }
+.sub b { font-size: 17px; }
+.sub span { font-size: 13px; color: var(--muted); }
+.prs { display: flex; gap: 10px; overflow-x: auto; padding: 4px 18px 6px; scrollbar-width: none; }
+.prs::-webkit-scrollbar { display: none; }
+.pc { flex: 0 0 150px; background: var(--card); border-radius: 16px; border: 2px solid var(--line); padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.pc .d { font-size: 12px; font-weight: 700; color: var(--muted); }
+.pc .n { font-size: 14px; line-height: 1.4; min-height: 40px; }
+.pc .wave { color: var(--accent); }
+.tabbar { display: grid; grid-template-columns: 1fr 1fr 1fr; padding: 8px 0 28px; background: var(--card); border-top: 2px solid var(--line); }
+.tab { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; font-weight: 700; color: var(--muted); }
+.tab.on { color: var(--accent); }
+.bar { padding: 54px 14px 6px; display: flex; justify-content: space-between; align-items: center; }
+.bar .bk { width: 40px; height: 40px; border-radius: 14px; background: var(--card); border: 2px solid var(--line); display: grid; place-items: center; color: var(--muted); }
+.bar .ttl { font-weight: 800; font-size: 16px; }
+.blk { margin: 12px 18px 0; background: var(--card); border-radius: 20px; border: 2px solid var(--line); padding: 14px 16px; }
+.blk h3 { margin: 0 0 4px; font-size: 13px; color: var(--accent-d); letter-spacing: .05em; }
+.ttl-big { padding: 4px 18px 0; }
+.ttl-big b { font-size: 26px; font-weight: 800; display: block; }
+.ttl-big span { color: var(--muted); font-size: 14px; }
+.chips2 { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 18px 0; }
+.chips2 button { padding: 6px 12px; border-radius: 12px; background: var(--tint); color: var(--accent-d); font-weight: 700; font-size: 13px; }
+.lrec { display: flex; align-items: center; gap: 10px; }
+.lrec .wave { flex: 1; overflow: hidden; color: var(--accent); }
+.recgo { width: 100%; height: 52px; border-radius: 16px; background: var(--rec); color: #fff; font-weight: 800; box-shadow: 0 5px 0 #c23a41; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform .12s, box-shadow .12s; }
+.recgo:active { transform: translateY(5px); box-shadow: 0 0 0 #c23a41; }
+.recbar { display: flex; align-items: center; gap: 10px; margin: 0 18px 6px; padding: 10px 14px; border-radius: 16px; background: var(--rec); color: #fff; font-weight: 700; }
+.recbar .tm { flex: 1; font-variant-numeric: tabular-nums; }
+.recbar button { background: #fff; color: var(--rec); border-radius: 12px; padding: 5px 12px; font-size: 14px; font-weight: 800; }
+.prow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 2px solid var(--line); }
+.prow:first-of-type { border-top: 0; }
+.prow .d { width: 40px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.prow .n { flex: 1; min-width: 0; font-size: 15px; }
+.prow .n small { display: block; color: var(--muted); font-size: 12px; }
+.small-go { margin-top: 10px; width: 100%; height: 46px; border-radius: 14px; background: var(--accent); color: #fff; font-weight: 800; box-shadow: 0 4px 0 var(--accent-d); display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform .12s, box-shadow .12s; }
+.small-go:active { transform: translateY(4px); box-shadow: 0 0 0 var(--accent-d); }
+.list { padding: 0 18px; }
+.li { display: flex; align-items: center; justify-content: space-between; width: 100%; text-align: left; background: var(--card); border: 2px solid var(--line); border-bottom-width: 4px; border-radius: 16px; padding: 13px 14px; margin-top: 10px; }
+.li small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+.li b { font-size: 16px; }
+.memo { padding: 10px 0; border-top: 2px solid var(--line); }
+.memo:first-of-type { border-top: 0; }
+.memo .d { font-size: 12px; font-weight: 700; color: var(--muted); }
+.memo .t { font-size: 15px; line-height: 1.5; }
+.memo-in { display: flex; gap: 8px; margin-bottom: 6px; }
+.memo-in input { flex: 1; padding: 11px 12px; border-radius: 12px; border: 2px solid var(--line); background: var(--bg); font-size: 16px; outline: none; }
+.memo-in button { padding: 0 14px; border-radius: 12px; background: var(--accent); color: #fff; font-weight: 800; box-shadow: 0 3px 0 var(--accent-d); }
+#app .bl li::before { background: var(--accent); opacity: .6; border-radius: 3px; }
+.plus { position: absolute; right: 18px; bottom: 96px; width: 56px; height: 56px; border-radius: 18px; background: var(--card); color: var(--accent); border: 2px solid var(--line); border-bottom-width: 5px; display: grid; place-items: center; z-index: 20; }
+</style>
+</head>
+<body>
+<div id="app" data-t="t1"></div>
+<script src="core.js"></script>
+<script src="flows.js"></script>
+<script>
+const { D, Rec, makeNav, esc, h, I, toast } = LM;
+const app = document.getElementById('app');
+const stage = document.createElement('div'); stage.style.cssText = 'position:absolute;inset:0'; app.appendChild(stage);
+let cur = 't1'; let tab = 'home'; let recTarget = null;
+const setT = (tid) => { cur = tid; app.dataset.t = ['t1', 't2'].includes(tid) ? tid : 'other'; };
+
+function tabbar(nav) {
+  const el = h('<div class="tabbar">' + [['home', 'いま', I.home], ['lessons', 'レッスン', I.list], ['songs', '曲', I.note]].map(([k, n, ic]) => '<button class="tab' + (tab === k ? ' on' : '') + '" data-k="' + k + '">' + ic + n + '</button>').join('') + '</div>');
+  el.querySelectorAll('[data-k]').forEach((b) => (b.onclick = () => { if (tab !== b.dataset.k) { tab = b.dataset.k; nav.root(tab); } }));
+  return el;
+}
+function typeTabs(nav) {
+  const el = h('<div class="types">' + D.S.types.map((t) => '<button class="press' + (cur === t.id ? ' on' : '') + '" data-t="' + t.id + '">' + esc(t.name) + '</button>').join('') + '</div>');
+  el.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => { setT(b.dataset.t); nav.refresh(); }));
+  return el;
+}
+function recBar(nav) {
+  if (!Rec.on || !recTarget) return null;
+  const el = h('<div class="recbar"><span>●</span><span class="tm">録音中 ' + D.dur(Rec.sec) + '</span><button data-tap>停止</button></div>');
+  const un = Rec.sub(() => { if (!Rec.on) return un(); el.querySelector('.tm').textContent = '録音中 ' + D.dur(Rec.sec); });
+  el.querySelector('button').onclick = () => { const r = Rec.stop(); D.addRec({ kind: 'lesson', lessonId: recTarget, dur: r.dur }); recTarget = null; toast(app, 'レッスンの録音を保存'); nav.refresh(); };
+  return el;
+}
+function recordPractice(lesson, nav) {
+  LM.practiceStand(app, { lesson, onStop: (dur) => setTimeout(() => LM.afterPracticeSheet(app, { lesson, dur, onSave: ({ songId, note }) => { D.addRec({ kind: 'practice', lessonId: lesson.id, songId, dur, note }); toast(app, '個人練を保存'); nav.refresh(); } }), 420) });
+}
+function recordLesson(lesson, nav) {
+  recTarget = lesson.id;
+  LM.recordSheet(app, { label: D.md(lesson.date) + ' ' + D.type(lesson.typeId).name + 'のレッスン', minimizable: true, onMin: () => nav.refresh(),
+    onStop: (dur) => { D.addRec({ kind: 'lesson', lessonId: lesson.id, dur }); recTarget = null; toast(app, 'レッスンの録音を保存'); nav.refresh(); } });
+}
+function bar(nav, title, right) {
+  const el = h('<div class="bar"><button class="bk press" aria-label="戻る">' + I.back + '</button><span class="ttl">' + esc(title || '') + '</span><span style="width:40px">' + (right || '') + '</span></div>');
+  el.querySelector('.bk').onclick = () => nav.back(); return el;
+}
+let pokeTimer = null;
+const screens = {
+  home(el, a, nav) {
+    const hd = h('<div class="head"></div>'); hd.appendChild(typeTabs(nav)); el.appendChild(hd);
+    const sc = h('<div class="scroll"></div>'); el.appendChild(sc);
+    const rb = recBar(nav); if (rb) { rb.style.marginTop = '10px'; sc.appendChild(rb); }
+    const l = D.latest(cur);
+    if (!l) { sc.appendChild(h('<div class="hero"><b>まだレッスンがありません</b></div>')); }
+    else {
+      const hero = h('<div class="hero"><div class="hd"><b>' + D.fmtDate(l.date) + 'のレッスン · ' + D.rel(l.date) + '</b><button data-act="open">ひらく' + I.chev + '</button></div>' +
+        '<h2>宿題</h2><ul class="hw">' + l.homework.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>' +
+        '<h2 style="margin-top:14px">学んだこと</h2><ul class="lr">' + l.learned.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul></div>');
+      hero.querySelector('[data-act=open]').onclick = () => nav.push('lesson', { id: l.id });
+      sc.appendChild(hero);
+      const go = h('<button class="go">' + I.mic + '個人練をはじめる</button>');
+      go.onclick = () => recordPractice(l, nav);
+      sc.appendChild(go);
+      clearInterval(pokeTimer);
+      pokeTimer = setInterval(() => { if (!document.body.contains(go)) return clearInterval(pokeTimer); go.classList.add('poke'); setTimeout(() => go.classList.remove('poke'), 160); }, 4200);
+      const prs = D.practiceOf(l.id).slice().reverse();
+      sc.appendChild(h('<div class="sub"><b>このレッスン後の個人練</b><span>' + prs.length + '回</span></div>'));
+      if (prs.length) {
+        const strip = h('<div class="prs"></div>');
+        prs.forEach((r) => { const c = h('<div class="pc"><span class="d">' + D.fmtDate(r.date) + '</span><span class="n">' + (esc(r.note) || '（一言なし）') + '</span></div>'); c.appendChild(LM.playBtn(r)); strip.appendChild(c); });
+        sc.appendChild(strip);
+      } else sc.appendChild(h('<div style="padding:0 18px;color:var(--muted)">まだありません</div>'));
+    }
+    sc.appendChild(h('<div style="height:40px"></div>'));
+    el.appendChild(tabbar(nav));
+  },
+  lessons(el, a, nav) {
+    const hd = h('<div class="head"></div>'); hd.appendChild(typeTabs(nav)); el.appendChild(hd);
+    const sc = h('<div class="scroll"></div>'); el.appendChild(sc);
+    const list = h('<div class="list"></div>');
+    D.lessonsOf(cur).forEach((l) => { const b = h('<button class="li press"><span><b>' + D.fmtDate(l.date, true) + '</b><small>' + esc(l.learned[0] || '（まだ何も書いていない）') + '</small></span>' + I.chev + '</button>'); b.onclick = () => nav.push('lesson', { id: l.id }); list.appendChild(b); });
+    sc.appendChild(list); sc.appendChild(h('<div style="height:100px"></div>'));
+    const plus = h('<button class="plus press" aria-label="新しいレッスン">' + I.plus + '</button>');
+    plus.onclick = () => { const l = D.addLesson(cur); nav.push('lesson', { id: l.id }); };
+    el.appendChild(plus);
+    el.appendChild(tabbar(nav));
+  },
+  songs(el, a, nav) {
+    const hd = h('<div class="head"></div>'); hd.appendChild(typeTabs(nav)); el.appendChild(hd);
+    const sc = h('<div class="scroll"></div>'); el.appendChild(sc);
+    const list = h('<div class="list"></div>');
+    D.songsOf(cur).forEach((s) => { const la = D.lastActivity(s.id); const b = h('<button class="li press"><span><b>' + esc(s.title) + '</b><small>' + esc(s.sub) + (la ? ' · ' + D.rel(la) : '') + '</small></span>' + I.chev + '</button>'); b.onclick = () => nav.push('song', { id: s.id }); list.appendChild(b); });
+    sc.appendChild(list); sc.appendChild(h('<div style="height:30px"></div>'));
+    el.appendChild(tabbar(nav));
+  },
+  lesson(el, a, nav) {
+    const l = D.lesson(a.id); const t = D.type(l.typeId); setT(l.typeId);
+    el.appendChild(bar(nav, ''));
+    const rb = recBar(nav); if (rb) el.appendChild(rb);
+    const sc = h('<div class="scroll"></div>'); el.appendChild(sc);
+    sc.appendChild(h('<div class="ttl-big"><b>' + D.fmtDate(l.date, true) + '</b><span>' + esc(t.name) + ' · ' + esc(t.teacher) + '</span></div>'));
+    const ch = h('<div class="chips2">' + l.songIds.map((id) => '<button class="press" data-s="' + id + '">' + esc(D.song(id).title) + '</button>').join('') + '<button class="press" data-act="songs">' + (l.songIds.length ? '…' : '＋ 扱った曲') + '</button></div>');
+    ch.querySelectorAll('[data-s]').forEach((b) => (b.onclick = () => nav.push('song', { id: b.dataset.s })));
+    ch.querySelector('[data-act=songs]').onclick = () => LM.songPicker(app, l, () => nav.refresh());
+    sc.appendChild(ch);
+    const lr = D.lessonRec(l.id);
+    const rbk = h('<div class="blk"><h3>レッスン録音</h3></div>');
+    if (lr) { const row = h('<div class="lrec"></div>'); row.appendChild(LM.playBtn(lr)); row.insertAdjacentHTML('beforeend', LM.wave(lr.id, 34)); rbk.appendChild(row); }
+    else if (Rec.on && recTarget === l.id) rbk.appendChild(h('<div style="color:var(--muted)">録音中</div>'));
+    else { const b = h('<button class="recgo">' + I.mic + 'レッスンを録音</button>'); b.onclick = () => recordLesson(l, nav); rbk.appendChild(b); }
+    sc.appendChild(rbk);
+    const b1 = h('<div class="blk"><h3>学んだこと</h3></div>'); b1.appendChild(LM.bullets(l, 'learned')); sc.appendChild(b1);
+    const b2 = h('<div class="blk"><h3>宿題</h3></div>'); b2.appendChild(LM.bullets(l, 'homework')); sc.appendChild(b2);
+    const b3 = h('<div class="blk"><h3>このレッスン後の個人練</h3></div>');
+    D.practiceOf(l.id).forEach((r) => { const row = h('<div class="prow"><span class="d">' + D.md(r.date) + '</span><span class="n">' + (esc(r.note) || '（一言なし）') + (r.songId ? '<small>' + esc(D.song(r.songId).title) + '</small>' : '') + '</span></div>'); row.appendChild(LM.playBtn(r)); b3.appendChild(row); });
+    const g = h('<button class="small-go">' + I.mic + '個人練を記録</button>'); g.onclick = () => recordPractice(l, nav); b3.appendChild(g);
+    sc.appendChild(b3); sc.appendChild(h('<div style="height:40px"></div>'));
+  },
+  song(el, a, nav) {
+    const s = D.song(a.id);
+    el.appendChild(bar(nav, ''));
+    const sc = h('<div class="scroll"></div>'); el.appendChild(sc);
+    sc.appendChild(h('<div class="ttl-big"><b>' + esc(s.title) + '</b><span>' + esc(s.sub) + '</span></div>'));
+    const m = h('<div class="blk"><h3>メモ</h3></div>');
+    const mi = h('<div class="memo-in"><input id="memo-in" placeholder="今日のメモ" autocomplete="off"><button data-tap>追加</button></div>');
+    const add = () => { if (D.addMemo(s.id, mi.querySelector('input').value)) { toast(app, D.md(D.TODAY) + 'のメモとして追加'); nav.refresh(); } };
+    mi.querySelector('button').onclick = add; mi.querySelector('input').onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) add(); };
+    m.appendChild(mi);
+    D.memosOf(s.id).forEach((x) => m.appendChild(h('<div class="memo"><div class="d">' + D.fmtDate(x.date, true) + '</div><div class="t">' + esc(x.text) + '</div></div>')));
+    sc.appendChild(m);
+    const r = h('<div class="blk"><h3>録音</h3></div>');
+    D.recsOfSong(s.id).forEach((x) => { const row = h('<div class="prow"><span class="d">' + D.md(x.date) + '</span><span class="n">' + (esc(x.note) || '（一言なし）') + '<small>' + (x.kind === 'practice' ? D.md(D.lesson(x.lessonId).date) + 'のレッスン後' : '曲の録音') + '</small></span></div>'); row.appendChild(LM.playBtn(x)); r.appendChild(row); });
+    const g = h('<button class="small-go">' + I.mic + 'この曲を録音</button>');
+    g.onclick = () => LM.recordSheet(app, { label: s.title, onStop: (dur) => setTimeout(() => LM.afterPracticeSheet(app, { title: '曲の録音', typeId: s.typeId, songId: s.id, dur, onSave: ({ songId, note }) => { D.addRec({ kind: 'song', songId: songId || s.id, dur, note }); toast(app, '録音を保存'); nav.refresh(); } }), 420) });
+    r.appendChild(g); sc.appendChild(r);
+    const ls = h('<div class="blk"><h3>扱ったレッスン</h3></div>');
+    D.lessonsOfSong(s.id).forEach((l) => { const b = h('<button class="prow" style="width:100%;text-align:left" data-tap><span class="n">' + D.fmtDate(l.date, true) + '</span>' + I.chev + '</button>'); b.onclick = () => nav.push('lesson', { id: l.id }); ls.appendChild(b); });
+    sc.appendChild(ls); sc.appendChild(h('<div style="height:40px"></div>'));
+  },
+};
+const nav = makeNav(stage, screens);
+LM.chrome(app, () => { const l = recTarget && D.lesson(recTarget); if (l) recordLesson(l, nav); });
+nav.root('home');
+window.__nav = nav;
+</script>
+</body>
+</html>

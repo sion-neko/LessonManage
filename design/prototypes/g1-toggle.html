@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>G1 レッスン帳</title>
+<link rel="stylesheet" href="core.css">
+<link rel="stylesheet" href="flows.css">
+<style>
+/* G1：Cの画面構成（種類ごとに1画面・宿題を大きく・個人練ボタン）を、メモ帳式の見た目で。曲ページは「まとめ」と「チャット」を切り替え */
+:root {
+  --desk: #e7e7ec; --bg: #f2f2f7; --card: #ffffff; --fg: #1c1c1e; --muted: #8a8a8e; --line: #dcdce1;
+  --accent: #d29b00; --accent-d: #a87a00; --on-accent: #fff; --rec: #ff3b30; --field: #ffffff; --sheet: #f2f2f7; --bullet: #c7c7cc;
+  --t-bg: #ffffff; --me-bg: #fff3c4; --teacher: #3a6ea5; --hl: #e5e5ea; --seg: #e3e3e8;
+}
+/* 動き：遷移はゆっくりめ、押したら見える手応え */
+.screen { transition: opacity .42s ease, transform .42s ease; }
+button { transition: opacity .15s ease, background-color .2s ease, transform .15s ease; }
+button:active { opacity: .55; }
+.fade { animation: fade .38s ease both; }
+@keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+.head { padding: 54px 16px 4px; display: flex; gap: 8px; align-items: center; }
+.seg { position: relative; flex: 1; display: flex; background: var(--seg); border-radius: 10px; padding: 2px; }
+.seg .knob { position: absolute; top: 2px; bottom: 2px; left: 2px; border-radius: 8px; background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,.12); transition: transform .38s cubic-bezier(.3,.8,.3,1), width .38s; }
+.seg button { position: relative; flex: 1; padding: 7px 0; font-size: 14px; font-weight: 600; color: var(--fg); z-index: 1; }
+.seg button:active { opacity: 1; }
+.seg.sm button { padding: 6px 0; font-size: 13px; }
+.ic { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: var(--accent); flex: none; }
+.ic svg { width: 20px; height: 20px; }
+.lh { display: flex; justify-content: space-between; align-items: center; width: calc(100% - 32px); margin: 12px 16px 0; padding: 12px 16px; border-radius: 12px; background: var(--card); text-align: left; }
+.lh b { font-size: 16px; }
+.lh span { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 2px; }
+.lh span svg { color: #c4c4c7; }
+.grp { margin: 0 16px; background: var(--card); border-radius: 12px; padding: 4px 16px; }
+.hw li { font-size: 19px; font-weight: 700; line-height: 1.45; padding: 11px 0; border-bottom: .5px solid var(--line); list-style: none; }
+.hw li:last-child { border-bottom: 0; }
+.hw, .lr { margin: 0; padding: 0; }
+.lr li { list-style: none; padding: 8px 0; font-size: 16px; line-height: 1.5; border-bottom: .5px solid var(--line); display: flex; gap: 8px; align-items: baseline; }
+.lr li:last-child { border-bottom: 0; }
+.who { flex: none; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 5px; line-height: 1.6; }
+.who.t { color: var(--teacher); background: #e6eef7; }
+.who.m { color: #8a6500; background: var(--me-bg); }
+.dock { padding: 10px 16px 12px; background: linear-gradient(to top, var(--bg) 75%, rgba(242,242,247,0)); }
+.go { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 54px; border-radius: 14px; background: var(--accent); color: #fff; font-size: 17px; font-weight: 700; box-shadow: 0 4px 0 var(--accent-d); transition: transform .14s ease, box-shadow .14s ease; }
+.go:active { opacity: 1; transform: translateY(4px); box-shadow: 0 0 0 var(--accent-d); }
+.tabbar { display: grid; grid-template-columns: 1fr 1fr 1fr; border-top: .5px solid var(--line); background: rgba(249,249,249,.94); padding: 6px 0 28px; }
+.tab { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; color: var(--muted); }
+.tab.on { color: var(--accent); }
+.nav { padding: 54px 16px 4px; display: flex; align-items: center; justify-content: space-between; min-height: 92px; }
+.nav .bk { display: flex; align-items: center; gap: 2px; color: var(--accent); font-size: 17px; margin-left: -6px; }
+.ttl { padding: 0 20px; }
+.ttl b { display: block; font-size: 28px; font-weight: 700; line-height: 1.25; }
+.ttl span { color: var(--muted); font-size: 15px; }
+.songs { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 20px 0; }
+.songs button { padding: 6px 12px; border-radius: 8px; background: var(--card); font-size: 14px; display: flex; align-items: center; gap: 6px; }
+.songs button svg { color: var(--accent); width: 15px; height: 15px; }
+.sec { font-size: 13px; color: var(--muted); padding: 22px 32px 7px; display: flex; justify-content: space-between; align-items: baseline; }
+.sec button { color: var(--accent); font-size: 14px; }
+.recbox { margin: 0 16px; background: var(--card); border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
+.recbox .wave { flex: 1; color: var(--fg); overflow: hidden; }
+.recbtn { width: calc(100% - 32px); margin: 0 16px; background: var(--card); border-radius: 12px; padding: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--rec); font-weight: 600; font-size: 16px; }
+.recbar { display: flex; align-items: center; gap: 10px; margin: 0 16px 6px; padding: 10px 14px; border-radius: 12px; background: #fff0ef; color: var(--rec); font-weight: 600; }
+.recbar .tm { flex: 1; font-variant-numeric: tabular-nums; }
+.recbar button { background: var(--rec); color: #fff; border-radius: 14px; padding: 5px 12px; font-size: 14px; }
+.player { position: absolute; left: 12px; right: 12px; bottom: 26px; z-index: 30; display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 14px; border-radius: 16px; background: rgba(30,30,32,.94); color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,.25); animation: fade .35s ease both; }
+.player .pt { flex: 1; min-width: 0; font-size: 13px; }
+.player .pt b { display: block; font-size: 15px; font-variant-numeric: tabular-nums; }
+.player .bar { height: 3px; border-radius: 2px; background: rgba(255,255,255,.25); margin-top: 6px; overflow: hidden; }
+.player .bar i { display: block; height: 100%; background: var(--accent); }
+.player button { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.15); display: grid; place-items: center; color: #fff; }
+/* 編集できる箇条書き */
+.el { margin: 0 16px; background: var(--card); border-radius: 12px; overflow: hidden; }
+.el ul { list-style: none; margin: 0; padding: 0; }
+.el li { position: relative; overflow: hidden; border-bottom: .5px solid var(--line); }
+.el .row { position: relative; z-index: 1; display: flex; align-items: baseline; gap: 8px; padding: 10px 14px; background: var(--card); transition: transform .3s cubic-bezier(.3,.8,.3,1), background-color .2s; touch-action: pan-y; }
+.el .row.hl { background: var(--hl); }
+.el .row .tx { flex: 1; min-width: 0; font-size: 16px; line-height: 1.5; cursor: text; }
+.el .row .tx.big { font-size: 17px; font-weight: 600; }
+.el .row .meta { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 2px; font-size: 12px; color: var(--muted); }
+.el .row .meta button { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 3px; }
+.el .row .meta .at { color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
+.el .row .meta .at.live { color: var(--rec); }
+.el .row .meta .at svg { width: 10px; height: 10px; }
+.el .row .meta .none { color: var(--accent); }
+.el .row input.ed { width: 100%; border: 0; outline: none; background: transparent; font-size: 16px; line-height: 1.5; padding: 0; }
+.el .del { position: absolute; z-index: 0; top: 0; bottom: 0; right: 0; width: 80px; background: var(--rec); color: #fff; font-weight: 600; font-size: 15px; }
+.el .grip { flex: none; align-self: center; color: #c4c4c7; padding: 2px 0 2px 8px; cursor: grab; touch-action: none; }
+.el .minus { flex: none; align-self: center; width: 22px; height: 22px; border-radius: 50%; background: var(--rec); color: #fff; display: grid; place-items: center; font-weight: 700; line-height: 1; }
+.el li:not(.sw) .del { visibility: hidden; }
+.el li.drag .row { background: var(--hl); box-shadow: 0 4px 14px rgba(0,0,0,.12); position: relative; z-index: 2; }
+.el .add { display: flex; align-items: center; gap: 8px; padding: 9px 14px; }
+.el .add input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font-size: 16px; padding: 3px 0; }
+.el .add input::placeholder { color: var(--muted); }
+.el .pick { display: flex; gap: 6px; flex-wrap: wrap; padding: 10px 14px 0; border-top: .5px solid var(--line); }
+.el .pick button { padding: 4px 10px; border-radius: 12px; font-size: 13px; background: var(--bg); color: var(--fg); }
+.el .pick button.on { background: var(--accent); color: #fff; }
+.el .pick span { font-size: 12px; color: var(--muted); align-self: center; margin-right: 2px; }
+.pr { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: .5px solid var(--line); }
+.pr:last-child { border-bottom: 0; }
+.pr .d { width: 44px; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.pr .n { flex: 1; min-width: 0; font-size: 15px; line-height: 1.45; }
+.pr .n small { display: block; color: var(--muted); font-size: 12px; }
+.addpr { display: flex; align-items: center; gap: 6px; color: var(--accent); font-size: 16px; padding: 10px 0; }
+.list { margin: 0 16px; background: var(--card); border-radius: 12px; overflow: hidden; }
+.list button { display: flex; width: 100%; align-items: center; justify-content: space-between; text-align: left; padding: 12px 16px; border-bottom: .5px solid var(--line); }
+.list button:active { opacity: 1; background: var(--hl); }
+.list button:last-child { border-bottom: 0; }
+.list small { display: block; color: var(--muted); font-size: 14px; }
+.list svg { color: #c4c4c7; flex: none; }
+.plus { position: absolute; right: 18px; bottom: 96px; width: 54px; height: 54px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; box-shadow: 0 4px 0 var(--accent-d); z-index: 20; transition: transform .14s, box-shadow .14s; }
+.plus:active { opacity: 1; transform: translateY(4px); box-shadow: 0 0 0 var(--accent-d); }
+/* 曲ページ */
+.tr li { display: flex; flex-direction: column; padding: 9px 0; border-bottom: .5px solid var(--line); list-style: none; }
+.tr li:last-child { border-bottom: 0; }
+.tr .d { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+.tr .t { font-size: 15px; line-height: 1.5; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.tr .at { flex: none; font-size: 12px; color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 3px; }
+.tr .at svg { width: 10px; height: 10px; }
+.tr { margin: 0; padding: 0; }
+.memo-in { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: .5px solid var(--line); }
+.memo-in input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font-size: 16px; }
+.memo-in .ok { color: var(--accent); font-weight: 600; }
+.log { padding: 10px 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+.div { align-self: center; font-size: 12px; color: var(--muted); margin: 10px 0 2px; }
+.lmark { align-self: center; display: flex; align-items: center; gap: 4px; background: var(--seg); border-radius: 14px; padding: 5px 12px; font-size: 12px; color: var(--fg); font-weight: 600; margin: 2px 0; }
+.lb { align-self: flex-start; max-width: 80%; }
+.lb .nm { font-size: 11px; color: var(--muted); margin: 0 0 2px 10px; }
+.lb .bb { background: var(--t-bg); padding: 9px 13px; border-radius: 18px 18px 18px 6px; font-size: 15px; line-height: 1.45; }
+.lb .bb .at { display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; font-size: 12px; color: var(--accent); font-weight: 600; }
+.lb .bb .at svg { width: 10px; height: 10px; }
+.rb { align-self: flex-end; max-width: 80%; background: var(--me-bg); padding: 9px 13px; border-radius: 18px 18px 6px 18px; font-size: 15px; line-height: 1.45; }
+.rb small { display: block; font-size: 11px; color: #8a6500; margin-bottom: 1px; }
+.rrec { align-self: flex-end; max-width: 82%; background: var(--card); padding: 8px 12px 8px 8px; border-radius: 18px 18px 6px 18px; display: flex; flex-direction: column; gap: 4px; }
+.rrec .rl { font-size: 11px; color: var(--muted); padding-left: 4px; }
+.rrec .rt { font-size: 14px; padding-left: 4px; }
+.rrec .rr { display: flex; align-items: center; gap: 8px; }
+.rrec .pb { background: var(--bg); }
+.rrec .wave { color: var(--accent); }
+.composer { display: flex; align-items: center; gap: 8px; padding: 8px 12px 30px; border-top: .5px solid var(--line); background: rgba(249,249,249,.96); }
+.composer input { flex: 1; min-width: 0; height: 40px; border-radius: 20px; border: .5px solid var(--line); padding: 0 14px; font-size: 16px; outline: none; background: var(--card); }
+.composer .send { flex: none; color: var(--accent); font-weight: 700; padding: 0 6px; }
+.composer .rec { flex: none; width: 38px; height: 38px; border-radius: 50%; background: var(--card); color: var(--rec); display: grid; place-items: center; }
+.composer .who { flex: none; font-size: 12px; padding: 5px 8px; border-radius: 8px; }
+.tg { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--card); font-size: 15px; text-align: left; }
+.tg .bx { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--line); display: grid; place-items: center; color: #fff; flex: none; }
+.tg.on .bx { background: var(--accent); border-color: var(--accent); }
+.empty { color: var(--muted); font-size: 15px; padding: 10px 0; }
+.more { display: block; width: 100%; text-align: center; padding: 10px 0 8px; color: var(--accent); font-size: 14px; }
+/* 最初の状態 */
+.hello { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 28px 60px; }
+.hello h1 { font-size: 30px; margin: 0 0 8px; line-height: 1.3; }
+.hello p { color: var(--muted); font-size: 16px; line-height: 1.6; margin: 0 0 26px; }
+.hello .f { display: flex; flex-direction: column; gap: 10px; }
+.hello .go { margin-top: 10px; }
+.ex { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.ex button { padding: 6px 12px; border-radius: 14px; background: var(--card); font-size: 14px; }
+.blank { margin: 28px 16px 0; padding: 28px 20px; border-radius: 14px; background: var(--card); text-align: center; }
+.blank b { display: block; font-size: 17px; margin-bottom: 6px; }
+.blank p { margin: 0 0 18px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+.tl-item { display: flex; align-items: center; gap: 10px; padding: 13px 14px; border-radius: 12px; background: var(--card); width: 100%; text-align: left; }
+.tl-item .nm { flex: 1; min-width: 0; }
+.tl-item .nm small { display: block; color: var(--muted); font-size: 13px; }
+/* ホームの見せ方の比較用（#v1〜#v3） */
+.v-cap { padding: 18px 20px 0; font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
+.v-cap button { color: var(--accent); font-size: 14px; display: flex; align-items: center; }
+.v-h { padding: 2px 20px 8px; font-size: 30px; font-weight: 800; letter-spacing: .01em; }
+.v1-hw { margin: 0 16px; background: var(--card); border-radius: 14px; padding: 4px 18px; }
+.v1-hw li { list-style: none; font-size: 20px; font-weight: 700; line-height: 1.45; padding: 14px 0; border-bottom: .5px solid var(--line); }
+.v1-hw li:last-child { border-bottom: 0; }
+.v1-hw ul { margin: 0; padding: 0; }
+.v1-sub { display: block; width: calc(100% - 32px); margin: 14px 16px 0; padding: 12px 16px; border-radius: 12px; background: transparent; border: 1px solid var(--line); text-align: left; }
+.v1-sub .k { display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; }
+.v1-sub .k span { color: var(--muted); font-weight: 400; display: flex; align-items: center; }
+.v1-sub p { margin: 6px 0 0; font-size: 14px; color: var(--muted); line-height: 1.55; }
+.v1-pr { padding: 14px 20px 0; font-size: 14px; color: var(--muted); }
+.v2 { margin: 12px 16px 0; background: var(--card); border-radius: 16px; padding: 18px 18px 8px; }
+.v2-top { display: flex; justify-content: space-between; align-items: baseline; width: 100%; text-align: left; padding-bottom: 14px; border-bottom: .5px solid var(--line); }
+.v2-top b { font-size: 20px; }
+.v2-top span { font-size: 13px; color: var(--muted); display: flex; align-items: center; }
+.v2 h3 { margin: 16px 0 4px; font-size: 13px; font-weight: 700; color: var(--fg); letter-spacing: .04em; }
+.v2 ul { margin: 0; padding: 0; list-style: none; }
+.v2 .hwl li { font-size: 19px; font-weight: 700; line-height: 1.45; padding: 6px 0; }
+.v2 .lrl li { position: relative; padding: 4px 0 4px 16px; font-size: 15px; line-height: 1.5; color: #3a3a3c; }
+.v2 .lrl li::before { content: ""; position: absolute; left: 2px; top: 12px; width: 7px; height: 7px; border-radius: 50%; background: var(--teacher); }
+.v2 .lrl li.m::before { background: #e3b400; }
+.v2 .lgd { display: flex; gap: 12px; font-size: 11px; color: var(--muted); margin: 2px 0 0; }
+.v2 .lgd i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--teacher); margin-right: 4px; }
+.v2 .lgd i.m { background: #e3b400; }
+.v2-pr { margin-top: 14px; padding: 12px 0 6px; border-top: .5px solid var(--line); font-size: 14px; color: var(--muted); }
+.v3-hero { margin: 12px 16px 0; border-radius: 18px; background: #fff6d6; padding: 18px; }
+.v3-hero .cap { font-size: 13px; color: #8a6500; display: flex; justify-content: space-between; }
+.v3-hero h2 { margin: 4px 0 12px; font-size: 22px; font-weight: 800; }
+.v3-hero li { list-style: none; background: var(--card); border-radius: 12px; padding: 12px 14px; margin-top: 8px; font-size: 17px; font-weight: 700; line-height: 1.45; }
+.v3-hero ul { margin: 0; padding: 0; }
+.v3-hero .st { margin-top: 12px; font-size: 13px; color: #8a6500; }
+.v3-t { margin: 0 16px; }
+.v3-t li { list-style: none; position: relative; padding: 8px 0 8px 14px; font-size: 15px; line-height: 1.5; border-bottom: .5px solid var(--line); }
+.v3-t li::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 2px; background: var(--teacher); opacity: .6; }
+.v3-t ul { margin: 0; padding: 0; }
+.v3-more { display: flex; align-items: center; gap: 2px; padding: 10px 16px; color: var(--accent); font-size: 14px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="core.js"></script>
+<script src="flows.js"></script>
+<script>
+const { D, Rec, Play, makeNav, esc, h, I, toast, sheet } = LM;
+const app = document.getElementById('app');
+const stage = document.createElement('div'); stage.style.cssText = 'position:absolute;inset:0'; app.appendChild(stage);
+const grip = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 9h14M5 15h14"/></svg>';
+const playSm = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>';
+
+// ── データ：学んだこと・宿題を「1行＝1つの物」にする ──
+// 学んだこと：{ text, by: 't'(先生)|'m'(自分), songId, at: レッスン録音の何秒目に書いたか }
+const sampleNotes = {
+  L1: [['弓を返すときに手首を固めない', 't', 's1', 190], ['3ポジへの移動は親指を先に動かす', 't', 's1', 760], ['20小節目からは弓を多めに使ってフレーズを大きく', 't', 's1', 1505], ['スケールは移弦の前に左手を準備', 't', 's3', 2010], ['親指を意識すると音程が安定する気がする', 'm', 's1', 2390]],
+  L2: [['冒頭の付点はもっと軽く', 't', 's1', 420], ['開放弦に逃げずに4の指で取る', 't', 's2', 1630], ['付点を軽くすると弓が余る', 'm', 's1', 1950]],
+  L3: [['移弦は肘の高さから先に変える', 't', 's2', 880]],
+  L4: [['高音は喉で押さずに息の量で出す', 't', 's5', 615], ['サビ前のブレスを半拍早めに', 't', 's5', 1420], ['息を多めにすると喉が楽', 'm', 's5', 2210]],
+  L5: [['語尾を投げずに最後まで息を流す', 't', 's6', 1010]],
+};
+D.S.lessons.forEach((l) => {
+  l.notes = (sampleNotes[l.id] || []).map(([text, by, songId, at]) => ({ text, by, songId, at }));
+  l.hw = l.homework.map((text) => ({ text }));
+});
+const sync = (l) => { l.learned = l.notes.map((n) => n.text); l.homework = l.hw.map((n) => n.text); };
+D.S.lessons.forEach(sync);
+D.S.memos.forEach((m) => { m.by = /（先生）/.test(m.text) ? 't' : 'm'; m.text = m.text.replace('（先生）', ''); });
+const newLesson = (typeId) => { const l = D.addLesson(typeId); l.notes = []; l.hw = []; return l; };
+const teacherOf = (typeId) => (D.type(typeId) && D.type(typeId).teacher) || '先生';
+const notesOfSong = (sid) => D.S.lessons.flatMap((l) => l.notes.filter((n) => n.songId === sid).map((n) => ({ ...n, date: l.date, lesson: l })));
+
+// 最初の状態を見るとき（#empty）はデータを空にする
+if (location.hash === '#empty') ['types', 'songs', 'lessons', 'recs', 'memos'].forEach((k) => D.S[k].splice(0));
+
+let cur = D.S.types[0] ? D.S.types[0].id : null; let tab = 'home'; let recTarget = null; let songView = 'sum';
+let lastSong = {}; // レッスンごとに、次に書く行の曲
+
+// ── 共通部品 ──
+function tabbar(nav) {
+  const el = h('<div class="tabbar">' + [['home', 'いま', I.home], ['lessons', 'レッスン', I.list], ['songs', '曲', I.note]].map(([k, n, ic]) => '<button class="tab' + (tab === k ? ' on' : '') + '" data-k="' + k + '">' + ic + n + '</button>').join('') + '</div>');
+  el.querySelectorAll('[data-k]').forEach((b) => (b.onclick = () => { if (tab !== b.dataset.k) { tab = b.dataset.k; nav.root(tab); } }));
+  return el;
+}
+// つまみがすべるセグメント
+function segment(items, value, onPick, cls) {
+  const el = h('<div class="seg ' + (cls || '') + '"><span class="knob"></span>' + items.map(([k, n]) => '<button data-k="' + k + '">' + esc(n) + '</button>').join('') + '</div>');
+  const knob = el.querySelector('.knob'); const n = items.length;
+  const place = (k, anim) => { const i = Math.max(0, items.findIndex((x) => x[0] === k)); if (!anim) knob.style.transition = 'none'; knob.style.width = 'calc((100% - 4px) / ' + n + ')'; knob.style.transform = 'translateX(' + (i * 100) + '%)'; if (!anim) requestAnimationFrame(() => (knob.style.transition = '')); };
+  place(value, false);
+  el.querySelectorAll('[data-k]').forEach((b) => (b.onclick = () => { if (b.dataset.k === value) return; value = b.dataset.k; place(value, true); setTimeout(() => onPick(value), 220); }));
+  return el;
+}
+function head(nav) {
+  const hd = h('<div class="head"></div>');
+  if (D.S.types.length) hd.appendChild(segment(D.S.types.map((t) => [t.id, t.name]), cur, (k) => { cur = k; nav.refresh(); fadeIn(); }));
+  else hd.appendChild(h('<div style="flex:1"></div>'));
+  const g = h('<button class="ic" aria-label="種類の編集">' + I.gear + '</button>'); g.onclick = () => typesSheet(nav); hd.appendChild(g);
+  return hd;
+}
+const fadeIn = () => requestAnimationFrame(() => { const s = document.querySelector('.screen.in .scroll'); if (s) { s.classList.remove('fade'); void s.offsetWidth; s.classList.add('fade'); } });
+function recBar(nav) {
+  if (!Rec.on || !recTarget) return null;
+  const el = h('<div class="recbar"><span>●</span><span class="tm">録音中 ' + D.dur(Rec.sec) + '</span><button data-tap>停止</button></div>');
+  const un = Rec.sub(() => { if (!Rec.on) return un(); el.querySelector('.tm').textContent = '録音中 ' + D.dur(Rec.sec); });
+  el.querySelector('button').onclick = () => { const r = Rec.stop(); D.addRec({ kind: 'lesson', lessonId: recTarget, dur: r.dur }); D.lesson(recTarget).notes.forEach((n) => (n.live = false)); recTarget = null; toast(app, 'レッスンの録音を保存'); nav.refresh(); };
+  return el;
+}
+// レッスン録音を、書いた位置から再生
+function playAt(lesson, at) {
+  const lr = D.lessonRec(lesson.id); if (!lr) return;
+  Play.stop(); Play.toggle(lr); Play.pos = Math.min(at, lr.dur - 1); Play.emit();
+}
+function player(lesson) {
+  const el = document.createElement('div'); let shown = false;
+  const draw = () => {
+    const lr = lesson && D.lessonRec(lesson.id);
+    if (!lr || Play.id !== lr.id) { if (shown) { el.innerHTML = ''; shown = false; } return; }
+    if (!shown) {
+      el.innerHTML = '<div class="player"><div class="pt"><span>' + D.fmtDate(lesson.date) + 'のレッスン</span><b></b><div class="bar"><i></i></div></div><button aria-label="停止">' + I.pause + '</button></div>';
+      el.querySelector('button').onclick = () => Play.stop(); shown = true;
+    }
+    el.querySelector('b').textContent = D.dur(Play.pos) + ' / ' + D.dur(lr.dur);
+    el.querySelector('.bar i').style.width = (Play.pos / lr.dur * 100) + '%';
+  };
+  const un = Play.sub(() => { if (!document.body.contains(el) && el.isConnected === false && shown) return un(); draw(); });
+  draw(); return el;
+}
+function recordPractice(lesson, nav) {
+  LM.practiceStand(app, { lesson, onStop: (dur) => setTimeout(() => LM.afterPracticeSheet(app, { lesson, dur, onSave: ({ songId, note }) => { D.addRec({ kind: 'practice', lessonId: lesson.id, songId, dur, note }); toast(app, '個人練を保存'); nav.refresh(); } }), 200) });
+}
+function recordLesson(lesson, nav) {
+  recTarget = lesson.id;
+  LM.recordSheet(app, { label: D.md(lesson.date) + ' ' + D.type(lesson.typeId).name + 'のレッスン', minimizable: true, onMin: () => nav.refresh(),
+    onStop: (dur) => { D.addRec({ kind: 'lesson', lessonId: lesson.id, dur }); lesson.notes.forEach((n) => (n.live = false)); recTarget = null; toast(app, 'レッスンの録音を保存'); nav.refresh(); } });
+}
+const check = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>';
+function recordSong(s, nav) {
+  LM.recordSheet(app, { label: s.title, onStop: (dur) => setTimeout(() => {
+    const l = D.latest(s.typeId); let link = !!l; let note = '';
+    sheet(app, (el, close) => {
+      const draw = () => {
+        el.innerHTML = '<div class="ap"><div class="ap-head"><span class="ap-title">' + esc(s.title) + '</span><span class="ap-dur">' + D.dur(dur) + '</span></div>' +
+          '<div class="ap-k">一言</div><input id="g-note" class="ap-note" placeholder="例：テンポ60で通せた" autocomplete="off">' +
+          (l ? '<button class="tg' + (link ? ' on' : '') + '" data-act="tg"><span class="bx">' + (link ? check : '') + '</span><span>' + D.fmtDate(l.date) + 'のレッスン後の個人練</span></button>' : '') +
+          '<button class="ap-save" data-act="save">保存</button></div>';
+        const ni = el.querySelector('#g-note'); ni.value = note; ni.oninput = () => (note = ni.value);
+        const tg = el.querySelector('[data-act=tg]'); if (tg) tg.onclick = () => { link = !link; draw(); };
+        el.querySelector('[data-act=save]').onclick = () => { close(); D.addRec(link ? { kind: 'practice', lessonId: l.id, songId: s.id, dur, note } : { kind: 'song', songId: s.id, dur, note }); toast(app, '録音を保存'); nav.refresh(); };
+      };
+      draw();
+    }, { modal: true });
+  }, 420) });
+}
+const whoTag = (by, attr) => (attr ? '<button class="who ' + by + '" ' + attr + '>' : '<span class="who ' + by + '">') + (by === 't' ? '先生' : '自分') + (attr ? '</button>' : '</span>');
+
+// 曲を選ぶシート（行の曲の付け替え）
+function pickSong(l, current, onPick) {
+  sheet(app, (el, close) => {
+    el.innerHTML = '<div class="tp"><div class="tp-title">曲</div>' + l.songIds.map((id) => '<button class="tp-item" data-s="' + id + '"><b>' + esc(D.song(id).title) + '</b>' + (current === id ? check : '') + '</button>').join('') +
+      '<button class="tp-item" data-s=""><b>曲なし</b>' + (!current ? check : '') + '</button></div>';
+    el.querySelectorAll('[data-s]').forEach((b) => (b.onclick = () => { close(); onPick(b.dataset.s || null); }));
+  });
+}
+
+// ── 編集できる箇条書き（学んだこと・宿題で共通） ──
+// タップで編集、左スワイプで削除、「並べ替え」でつまみを持って移動
+function editList(l, key, o) {
+  const box = h('<div class="el"></div>');
+  let addBy = 't'; let sorting = false; let openRow = null;
+  const items = () => l[key];
+  const live = () => Rec.on && recTarget === l.id;
+  const songOf = () => (l.songIds.length === 1 ? l.songIds[0] : l.songIds.includes(lastSong[l.id]) ? lastSong[l.id] : l.songIds[0] || null);
+  const draw = (focusAdd) => {
+    const multi = o.notes && l.songIds.length > 1;
+    box.innerHTML = '<ul>' + items().map((n, i) => {
+      const meta = [];
+      if (o.notes && multi) meta.push('<button data-act="song" class="' + (n.songId ? '' : 'none') + '">' + (n.songId ? '♪ ' + esc(D.song(n.songId).title) : '曲なし') + '</button>');
+      if (o.notes && n.at != null) meta.push(n.live ? '<span class="at live">● ' + D.dur(n.at) + '</span>' : (D.lessonRec(l.id) ? '<button data-act="at" class="at">' + playSm + D.dur(n.at) + '</button>' : ''));
+      return '<li data-i="' + i + '"><div class="row">' + (sorting ? '<button class="minus" data-act="del" aria-label="削除">−</button>' : '') +
+        (o.notes ? whoTag(n.by, 'data-act="who"') : '') +
+        '<div class="tx' + (o.big ? ' big' : '') + '" data-act="edit">' + esc(n.text) + (meta.length ? '<div class="meta">' + meta.join('') + '</div>' : '') + '</div>' +
+        (sorting ? '<span class="grip" data-act="grip">' + grip + '</span>' : '') + '</div>' +
+        (sorting ? '' : '<button class="del" data-act="del">削除</button>') + '</li>';
+    }).join('') + '</ul>' +
+      (multi && !sorting ? '<div class="pick"><span>次の行</span>' + l.songIds.map((id) => '<button data-pick="' + id + '" class="' + (songOf() === id ? 'on' : '') + '">' + esc(D.song(id).title) + '</button>').join('') + '</div>' : '') +
+      (sorting ? '' : '<div class="add">' + (o.notes ? whoTag(addBy, 'data-act="addwho"') : '') + '<input id="el-' + l.id + '-' + key + '" placeholder="＋ 追加" enterkeyhint="next" autocomplete="off"></div>');
+    bind(); if (focusAdd) box.querySelector('.add input').focus();
+  };
+  const closeOpen = () => { if (openRow) { const r = openRow; r.style.transform = ''; openRow = null; setTimeout(() => r.parentElement.classList.remove('sw'), 320); } };
+  const bind = () => {
+    box.querySelectorAll('li').forEach((li) => {
+      const i = +li.dataset.i; const n = items()[i]; const row = li.querySelector('.row');
+      const on = (sel, fn) => { const b = li.querySelector(sel); if (b) b.onclick = (e) => { e.stopPropagation(); fn(e); }; };
+      on('[data-act=who]', () => { n.by = n.by === 't' ? 'm' : 't'; draw(); });
+      on('[data-act=song]', () => pickSong(l, n.songId, (sid) => { n.songId = sid; draw(); }));
+      on('[data-act=at]', () => playAt(l, n.at));
+      li.querySelectorAll('[data-act=del]').forEach((b) => (b.onclick = (e) => { e.stopPropagation(); items().splice(i, 1); sync(l); openRow = null; draw(); }));
+      const tx = li.querySelector('[data-act=edit]');
+      tx.onclick = (e) => {
+        if (sorting || e.target.closest('button')) return;
+        if (openRow) { closeOpen(); return; }
+        tx.innerHTML = ''; const inp = h('<input class="ed" autocomplete="off">'); inp.value = n.text; tx.appendChild(inp); inp.focus();
+        const done = () => { const v = inp.value.trim(); if (v) n.text = v; else items().splice(i, 1); sync(l); draw(); };
+        inp.onkeydown = (ev) => { if (ev.key === 'Enter' && !ev.isComposing) { ev.preventDefault(); inp.blur(); } if (ev.key === 'Escape') { inp.value = n.text; inp.blur(); } };
+        inp.onblur = done;
+      };
+      if (!sorting) swipe(row);
+      else { const g = li.querySelector('[data-act=grip]'); dragSort(g, li); }
+    });
+    box.querySelectorAll('[data-pick]').forEach((b) => { b.onpointerdown = (e) => e.preventDefault(); b.onclick = () => { lastSong[l.id] = b.dataset.pick; const v = box.querySelector('.add input').value; draw(); const inp = box.querySelector('.add input'); inp.value = v; inp.focus(); }; });
+    const aw = box.querySelector('[data-act=addwho]'); if (aw) aw.onpointerdown = (e) => e.preventDefault(); if (aw) aw.onclick = () => { addBy = addBy === 't' ? 'm' : 't'; const v = box.querySelector('.add input').value; draw(); const inp = box.querySelector('.add input'); inp.value = v; inp.focus(); };
+    const inp = box.querySelector('.add input'); if (!inp) return;
+    const commit = (keep) => {
+      const v = inp.value; inp.value = ''; if (!v.trim()) return;
+      const item = o.notes ? { text: v.trim(), by: addBy, songId: songOf(), at: live() ? Rec.sec : null, live: live() } : { text: v.trim() };
+      items().push(item); sync(l); if (keep) draw(true); else setTimeout(() => draw(false), 0);
+    };
+    inp.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); commit(true); } });
+    inp.addEventListener('blur', () => commit(false));
+  };
+  // 左スワイプで「削除」を出す
+  const swipe = (row) => {
+    let x0 = null, y0 = 0, dx = 0, moved = false;
+    row.addEventListener('pointerdown', (e) => { if (e.target.closest('button,input')) return; x0 = e.clientX; y0 = e.clientY; dx = 0; moved = false; row.style.transition = 'none'; });
+    row.addEventListener('pointermove', (e) => {
+      if (x0 == null) return; const ddx = e.clientX - x0; if (!moved && Math.abs(e.clientY - y0) > Math.abs(ddx)) { x0 = null; row.style.transition = ''; return; }
+      if (Math.abs(ddx) > 6) { moved = true; row.setPointerCapture(e.pointerId); row.parentElement.classList.add('sw'); }
+      const base = openRow === row ? -80 : 0; dx = Math.min(0, Math.max(-110, base + ddx)); if (moved) row.style.transform = 'translateX(' + dx + 'px)';
+    });
+    const end = () => {
+      if (x0 == null) return; x0 = null; row.style.transition = '';
+      if (!moved) return;
+      if (dx < -40) { if (openRow && openRow !== row) closeOpen(); row.style.transform = 'translateX(-80px)'; openRow = row; }
+      else { row.style.transform = ''; if (openRow === row) openRow = null; setTimeout(() => row.parentElement.classList.remove('sw'), 320); }
+      row.addEventListener('click', (ev) => ev.stopPropagation(), { capture: true, once: true });
+    };
+    row.addEventListener('pointerup', end); row.addEventListener('pointercancel', end);
+  };
+  // つまみで並べ替え
+  const dragSort = (g, li) => {
+    g.addEventListener('pointerdown', (e) => {
+      e.preventDefault(); g.setPointerCapture(e.pointerId); li.classList.add('drag');
+      let from = +li.dataset.i;
+      const move = (ev) => {
+        const lis = [...box.querySelectorAll('li')];
+        const to = lis.findIndex((x) => { const r = x.getBoundingClientRect(); return ev.clientY < r.top + r.height / 2; });
+        const target = to < 0 ? lis.length - 1 : to > from ? to - 1 : to;
+        if (target !== from && target >= 0) { const arr = items(); const [it] = arr.splice(from, 1); arr.splice(target, 0, it); sync(l); from = target; draw(); const nl = box.querySelectorAll('li')[from]; nl.classList.add('drag'); const ng = nl.querySelector('[data-act=grip]'); g.removeEventListener('pointermove', move); ng.setPointerCapture(e.pointerId); ng.addEventListener('pointermove', move); ng.addEventListener('pointerup', up, { once: true }); }
+      };
+      const up = () => { box.querySelectorAll('li.drag').forEach((x) => x.classList.remove('drag')); };
+      g.addEventListener('pointermove', move); g.addEventListener('pointerup', up, { once: true });
+    });
+  };
+  box.setSorting = (v) => { sorting = v; openRow = null; draw(); };
+  draw(false);
+  return box;
+}
+function sortableSection(title, list) {
+  const sec = h('<div class="sec"><span>' + esc(title) + '</span><button data-tap>並べ替え</button></div>');
+  let on = false; const b = sec.querySelector('button');
+  b.onclick = () => { on = !on; b.textContent = on ? '完了' : '並べ替え'; list.setSorting(on); };
+  return sec;
+}
+
+// 種類の編集
+function typesSheet(nav) {
+  sheet(app, (el, close) => {
+    const draw = () => {
+      el.innerHTML = '<div class="tp"><div class="tp-title">種類</div>' + D.S.types.map((t) => '<button class="tl-item" data-t="' + t.id + '"><span class="nm">' + esc(t.name) + '<small>' + esc(t.teacher || '先生・教室なし') + '</small></span>' + I.chev + '</button>').join('') +
+        '<button class="tp-add" data-act="add">＋ 種類を追加</button></div>';
+      el.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => { close(); setTimeout(() => typeEdit(nav, D.type(b.dataset.t)), 400); }));
+      el.querySelector('[data-act=add]').onclick = () => { close(); setTimeout(() => typeEdit(nav, null), 400); };
+    };
+    draw();
+  });
+}
+function typeEdit(nav, t) {
+  sheet(app, (el, close) => {
+    el.innerHTML = '<div class="tp"><div class="tp-title">' + (t ? '種類の編集' : '種類を追加') + '</div>' +
+      '<input id="te-name" class="ap-note" placeholder="例：バイオリン"><input id="te-teacher" class="ap-note" placeholder="先生・教室（なくてもいい）">' +
+      '<button class="ap-save" data-act="ok">' + (t ? '保存' : '追加') + '</button></div>';
+    const nm = el.querySelector('#te-name'), tc = el.querySelector('#te-teacher');
+    if (t) { nm.value = t.name; tc.value = t.teacher; }
+    el.querySelector('[data-act=ok]').onclick = () => {
+      const n = nm.value.trim(); if (!n) { nm.focus(); return; }
+      if (t) { t.name = n; t.teacher = tc.value.trim(); } else { const nt = D.addType(n, tc.value.trim()); cur = nt.id; }
+      close(); nav.refresh();
+    };
+    setTimeout(() => nm.focus(), 450);
+  });
+}
+
+// ── 画面 ──
+const screens = {
+  hello(el, a, nav) {
+    const v = h('<div class="hello"><h1>レッスン帳</h1><p>レッスンで学んだこと、宿題、個人練の録音をまとめる場所。<br>まずは習っているものをひとつ。</p>' +
+      '<div class="f"><input id="hl-name" class="ap-note" placeholder="例：バイオリン"><div class="ex"><button>バイオリン</button><button>ボイトレ</button><button>ピアノ</button></div>' +
+      '<input id="hl-teacher" class="ap-note" placeholder="先生・教室（なくてもいい）"><button class="go" data-act="ok">スタート</button></div></div>');
+    v.querySelectorAll('.ex button').forEach((b) => (b.onclick = () => { v.querySelector('#hl-name').value = b.textContent; }));
+    v.querySelector('[data-act=ok]').onclick = () => {
+      const n = v.querySelector('#hl-name').value.trim(); if (!n) { v.querySelector('#hl-name').focus(); return; }
+      const t = D.addType(n, v.querySelector('#hl-teacher').value.trim()); cur = t.id; tab = 'home'; nav.root('home');
+    };
+    el.appendChild(v);
+  },
+  home(el, a, nav) {
+    el.appendChild(head(nav));
+    const sc = h('<div class="scroll"></div>'); el.appendChild(sc);
+    const rb = recBar(nav); if (rb) { rb.style.marginTop = '10px'; sc.appendChild(rb); }
+    const l = cur && D.latest(cur);
+    if (!l) {
+      const t = D.type(cur);
+      const bl = h('<div class="blank"><b>' + esc(t ? t.name : '') + 'のレッスンはまだありません</b><p>レッスンの日に作ると、学んだことと宿題がここに出ます。</p><button class="go" data-act="new">' + I.plus + '最初のレッスン</button></div>');
+      bl.querySelector('[data-act=new]').onclick = () => { const nl = newLesson(cur); nav.push('lesson', { id: nl.id }); };
+      sc.appendChild(bl); el.appendChild(tabbar(nav)); return;
+    }
+    const dockGo = () => { sc.appendChild(h('<div style="height:24px"></div>')); const dock = h('<div class="dock"><button class="go">' + I.mic + '個人練スタート</button></div>'); dock.querySelector('.go').onclick = () => recordPractice(l, nav); el.appendChild(dock); el.appendChild(tabbar(nav)); };
+    const prs0 = D.practiceOf(l.id); const prLine = '個人練 ' + prs0.length + '回' + (prs0.length ? ' · 最後は' + D.rel(prs0[prs0.length - 1].date) : '');
+    const tN = l.notes.filter((n) => n.by === 't'); const mN = l.notes.filter((n) => n.by === 'm');
+    const open = () => nav.push('lesson', { id: l.id });
+    { // 次のレッスンまでにやること＋先生の指摘だけ
+      const hero = h('<div class="v3-hero"><div class="cap"><span>' + D.fmtDate(l.date) + 'のレッスンから ' + D.rel(l.date) + '</span></div><h2>次のレッスンまでに</h2><ul>' + l.hw.map((x) => '<li>' + esc(x.text) + '</li>').join('') + '</ul><div class="st">' + prLine + '</div></div>');
+      sc.appendChild(hero);
+      sc.appendChild(h('<div class="sec">先生に言われたこと</div>'));
+      sc.appendChild(h('<div class="v3-t"><ul>' + tN.slice(0, 3).map((n) => '<li>' + esc(n.text) + '</li>').join('') + '</ul></div>'));
+      const more = h('<button class="v3-more">レッスンのページ' + I.chev + '</button>'); more.onclick = open; sc.appendChild(more);
+      return dockGo();
+    }
+  },
+  lessons(el, a, nav) {
+    el.appendChild(head(nav));
+    const sc = h('<div class="scroll"></div>'); el.appendChild(sc);
+    const ls = cur ? D.lessonsOf(cur) : [];
+    if (!ls.length) sc.appendChild(h('<div class="blank"><b>レッスンはまだありません</b><p>右下の＋で、今日のレッスンを作れます。</p></div>'));
+    else {
+      sc.appendChild(h('<div class="sec">' + esc(teacherOf(cur)) + '</div>'));
+      const list = h('<div class="list"></div>');
+      ls.forEach((l) => { const b = h('<button><span>' + D.fmtDate(l.date, true) + '<small>' + esc(l.learned[0] || '（まだ何も書いていない）') + '</small></span>' + I.chev + '</button>'); b.onclick = () => nav.push('lesson', { id: l.id }); list.appendChild(b); });
+      sc.appendChild(list);
+    }
+    sc.appendChild(h('<div style="height:100px"></div>'));
+    if (cur) { const plus = h('<button class="plus" aria-label="新しいレッスン">' + I.plus + '</button>'); plus.onclick = () => { const l = newLesson(cur); nav.push('lesson', { id: l.id }); }; el.appendChild(plus); }
+    el.appendChild(tabbar(nav));
+  },
+  songs(el, a, nav) {
+    el.appendChild(head(nav));
+    const sc = h('<div class="scroll"></div>'); el.appendChild(sc);
+    const ss = cur ? D.songsOf(cur) : [];
+    if (!ss.length) sc.appendChild(h('<div class="blank"><b>曲はまだありません</b><p>レッスンページの「扱った曲」から追加できます。</p></div>'));
+    else {
+      sc.appendChild(h('<div class="sec">曲</div>'));
+      const list = h('<div class="list"></div>');
+      ss.forEach((s) => { const la = D.lastActivity(s.id); const b = h('<button><span>' + esc(s.title) + '<small>' + esc(s.sub) + (la ? ' · ' + D.rel(la) : '') + '</small></span>' + I.chev + '</button>'); b.onclick = () => nav.push('song', { id: s.id }); list.appendChild(b); });
+      sc.appendChild(list);
+    }
+    sc.appendChild(h('<div style="height:30px"></div>'));
+    el.appendChild(tabbar(nav));
+  },
+  lesson(el, a, nav) {
+    const l = D.lesson(a.id); const t = D.type(l.typeId); cur = l.typeId;
+    const nb = h('<div class="nav"><button class="bk">' + I.back + '戻る</button><span></span></div>'); nb.querySelector('.bk').onclick = () => { Play.stop(); nav.back(); }; el.appendChild(nb);
+    const rb = recBar(nav); if (rb) el.appendChild(rb);
+    const sc = h('<div class="scroll"></div>'); el.appendChild(sc);
+    sc.appendChild(h('<div class="ttl"><b>' + D.fmtDate(l.date, true) + '</b><span>' + esc(t.name) + (t.teacher ? ' · ' + esc(t.teacher) : '') + '</span></div>'));
+    const songs = h('<div class="songs">' + l.songIds.map((id) => '<button data-s="' + id + '">' + I.note + esc(D.song(id).title) + '</button>').join('') + '<button data-act="songs" style="color:var(--accent)">' + (l.songIds.length ? '編集' : '＋ 扱った曲') + '</button></div>');
+    songs.querySelectorAll('[data-s]').forEach((b) => (b.onclick = () => nav.push('song', { id: b.dataset.s })));
+    songs.querySelector('[data-act=songs]').onclick = () => LM.songPicker(app, l, () => nav.refresh());
+    sc.appendChild(songs);
+    sc.appendChild(h('<div class="sec">レッスン録音</div>'));
+    const lr = D.lessonRec(l.id);
+    if (lr) { const box = h('<div class="recbox"></div>'); box.appendChild(LM.playBtn(lr)); box.insertAdjacentHTML('beforeend', LM.wave(lr.id, 40)); sc.appendChild(box); }
+    else if (Rec.on && recTarget === l.id) sc.appendChild(h('<div style="padding:0 32px;color:var(--muted);font-size:14px">録音中。書いた行には録音の位置が付きます</div>'));
+    else { const b = h('<button class="recbtn">' + I.mic + 'レッスンを録音</button>'); b.onclick = () => recordLesson(l, nav); sc.appendChild(b); }
+    const nl = editList(l, 'notes', { notes: true }); sc.appendChild(sortableSection('学んだこと', nl)); sc.appendChild(nl);
+    const hw = editList(l, 'hw', { big: false }); sc.appendChild(sortableSection('宿題', hw)); sc.appendChild(hw);
+    sc.appendChild(h('<div class="sec">このレッスン後の個人練</div>'));
+    const pg = h('<div class="grp"></div>');
+    D.practiceOf(l.id).forEach((r) => { const row = h('<div class="pr"><span class="d">' + D.md(r.date) + '</span><span class="n">' + (esc(r.note) || '（一言なし）') + (r.songId ? '<small>' + esc(D.song(r.songId).title) + '</small>' : '') + '</span></div>'); row.appendChild(LM.playBtn(r)); pg.appendChild(row); });
+    const ap = h('<button class="addpr">' + I.mic + '個人練を記録</button>'); ap.onclick = () => recordPractice(l, nav); pg.appendChild(ap);
+    sc.appendChild(pg); sc.appendChild(h('<div style="height:100px"></div>'));
+    el.appendChild(player(l));
+  },
+  song(el, a, nav) {
+    const s = D.song(a.id); const tname = teacherOf(s.typeId);
+    const nb = h('<div class="nav"><button class="bk">' + I.back + '戻る</button><span></span></div>'); nb.querySelector('.bk').onclick = () => { Play.stop(); nav.back(); }; el.appendChild(nb);
+    const top = h('<div><div class="ttl"><b>' + esc(s.title) + '</b><span>' + esc(s.sub) + '</span></div><div style="padding:14px 20px 0"></div></div>');
+    top.lastChild.appendChild(segment([['sum', 'まとめ'], ['chat', 'チャット']], songView, (k) => { songView = k; nav.refresh(); fadeIn(); }, 'sm'));
+    el.appendChild(top);
+    const sc = h('<div class="scroll"></div>'); el.appendChild(sc);
+    let playing = null; // 再生中のレッスン（プレーヤー表示用）
+    const atBtn = (n) => (n.at != null && D.lessonRec(n.lesson.id) ? '<button class="at" data-l="' + n.lesson.id + '" data-at="' + n.at + '">' + playSm + D.dur(n.at) + '</button>' : '');
+    const bindAt = (root) => root.querySelectorAll('[data-at]').forEach((b) => (b.onclick = () => { const l = D.lesson(b.dataset.l); playing = l; pl.replaceChildren(player(l)); playAt(l, +b.dataset.at); }));
+    const pl = h('<div></div>');
+    if (songView === 'sum') {
+      const LIM = 3;
+      const block = (title, rows, render, extra) => {
+        sc.appendChild(h('<div class="sec">' + title + '</div>'));
+        const g = h('<div class="grp"></div>'); if (extra) g.appendChild(extra);
+        if (!rows.length) g.appendChild(h('<div class="empty">まだありません</div>'));
+        const ul = h('<ul class="tr"></ul>'); g.appendChild(ul);
+        const fill = (all) => { ul.innerHTML = ''; (all ? rows : rows.slice(0, LIM)).forEach((r) => ul.appendChild(render(r))); bindAt(ul); };
+        fill(false);
+        if (rows.length > LIM) { const m = h('<button class="more">すべて（' + rows.length + '件）</button>'); m.onclick = () => { fill(true); m.remove(); }; g.appendChild(m); }
+        sc.appendChild(g); return g;
+      };
+      const tn = notesOfSong(s.id).filter((n) => n.by === 't').sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : 0));
+      const groups = []; tn.forEach((n) => { const g = groups[groups.length - 1]; if (g && g.date === n.date) g.items.push(n); else groups.push({ date: n.date, items: [n] }); });
+      block('先生の指摘', groups, (g) => h('<li><span class="d">' + D.fmtDate(g.date, true) + '</span>' + g.items.map((n) => '<span class="t"><span>・' + esc(n.text) + '</span>' + atBtn(n) + '</span>').join('') + '</li>'));
+      const recs = D.recsOfSong(s.id);
+      const rg = block('録音', recs, (r) => { const li = h('<li style="flex-direction:row;align-items:center;gap:12px"><span class="d" style="width:40px">' + D.md(r.date) + '</span><span class="t" style="flex:1;display:block;min-width:0">' + (esc(r.note) || '（一言なし）') + '<small style="display:block;color:var(--muted);font-size:12px">' + (r.kind === 'practice' ? D.md(D.lesson(r.lessonId).date) + 'のレッスン後の個人練' : '曲の録音') + '</small></span></li>'); li.appendChild(LM.playBtn(r)); return li; });
+      const ar = h('<button class="addpr">' + I.mic + 'この曲を録音</button>'); ar.onclick = () => recordSong(s, nav); rg.appendChild(ar);
+      const mi = h('<div class="memo-in"><input id="g-memo" placeholder="今日のメモ" autocomplete="off"><button class="ok">追加</button></div>');
+      const add = () => { const m = D.addMemo(s.id, mi.querySelector('input').value); if (m) { m.by = 'm'; toast(app, D.md(D.TODAY) + 'のメモとして追加'); nav.refresh(); } };
+      mi.querySelector('.ok').onclick = add; mi.querySelector('input').onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) add(); };
+      const mine = [...D.memosOf(s.id).map((m) => ({ date: m.date, text: m.text, by: m.by })), ...notesOfSong(s.id).filter((n) => n.by === 'm')].sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : 0));
+      block('自分のメモ', mine, (m) => h('<li><span class="d"><span>' + D.fmtDate(m.date, true) + (m.lesson ? ' · レッスンで' : '') + (m.by === 't' ? ' · 先生' : '') + '</span></span><span class="t"><span>' + esc(m.text) + '</span>' + (m.lesson ? atBtn(m) : '') + '</span></li>'), mi);
+      sc.appendChild(h('<div class="sec">扱ったレッスン</div>'));
+      const lg = h('<div class="list"></div>');
+      D.lessonsOfSong(s.id).forEach((l) => { const b = h('<button><span>' + D.fmtDate(l.date, true) + '</span>' + I.chev + '</button>'); b.onclick = () => nav.push('lesson', { id: l.id }); lg.appendChild(b); });
+      if (!lg.children.length) lg.appendChild(h('<div class="empty" style="padding:12px 16px">まだありません</div>'));
+      sc.appendChild(lg); sc.appendChild(h('<div style="height:100px"></div>'));
+      el.appendChild(pl);
+      return;
+    }
+    // チャット：先生の指摘は左、自分のメモ・気づき・録音は右
+    const items = [];
+    D.lessonsOfSong(s.id).forEach((l) => items.push({ t: 'lesson', date: l.date, o: 0, l }));
+    notesOfSong(s.id).forEach((n) => items.push({ t: n.by === 't' ? 'tn' : 'mn', date: n.date, o: 1, n }));
+    D.memosOf(s.id).forEach((m) => items.push({ t: m.by === 't' ? 'tm' : 'mm', date: m.date, o: 2, m }));
+    D.recsOfSong(s.id).forEach((r) => items.push({ t: 'rec', date: r.date, o: 3, r }));
+    items.sort((x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : x.o - y.o));
+    const log = h('<div class="log"></div>'); let last = ''; let prevT = '';
+    if (!items.length) log.appendChild(h('<div class="div">まだ記録がありません</div>'));
+    items.forEach((it) => {
+      if (it.date !== last) { last = it.date; prevT = ''; log.appendChild(h('<div class="div">' + D.fmtDate(it.date, true) + '</div>')); }
+      const isT = it.t === 'tn' || it.t === 'tm'; const cont = isT && prevT === 'T'; prevT = isT ? 'T' : it.t;
+      if (it.t === 'lesson') { const b = h('<button class="lmark">' + esc(D.type(it.l.typeId).name) + 'のレッスン' + I.chev + '</button>'); b.onclick = () => nav.push('lesson', { id: it.l.id }); log.appendChild(b); }
+      if (isT) log.appendChild(h('<div class="lb">' + (cont ? '' : '<div class="nm">' + esc(tname) + '</div>') + '<div class="bb">' + esc((it.n || it.m).text) + (it.n ? atBtn(it.n) : '') + '</div></div>'));
+      if (it.t === 'mn') log.appendChild(h('<div class="rb"><small>レッスンで</small>' + esc(it.n.text) + '</div>'));
+      if (it.t === 'mm') log.appendChild(h('<div class="rb">' + esc(it.m.text) + '</div>'));
+      if (it.t === 'rec') { const r = it.r; const b = h('<div class="rrec"><span class="rl">' + (r.kind === 'practice' ? D.md(D.lesson(r.lessonId).date) + 'のレッスン後の個人練' : '録音') + '</span>' + (r.note ? '<span class="rt">' + esc(r.note) + '</span>' : '') + '<div class="rr"></div></div>'); b.querySelector('.rr').appendChild(LM.playBtn(r)); b.querySelector('.rr').insertAdjacentHTML('beforeend', LM.wave(r.id, 16)); log.appendChild(b); }
+    });
+    bindAt(log);
+    sc.appendChild(log);
+    let by = 'm';
+    const cp = h('<div class="composer"><button class="rec" aria-label="録音">' + I.mic + '</button><button class="who m" data-act="by">自分</button><input id="g-chat" placeholder="メモ" autocomplete="off"><button class="send">追加</button></div>');
+    cp.querySelector('[data-act=by]').onclick = (e) => { by = by === 'm' ? 't' : 'm'; e.currentTarget.className = 'who ' + by; e.currentTarget.textContent = by === 't' ? '先生' : '自分'; };
+    const add = () => { const m = D.addMemo(s.id, cp.querySelector('input').value); if (m) { m.by = by; nav.refresh(); } };
+    cp.querySelector('.send').onclick = add; cp.querySelector('input').onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) add(); };
+    cp.querySelector('.rec').onclick = () => recordSong(s, nav);
+    el.appendChild(cp);
+    pl.style.cssText = 'position:absolute;left:0;right:0;bottom:70px'; el.appendChild(pl);
+    requestAnimationFrame(() => { sc.scrollTop = sc.scrollHeight; });
+  },
+};
+const nav = makeNav(stage, screens);
+LM.chrome(app, () => { const l = recTarget && D.lesson(recTarget); if (l) recordLesson(l, nav); });
+nav.root(D.S.types.length ? 'home' : 'hello');
+window.__nav = nav;
+</script>
+</body>
+</html>
