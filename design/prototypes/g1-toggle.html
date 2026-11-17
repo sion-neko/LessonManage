@@ -161,6 +161,44 @@ button:active { opacity: .55; }
 .tl-item { display: flex; align-items: center; gap: 10px; padding: 13px 14px; border-radius: 12px; background: var(--card); width: 100%; text-align: left; }
 .tl-item .nm { flex: 1; min-width: 0; }
 .tl-item .nm small { display: block; color: var(--muted); font-size: 13px; }
+/* ホームの見せ方の比較用（#v1〜#v3） */
+.v-cap { padding: 18px 20px 0; font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
+.v-cap button { color: var(--accent); font-size: 14px; display: flex; align-items: center; }
+.v-h { padding: 2px 20px 8px; font-size: 30px; font-weight: 800; letter-spacing: .01em; }
+.v1-hw { margin: 0 16px; background: var(--card); border-radius: 14px; padding: 4px 18px; }
+.v1-hw li { list-style: none; font-size: 20px; font-weight: 700; line-height: 1.45; padding: 14px 0; border-bottom: .5px solid var(--line); }
+.v1-hw li:last-child { border-bottom: 0; }
+.v1-hw ul { margin: 0; padding: 0; }
+.v1-sub { display: block; width: calc(100% - 32px); margin: 14px 16px 0; padding: 12px 16px; border-radius: 12px; background: transparent; border: 1px solid var(--line); text-align: left; }
+.v1-sub .k { display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; }
+.v1-sub .k span { color: var(--muted); font-weight: 400; display: flex; align-items: center; }
+.v1-sub p { margin: 6px 0 0; font-size: 14px; color: var(--muted); line-height: 1.55; }
+.v1-pr { padding: 14px 20px 0; font-size: 14px; color: var(--muted); }
+.v2 { margin: 12px 16px 0; background: var(--card); border-radius: 16px; padding: 18px 18px 8px; }
+.v2-top { display: flex; justify-content: space-between; align-items: baseline; width: 100%; text-align: left; padding-bottom: 14px; border-bottom: .5px solid var(--line); }
+.v2-top b { font-size: 20px; }
+.v2-top span { font-size: 13px; color: var(--muted); display: flex; align-items: center; }
+.v2 h3 { margin: 16px 0 4px; font-size: 13px; font-weight: 700; color: var(--fg); letter-spacing: .04em; }
+.v2 ul { margin: 0; padding: 0; list-style: none; }
+.v2 .hwl li { font-size: 19px; font-weight: 700; line-height: 1.45; padding: 6px 0; }
+.v2 .lrl li { position: relative; padding: 4px 0 4px 16px; font-size: 15px; line-height: 1.5; color: #3a3a3c; }
+.v2 .lrl li::before { content: ""; position: absolute; left: 2px; top: 12px; width: 7px; height: 7px; border-radius: 50%; background: var(--teacher); }
+.v2 .lrl li.m::before { background: #e3b400; }
+.v2 .lgd { display: flex; gap: 12px; font-size: 11px; color: var(--muted); margin: 2px 0 0; }
+.v2 .lgd i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--teacher); margin-right: 4px; }
+.v2 .lgd i.m { background: #e3b400; }
+.v2-pr { margin-top: 14px; padding: 12px 0 6px; border-top: .5px solid var(--line); font-size: 14px; color: var(--muted); }
+.v3-hero { margin: 12px 16px 0; border-radius: 18px; background: #fff6d6; padding: 18px; }
+.v3-hero .cap { font-size: 13px; color: #8a6500; display: flex; justify-content: space-between; }
+.v3-hero h2 { margin: 4px 0 12px; font-size: 22px; font-weight: 800; }
+.v3-hero li { list-style: none; background: var(--card); border-radius: 12px; padding: 12px 14px; margin-top: 8px; font-size: 17px; font-weight: 700; line-height: 1.45; }
+.v3-hero ul { margin: 0; padding: 0; }
+.v3-hero .st { margin-top: 12px; font-size: 13px; color: #8a6500; }
+.v3-t { margin: 0 16px; }
+.v3-t li { list-style: none; position: relative; padding: 8px 0 8px 14px; font-size: 15px; line-height: 1.5; border-bottom: .5px solid var(--line); }
+.v3-t li::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 2px; background: var(--teacher); opacity: .6; }
+.v3-t ul { margin: 0; padding: 0; }
+.v3-more { display: flex; align-items: center; gap: 2px; padding: 10px 16px; color: var(--accent); font-size: 14px; }
 </style>
 </head>
 <body>
@@ -439,24 +477,18 @@ const screens = {
       bl.querySelector('[data-act=new]').onclick = () => { const nl = newLesson(cur); nav.push('lesson', { id: nl.id }); };
       sc.appendChild(bl); el.appendChild(tabbar(nav)); return;
     }
-    const lh = h('<button class="lh"><b>' + D.fmtDate(l.date) + 'のレッスン</b><span>' + D.rel(l.date) + I.chev + '</span></button>');
-    lh.onclick = () => nav.push('lesson', { id: l.id }); sc.appendChild(lh);
-    sc.appendChild(h('<div class="sec">宿題</div>'));
-    sc.appendChild(l.hw.length ? h('<div class="grp"><ul class="hw">' + l.hw.map((x) => '<li>' + esc(x.text) + '</li>').join('') + '</ul></div>') : h('<div class="grp"><div class="empty">宿題なし</div></div>'));
-    sc.appendChild(h('<div class="sec">学んだこと</div>'));
-    const ord = l.notes.slice().sort((x, y) => (x.by === y.by ? 0 : x.by === 't' ? -1 : 1));
-    sc.appendChild(ord.length ? h('<div class="grp"><ul class="lr">' + ord.map((n) => '<li>' + whoTag(n.by) + '<span>' + esc(n.text) + '</span></li>').join('') + '</ul></div>') : h('<div class="grp"><div class="empty">まだ何も書いていません</div></div>'));
-    const prs = D.practiceOf(l.id).slice().reverse();
-    sc.appendChild(h('<div class="sec"><span>このレッスン後の個人練</span><span>' + prs.length + '回</span></div>'));
-    const pg = h('<div class="grp"></div>');
-    if (prs.length) prs.forEach((r) => { const row = h('<div class="pr"><span class="d">' + D.md(r.date) + '</span><span class="n">' + (esc(r.note) || '（一言なし）') + (r.songId ? '<small>' + esc(D.song(r.songId).title) + '</small>' : '') + '</span></div>'); row.appendChild(LM.playBtn(r)); pg.appendChild(row); });
-    else pg.appendChild(h('<div class="empty">まだありません</div>'));
-    sc.appendChild(pg);
-    sc.appendChild(h('<div style="height:24px"></div>'));
-    const dock = h('<div class="dock"><button class="go">' + I.mic + '個人練スタート</button></div>');
-    dock.querySelector('.go').onclick = () => recordPractice(l, nav);
-    el.appendChild(dock);
-    el.appendChild(tabbar(nav));
+    const dockGo = () => { sc.appendChild(h('<div style="height:24px"></div>')); const dock = h('<div class="dock"><button class="go">' + I.mic + '個人練スタート</button></div>'); dock.querySelector('.go').onclick = () => recordPractice(l, nav); el.appendChild(dock); el.appendChild(tabbar(nav)); };
+    const prs0 = D.practiceOf(l.id); const prLine = '個人練 ' + prs0.length + '回' + (prs0.length ? ' · 最後は' + D.rel(prs0[prs0.length - 1].date) : '');
+    const tN = l.notes.filter((n) => n.by === 't'); const mN = l.notes.filter((n) => n.by === 'm');
+    const open = () => nav.push('lesson', { id: l.id });
+    { // 次のレッスンまでにやること＋先生の指摘だけ
+      const hero = h('<div class="v3-hero"><div class="cap"><span>' + D.fmtDate(l.date) + 'のレッスンから ' + D.rel(l.date) + '</span></div><h2>次のレッスンまでに</h2><ul>' + l.hw.map((x) => '<li>' + esc(x.text) + '</li>').join('') + '</ul><div class="st">' + prLine + '</div></div>');
+      sc.appendChild(hero);
+      sc.appendChild(h('<div class="sec">先生に言われたこと</div>'));
+      sc.appendChild(h('<div class="v3-t"><ul>' + tN.slice(0, 3).map((n) => '<li>' + esc(n.text) + '</li>').join('') + '</ul></div>'));
+      const more = h('<button class="v3-more">レッスンのページ' + I.chev + '</button>'); more.onclick = open; sc.appendChild(more);
+      return dockGo();
+    }
   },
   lessons(el, a, nav) {
     el.appendChild(head(nav));
