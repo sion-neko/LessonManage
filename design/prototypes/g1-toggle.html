@@ -322,7 +322,7 @@ function head(nav) {
   // 種類が1つのときは切り替えを出さない（2つ以上習っている人は少ないため）
   if (D.S.types.length > 1) hd.appendChild(segment(D.S.types.map((t) => [t.id, t.name]), cur, (k) => { cur = k; nav.refresh(); fadeIn(); }));
   else hd.appendChild(h('<div style="flex:1"></div>'));
-  const g = h('<button class="ic" aria-label="種類の編集">' + I.gear + '</button>'); g.onclick = () => typesSheet(nav); hd.appendChild(g);
+  const g = h('<button class="ic" aria-label="フォルダの編集">' + I.gear + '</button>'); g.onclick = () => typesSheet(nav); hd.appendChild(g);
   return hd;
 }
 const fadeIn = () => requestAnimationFrame(() => { const s = document.querySelector('.screen.in .scroll'); if (s) { s.classList.remove('fade'); void s.offsetWidth; s.classList.add('fade'); } });
@@ -600,8 +600,8 @@ function sortableSection(title, list) {
 function typesSheet(nav) {
   sheet(app, (el, close) => {
     const draw = () => {
-      el.innerHTML = '<div class="tp"><div class="tp-title">種類</div>' + D.S.types.map((t) => '<button class="tl-item" data-t="' + t.id + '"><span class="nm">' + esc(t.name) + '<small>' + esc(t.teacher || '先生・教室なし') + '</small></span>' + I.chev + '</button>').join('') +
-        '<button class="tp-add" data-act="add">＋ 種類を追加</button>' +
+      el.innerHTML = '<div class="tp"><div class="tp-title">フォルダ</div>' + D.S.types.map((t) => '<button class="tl-item" data-t="' + t.id + '"><span class="nm">' + esc(t.name) + '<small>' + esc(t.teacher || '先生・教室なし') + '</small></span>' + I.chev + '</button>').join('') +
+        '<button class="tp-add" data-act="add">＋ フォルダを追加</button>' +
         '<div class="tp-title" style="margin-top:12px">表示</div><button class="sw-row" data-act="homerec"><span>ホームに録音ボタン</span><span class="sw' + (homeRec ? ' on' : '') + '"></span></button></div>';
       el.querySelector('[data-act=homerec]').onclick = () => { homeRec = !homeRec; draw(); nav.refresh(); };
       el.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => { close(); setTimeout(() => typeEdit(nav, D.type(b.dataset.t)), 400); }));
@@ -612,10 +612,10 @@ function typesSheet(nav) {
 }
 function typeEdit(nav, t) {
   sheet(app, (el, close) => {
-    el.innerHTML = '<div class="tp"><div class="tp-title">' + (t ? '種類の編集' : '種類を追加') + '</div>' +
+    el.innerHTML = '<div class="tp"><div class="tp-title">' + (t ? 'フォルダの編集' : 'フォルダを追加') + '</div>' +
       '<input id="te-name" class="ap-note" placeholder="例：バイオリン"><input id="te-teacher" class="ap-note" placeholder="先生・教室（なくてもいい）">' +
       '<button class="ap-save" data-act="ok">' + (t ? '保存' : '追加') + '</button>' +
-      (t ? '<button class="tp-add" data-act="del" style="color:var(--rec)">この種類を削除</button>' : '') + '</div>';
+      (t ? '<button class="tp-add" data-act="del" style="color:var(--rec)">このフォルダを削除</button>' : '') + '</div>';
     const nm = el.querySelector('#te-name'), tc = el.querySelector('#te-teacher');
     const del = el.querySelector('[data-act=del]');
     if (del) del.onclick = () => {

@@ -79,7 +79,7 @@
     sheet(host, (el, close) => {
       el.innerHTML = '<div class="tp"><div class="tp-title">' + esc(o.title || '新しいレッスン') + '</div>' +
         D.S.types.map((t) => '<button class="tp-item press" data-t="' + t.id + '"><b>' + esc(t.name) + '</b><span>' + esc(t.teacher) + '</span></button>').join('') +
-        '<button class="tp-add press" data-act="add">＋ 種類を追加</button></div>';
+        '<button class="tp-add press" data-act="add">＋ フォルダを追加</button></div>';
       el.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => { close(); o.onPick(b.dataset.t); }));
       el.querySelector('[data-act=add]').onclick = () => { close(); setTimeout(() => LM.addTypeSheet(host, { onAdd: (t) => o.onPick(t.id) }), 400); };
     });
@@ -87,7 +87,7 @@
 
   LM.addTypeSheet = function (host, o) {
     sheet(host, (el, close) => {
-      el.innerHTML = '<div class="tp"><div class="tp-title">種類を追加</div>' +
+      el.innerHTML = '<div class="tp"><div class="tp-title">フォルダを追加</div>' +
         '<input id="tp-name" class="ap-note" placeholder="例：ピアノ">' +
         '<input id="tp-teacher" class="ap-note" placeholder="先生・教室（なくてもいい）">' +
         '<button class="ap-save press" data-act="ok">追加</button></div>';
