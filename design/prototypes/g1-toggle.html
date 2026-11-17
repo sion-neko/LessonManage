@@ -50,8 +50,6 @@ button:active { opacity: .55; }
 .sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.2); transition: transform .2s; }
 .sw.on { background: #34c759; }
 .sw.on::after { transform: translateX(20px); }
-.hero-rec { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 12px 0 0 auto; padding: 8px 16px; border-radius: 20px; background: var(--card); color: #8a6500; font-size: 15px; font-weight: 700; }
-.hero-rec svg { width: 18px; height: 18px; }
 .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; color: var(--muted); }
 .tab.on { color: var(--accent); }
 .nav { padding: 54px 16px 4px; display: flex; align-items: center; justify-content: space-between; min-height: 92px; }
@@ -651,12 +649,15 @@ const screens = {
       bl.querySelector('[data-act=new]').onclick = () => { const nl = newLesson(cur); nav.push('lesson', { id: nl.id }); };
       sc.appendChild(bl); el.appendChild(tabbar(nav)); return;
     }
-    const dockGo = () => { sc.appendChild(h('<div style="height:24px"></div>')); el.appendChild(tabbar(nav)); };
+    const dockGo = () => {
+      sc.appendChild(h('<div style="height:24px"></div>'));
+      if (homeRec) { const dock = h('<div class="dock"><button class="go">' + I.mic + '個人練を録音</button></div>'); dock.querySelector('.go').onclick = () => recordPractice(l, nav); el.appendChild(dock); }
+      el.appendChild(tabbar(nav));
+    };
     const open = () => nav.push('lesson', { id: l.id });
     { // 練習すること（宿題）＋学んだこと全部（先生と自分は線の色で分ける）
       const hero = h('<div class="v3-hero"><div class="cap"><span>' + D.fmtDate(l.date) + '</span><button data-act="open">レッスンのページ' + I.chev + '</button></div><h2>練習すること</h2><ul>' + l.hw.map((x) => '<li>' + esc(x.text) + '</li>').join('') + '</ul></div>');
       hero.querySelector('[data-act=open]').onclick = open; sc.appendChild(hero);
-      if (homeRec) { const hr = h('<button class="hero-rec">' + I.mic + '録音</button>'); hr.onclick = () => recordPractice(l, nav); hero.appendChild(hr); }
       if (l.notes.length) {
         const vt = h('<div class="v3-t">' + [{ k: null }, ...l.topics].map((g) => { const ns = l.notes.filter((n) => (n.tk || null) === g.k); return ns.length ? '<div class="v3-g' + (g.k ? '' : ' nok') + '">' + (g.k ? '<div class="v3-tk"><span>' + topicLabel(g) + '</span><small>' + ns.length + '</small></div>' : '') + '<ul>' + ns.map((n) => '<li class="' + n.by + '">' + esc(n.text) + (n.by === 'm' ? '<i>自分</i>' : '') + '</li>').join('') + '</ul></div>' : ''; }).join('') + '</div>');
         vt.querySelectorAll('.v3-tk').forEach((t) => (t.onclick = () => t.parentElement.classList.toggle('open')));
