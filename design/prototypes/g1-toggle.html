@@ -45,6 +45,11 @@ button:active { opacity: .55; }
 .go { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 54px; border-radius: 14px; background: var(--accent); color: #fff; font-size: 17px; font-weight: 700; box-shadow: 0 4px 0 var(--accent-d); transition: transform .14s ease, box-shadow .14s ease; }
 .go:active { opacity: 1; transform: translateY(4px); box-shadow: 0 0 0 var(--accent-d); }
 .tabbar { display: grid; grid-template-columns: 1fr 1fr 1fr; border-top: .5px solid var(--line); background: rgba(249,249,249,.94); padding: 6px 0 28px; }
+.sw-row { display: flex; justify-content: space-between; align-items: center; padding: 13px 16px; border-radius: 14px; background: var(--field, var(--card)); font-size: 16px; text-align: left; }
+.sw { position: relative; width: 51px; height: 31px; border-radius: 16px; background: #e3e3e8; transition: background .2s; flex: none; }
+.sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.2); transition: transform .2s; }
+.sw.on { background: #34c759; }
+.sw.on::after { transform: translateX(20px); }
 .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; color: var(--muted); }
 .tab.on { color: var(--accent); }
 .nav { padding: 54px 16px 4px; display: flex; align-items: center; justify-content: space-between; min-height: 92px; }
@@ -92,10 +97,9 @@ button:active { opacity: .55; }
 .el .add { display: flex; align-items: center; gap: 8px; padding: 9px 14px; }
 .el .add input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font-size: 16px; padding: 3px 0; }
 .el .add input::placeholder { color: var(--muted); }
-.el .pick { display: flex; gap: 6px; flex-wrap: wrap; padding: 10px 14px 0; border-top: .5px solid var(--line); }
-.el .pick button { padding: 4px 10px; border-radius: 12px; font-size: 13px; background: var(--bg); color: var(--fg); }
-.el .pick button.on { background: var(--accent); color: #fff; }
-.el .pick span { font-size: 12px; color: var(--muted); align-self: center; margin-right: 2px; }
+.el .tk-h { display: block; width: 100%; text-align: left; padding: 14px 14px 4px; font-size: 14px; font-weight: 700; color: var(--fg); border-top: .5px solid var(--line); }
+.el .tk-h:first-child { border-top: 0; }
+.el .tk-add { display: block; width: 100%; text-align: left; padding: 12px 14px; color: var(--accent); font-size: 15px; border-top: .5px solid var(--line); }
 .pr { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: .5px solid var(--line); }
 .pr:last-child { border-bottom: 0; }
 .pr .d { width: 44px; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
@@ -189,16 +193,61 @@ button:active { opacity: .55; }
 .v2 .lgd i.m { background: #e3b400; }
 .v2-pr { margin-top: 14px; padding: 12px 0 6px; border-top: .5px solid var(--line); font-size: 14px; color: var(--muted); }
 .v3-hero { margin: 12px 16px 0; border-radius: 18px; background: #fff6d6; padding: 18px; }
-.v3-hero .cap { font-size: 13px; color: #8a6500; display: flex; justify-content: space-between; }
-.v3-hero h2 { margin: 4px 0 12px; font-size: 22px; font-weight: 800; }
-.v3-hero li { list-style: none; background: var(--card); border-radius: 12px; padding: 12px 14px; margin-top: 8px; font-size: 17px; font-weight: 700; line-height: 1.45; }
+.v3-hero .cap { font-size: 13px; color: #8a6500; display: flex; justify-content: space-between; align-items: center; }
+.v3-hero .cap button { display: flex; align-items: center; gap: 2px; color: #8a6500; font-size: 13px; font-weight: 600; }
+.v3-hero .cap button svg { width: 14px; height: 14px; }
+.v3-hero h2 { margin: 4px 0 6px; font-size: 22px; font-weight: 800; }
+.v3-hero li { list-style: none; position: relative; padding: 5px 0 5px 16px; font-size: 17px; font-weight: 600; line-height: 1.5; }
+.v3-hero li::before { content: ""; position: absolute; left: 2px; top: 15px; width: 6px; height: 6px; border-radius: 50%; background: #d29b00; }
 .v3-hero ul { margin: 0; padding: 0; }
-.v3-hero .st { margin-top: 12px; font-size: 13px; color: #8a6500; }
-.v3-t { margin: 0 16px; }
-.v3-t li { list-style: none; position: relative; padding: 8px 0 8px 14px; font-size: 15px; line-height: 1.5; border-bottom: .5px solid var(--line); }
-.v3-t li::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 2px; background: var(--teacher); opacity: .6; }
+.v3-t { margin: 14px 16px 0; display: flex; flex-direction: column; gap: 10px; }
+.v3-g { background: var(--card); border-radius: 14px; padding: 12px 14px 8px; }
+.v3-tk { font-size: 15px; font-weight: 700; margin: 0 0 4px; }
 .v3-t ul { margin: 0; padding: 0; }
-.v3-more { display: flex; align-items: center; gap: 2px; padding: 10px 16px; color: var(--accent); font-size: 14px; }
+.v3-t li { list-style: none; position: relative; padding: 5px 0 5px 12px; font-size: 15px; line-height: 1.5; }
+.v3-t li::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 2px; background: var(--teacher); opacity: .6; }
+.v3-t li.m::before { background: #e3b400; opacity: 1; }
+.v3-tk small, .v3-t li i { display: none; }
+.pp-sel { appearance: none; -webkit-appearance: none; font-size: 17px; font-weight: 600; padding-right: 36px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8a8e' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 10l5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 18px; }
+.ap-save svg { width: 18px; height: 18px; vertical-align: -3px; }
+.pp-sel { text-align: left; }
+.pp-pop-wrap { position: absolute; inset: 0; z-index: 80; background: rgba(0,0,0,.25); display: flex; align-items: center; justify-content: center; padding: 0 28px; opacity: 0; transition: opacity .2s ease; }
+.pp-pop-wrap.in { opacity: 1; }
+.pp-pop { width: 100%; max-height: 60%; overflow-y: auto; background: var(--card); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,.2); transform: scale(.96); transition: transform .2s ease; }
+.pp-pop-wrap.in .pp-pop { transform: none; }
+.pp-pop button { display: block; width: 100%; text-align: left; padding: 14px 18px; font-size: 16px; border-bottom: .5px solid var(--line); }
+.pp-pop button:last-child { border-bottom: 0; color: var(--accent); }
+.pp-pop button.on { font-weight: 700; color: var(--accent-d); }
+.v3-tk { display: flex; justify-content: space-between; align-items: center; }
+/* 案A：線なし・1枚のカード。自分の気づきは灰色の文字と小さな「自分」 */
+.hv-a .v3-t { background: var(--card); border-radius: 14px; padding: 16px 16px 6px; gap: 0; }
+.hv-a .v3-g { background: none; padding: 0 0 14px; border-radius: 0; }
+.hv-a .v3-tk { margin-bottom: 6px; }
+.hv-a .v3-t li { padding: 4px 0; line-height: 1.6; }
+.hv-a .v3-t li::before { display: none; }
+.hv-a .v3-t li.m { color: var(--muted); }
+.hv-a .v3-t li i { display: inline; font-style: normal; font-size: 11px; margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: #fff3c4; color: #8a6500; vertical-align: 1px; }
+/* 案B：題だけを並べ、タップで開く */
+.hv-b .v3-t { background: var(--card); border-radius: 14px; padding: 0 16px; gap: 0; }
+.hv-b .v3-g { background: none; border-radius: 0; padding: 0; border-bottom: .5px solid var(--line); }
+.hv-b .v3-g:last-child { border-bottom: 0; }
+.hv-b .v3-tk { margin: 0; padding: 14px 0; font-weight: 600; cursor: pointer; }
+.hv-b .v3-tk small { display: inline; color: var(--muted); font-size: 14px; font-weight: 400; }
+.hv-b .v3-g:not(.open):not(.nok) ul { display: none; }
+.hv-b .v3-g ul { padding-bottom: 10px; }
+.hv-b .v3-g.nok ul { padding-top: 10px; }
+.hv-b .v3-t li::before { display: none; }
+.hv-b .v3-t li { padding: 3px 0; color: var(--fg); }
+.hv-b .v3-t li.m { color: var(--muted); }
+.hv-b .v3-t li i { display: inline; font-style: normal; font-size: 11px; margin-left: 6px; color: #8a6500; }
+/* 案C：カードも線もなし。ノートのように見出しと「・」だけ */
+.hv-c .v3-t { margin: 22px 24px 0; gap: 20px; }
+.hv-c .v3-g { background: none; padding: 0; border-radius: 0; }
+.hv-c .v3-tk { font-size: 14px; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+.hv-c .v3-t li { padding: 3px 0 3px 16px; line-height: 1.6; }
+.hv-c .v3-t li::before { content: "・"; width: auto; background: none; opacity: 1; top: 3px; bottom: auto; left: 0; color: var(--muted); }
+.hv-c .v3-t li.m { color: var(--muted); }
+.hv-c .v3-t li i { display: inline; font-style: normal; font-size: 11px; margin-left: 6px; color: #8a6500; }
 </style>
 </head>
 <body>
@@ -213,32 +262,47 @@ const grip = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke
 const playSm = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>';
 
 // ── データ：学んだこと・宿題を「1行＝1つの物」にする ──
-// 学んだこと：{ text, by: 't'(先生)|'m'(自分), songId, at: レッスン録音の何秒目に書いたか }
+// 学んだことは「題」ごとにまとめる。題は曲か、自由な言葉（例：手首が固まってしまう）
+// 題：{ k, songId(曲の題) | title(自由な言葉) }  行：{ text, by: 't'(先生)|'m'(自分), tk: 題のk(題なしはnull), songId: 題の曲, at: レッスン録音の何秒目に書いたか }
+let tkSeq = 0;
 const sampleNotes = {
-  L1: [['弓を返すときに手首を固めない', 't', 's1', 190], ['3ポジへの移動は親指を先に動かす', 't', 's1', 760], ['20小節目からは弓を多めに使ってフレーズを大きく', 't', 's1', 1505], ['スケールは移弦の前に左手を準備', 't', 's3', 2010], ['親指を意識すると音程が安定する気がする', 'm', 's1', 2390]],
-  L2: [['冒頭の付点はもっと軽く', 't', 's1', 420], ['開放弦に逃げずに4の指で取る', 't', 's2', 1630], ['付点を軽くすると弓が余る', 'm', 's1', 1950]],
+  L1: [['3ポジへの移動は親指を先に動かす', 't', 's1', 760], ['20小節目からは弓を多めに使ってフレーズを大きく', 't', 's1', 1505], ['親指を意識すると音程が安定する気がする', 'm', 's1', 2390],
+    ['肩を意識して動かすといい', 't', '手首が固まってしまう', 190], ['弓を返すときに手首を固めない', 't', '手首が固まってしまう', 260], ['スケールは移弦の前に左手を準備', 't', 's3', 2010]],
+  L2: [['冒頭の付点はもっと軽く', 't', 's1', 420], ['付点を軽くすると弓が余る', 'm', 's1', 1950], ['開放弦に逃げずに4の指で取る', 't', 's2', 1630]],
   L3: [['移弦は肘の高さから先に変える', 't', 's2', 880]],
-  L4: [['高音は喉で押さずに息の量で出す', 't', 's5', 615], ['サビ前のブレスを半拍早めに', 't', 's5', 1420], ['息を多めにすると喉が楽', 'm', 's5', 2210]],
+  L4: [['喉で押さずに息の量で出す', 't', '高音が苦しい', 615], ['息を多めにすると喉が楽', 'm', '高音が苦しい', 2210], ['サビ前のブレスを半拍早めに', 't', 's5', 1420]],
   L5: [['語尾を投げずに最後まで息を流す', 't', 's6', 1010]],
 };
+const addTopic = (l, songId, title) => { const t = { k: 'k' + (++tkSeq), songId: songId || null, title: songId ? null : title }; l.topics.push(t); return t; };
+const topicOf = (l, k) => (k ? l.topics.find((t) => t.k === k) : null);
+const topicLabel = (t) => (t.songId ? '♪ ' + esc(D.song(t.songId).title) : esc(t.title));
+// 行を題の順に並べ直す（同じ題の中の順番は保つ）
+const normNotes = (l) => { const o = (k) => (k ? l.topics.findIndex((t) => t.k === k) : -1); const s2 = [...l.notes].sort((a, b) => o(a.tk) - o(b.tk)); l.notes.splice(0, l.notes.length, ...s2); };
 D.S.lessons.forEach((l) => {
-  l.notes = (sampleNotes[l.id] || []).map(([text, by, songId, at]) => ({ text, by, songId, at }));
+  l.topics = [];
+  l.notes = (sampleNotes[l.id] || []).map(([text, by, key, at]) => {
+    let t = key ? l.topics.find((x) => x.songId === key || x.title === key) : null;
+    if (key && !t) t = D.song(key) ? addTopic(l, key) : addTopic(l, null, key);
+    return { text, by, tk: t ? t.k : null, songId: t ? t.songId : null, at };
+  });
   l.hw = l.homework.map((text) => ({ text }));
 });
 const sync = (l) => { l.learned = l.notes.map((n) => n.text); l.homework = l.hw.map((n) => n.text); };
 D.S.lessons.forEach(sync);
 D.S.memos.forEach((m) => { m.by = /（先生）/.test(m.text) ? 't' : 'm'; m.text = m.text.replace('（先生）', ''); });
-const newLesson = (typeId) => { const l = D.addLesson(typeId); l.notes = []; l.hw = []; return l; };
+const newLesson = (typeId) => { const l = D.addLesson(typeId); l.topics = []; l.notes = []; l.hw = []; return l; };
 const teacherOf = (typeId) => (D.type(typeId) && D.type(typeId).teacher) || '先生';
 const notesOfSong = (sid) => D.S.lessons.flatMap((l) => l.notes.filter((n) => n.songId === sid).map((n) => ({ ...n, date: l.date, lesson: l })));
 
 // 最初の状態を見るとき（#empty）はデータを空にする
+// ホームの学んだことの見せ方の案（?v=a 線なし1枚 / ?v=b 題だけ / ?v=c ノート風）
+const HV = new URLSearchParams(location.search).get('v'); if (HV) document.body.classList.add('hv-' + HV);
 if (location.hash === '#empty') ['types', 'songs', 'lessons', 'recs', 'memos'].forEach((k) => D.S[k].splice(0));
 
 let cur = D.S.types[0] ? D.S.types[0].id : null; let tab = 'home'; let recTarget = null; let songView = 'sum';
-let lastSong = {}; // レッスンごとに、次に書く行の曲
 
 // ── 共通部品 ──
+let homeRec = true; // 設定：ホームに録音ボタンを出す（人によって要る・要らないが分かれるので切り替えられるようにする）
 function tabbar(nav) {
   const el = h('<div class="tabbar">' + [['home', 'いま', I.home], ['lessons', 'レッスン', I.list], ['songs', '曲', I.note]].map(([k, n, ic]) => '<button class="tab' + (tab === k ? ' on' : '') + '" data-k="' + k + '">' + ic + n + '</button>').join('') + '</div>');
   el.querySelectorAll('[data-k]').forEach((b) => (b.onclick = () => { if (tab !== b.dataset.k) { tab = b.dataset.k; nav.root(tab); } }));
@@ -255,9 +319,10 @@ function segment(items, value, onPick, cls) {
 }
 function head(nav) {
   const hd = h('<div class="head"></div>');
-  if (D.S.types.length) hd.appendChild(segment(D.S.types.map((t) => [t.id, t.name]), cur, (k) => { cur = k; nav.refresh(); fadeIn(); }));
+  // 種類が1つのときは切り替えを出さない（2つ以上習っている人は少ないため）
+  if (D.S.types.length > 1) hd.appendChild(segment(D.S.types.map((t) => [t.id, t.name]), cur, (k) => { cur = k; nav.refresh(); fadeIn(); }));
   else hd.appendChild(h('<div style="flex:1"></div>'));
-  const g = h('<button class="ic" aria-label="種類の編集">' + I.gear + '</button>'); g.onclick = () => typesSheet(nav); hd.appendChild(g);
+  const g = h('<button class="ic" aria-label="フォルダの編集">' + I.gear + '</button>'); g.onclick = () => typesSheet(nav); hd.appendChild(g);
   return hd;
 }
 const fadeIn = () => requestAnimationFrame(() => { const s = document.querySelector('.screen.in .scroll'); if (s) { s.classList.remove('fade'); void s.offsetWidth; s.classList.add('fade'); } });
@@ -288,8 +353,86 @@ function player(lesson) {
   const un = Play.sub(() => { if (!document.body.contains(el) && el.isConnected === false && shown) return un(); draw(); });
   draw(); return el;
 }
+// 個人練：先に曲を選んでから録る（曲なし＝スケールや基礎練習）
+// 項目の数は固定：曲3つ（直近で録音した曲 → このレッスンで扱った曲）→ ほかの曲… → 曲なし → 曲を追加
+// 曲が増えても「曲を追加」が下に押し出されないように、ほかの曲は別の一覧に分ける
+function pickPracticeSong(lesson, onPick) {
+  sheet(app, (el, close) => {
+    const all = D.songsOf(lesson.typeId);
+    const recent = [];
+    D.S.recs.filter((r) => r.songId && D.song(r.songId) && D.song(r.songId).typeId === lesson.typeId)
+      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.id < b.id ? 1 : -1))
+      .forEach((r) => { const sg = D.song(r.songId); if (!recent.includes(sg)) recent.push(sg); });
+    const top = [...recent, ...lesson.songIds.map(D.song).filter((sg) => !recent.includes(sg))].slice(0, 3);
+    const others = all.filter((sg) => !top.includes(sg));
+    const item = (sg) => '<button class="tp-item" data-s="' + sg.id + '"><b>♪ ' + esc(sg.title) + '</b></button>';
+    const pick = (id) => { close(); setTimeout(() => onPick(id), 380); };
+    const bindPick = () => el.querySelectorAll('[data-s]').forEach((b) => (b.onclick = () => pick(b.dataset.s || null)));
+    const main = () => {
+      el.innerHTML = '<div class="tp"><div class="tp-title">録音内容</div>' + top.map(item).join('') +
+        (others.length ? '<button class="tp-item" data-act="others"><b>ほかの曲…</b></button>' : '') +
+        '<button class="tp-item" data-s=""><b>曲なし</b><span>スケール・基礎練習など</span></button>' +
+        '<button class="tp-add" data-act="add">＋ 曲を追加</button>' +
+        '<div class="tp-new" hidden><input id="pp-new" class="ap-note" placeholder="曲名" autocomplete="off"><button class="ap-save" data-act="ok">追加して録音</button></div></div>';
+      bindPick();
+      const ob = el.querySelector('[data-act=others]'); if (ob) ob.onclick = list;
+      const nw = el.querySelector('.tp-new'); const inp = el.querySelector('#pp-new');
+      el.querySelector('[data-act=add]').onclick = (e) => { e.currentTarget.hidden = true; nw.hidden = false; nw.style.cssText = 'display:flex;flex-direction:column;gap:10px'; inp.focus(); };
+      const ok = () => { const v = inp.value.trim(); if (!v) { inp.focus(); return; } pick(D.addSong(lesson.typeId, v).id); };
+      el.querySelector('[data-act=ok]').onclick = ok; inp.onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) ok(); };
+    };
+    // ほかの曲：一覧だけ。上の「戻る」で元に戻る
+    const list = () => {
+      el.innerHTML = '<div class="tp"><button class="tp-add" data-act="back" style="align-self:flex-start;padding:0 0 4px">‹ 戻る</button><div class="tp-title">ほかの曲</div>' + others.map(item).join('') + '</div>';
+      bindPick(); el.querySelector('[data-act=back]').onclick = main;
+    };
+    main();
+  });
+}
+// 個人練：プルダウン版。前回録った曲を最初から選んでおき、録音開始を押すだけで始められる
+// （一覧版に戻すときは ?pick=list）
+function pickPracticeDrop(lesson, onPick) {
+  sheet(app, (el, close) => {
+    const tid = lesson.typeId;
+    const recsOfType = D.S.recs.filter((r) => r.kind !== 'lesson' && ((r.songId && D.song(r.songId) && D.song(r.songId).typeId === tid) || (!r.songId && r.lessonId && D.lesson(r.lessonId) && D.lesson(r.lessonId).typeId === tid)))
+      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.id < b.id ? 1 : -1));
+    const order = [];
+    recsOfType.forEach((r) => { const sg = r.songId && D.song(r.songId); if (sg && !order.includes(sg)) order.push(sg); });
+    lesson.songIds.map(D.song).forEach((sg) => { if (!order.includes(sg)) order.push(sg); });
+    D.songsOf(tid).forEach((sg) => { if (!order.includes(sg)) order.push(sg); });
+    let cur = recsOfType.length ? (recsOfType[0].songId || '') : (lesson.songIds[0] || '');
+    const draw = () => {
+      // プルダウン：シートは下のまま、選択肢の一覧だけ画面の真ん中に出す
+      const opts = [...order.map((sg) => [sg.id, '♪ ' + sg.title]), ['', '曲なし（スケール・基礎練習など）'], ['__new', '＋ 曲を追加…']];
+      const label = (v) => esc((opts.find((o) => o[0] === v) || opts[0])[1]);
+      el.innerHTML = '<div class="tp"><div class="tp-title">録音内容</div>' +
+        '<button class="ap-note pp-sel" data-act="open">' + label(cur) + '</button>' +
+        '<div class="tp-new"' + (cur === '__new' ? '' : ' hidden') + '><input id="pp-new" class="ap-note" placeholder="曲名" autocomplete="off"></div>' +
+        '<button class="ap-save" data-act="go">' + I.mic + ' 録音開始</button></div>';
+      const inp = el.querySelector('#pp-new');
+      el.querySelector('[data-act=open]').onclick = () => {
+        const pop = h('<div class="pp-pop-wrap"><div class="pp-pop">' + opts.map(([v, t]) => '<button data-v="' + v + '" class="' + (v === cur ? 'on' : '') + '">' + esc(t) + '</button>').join('') + '</div></div>');
+        app.appendChild(pop); requestAnimationFrame(() => pop.classList.add('in'));
+        const shut = () => { pop.classList.remove('in'); setTimeout(() => pop.remove(), 200); };
+        pop.onclick = (e) => { if (e.target === pop) shut(); };
+        pop.querySelectorAll('[data-v]').forEach((b) => (b.onclick = () => { cur = b.dataset.v; shut(); draw(); if (cur === '__new') setTimeout(() => el.querySelector('#pp-new').focus(), 50); }));
+      };
+      const go = () => {
+        if (cur === '__new') { const v = inp.value.trim(); if (!v) { inp.focus(); return; } const sg = D.addSong(tid, v); close(); setTimeout(() => onPick(sg.id), 380); return; }
+        close(); setTimeout(() => onPick(cur || null), 380);
+      };
+      el.querySelector('[data-act=go]').onclick = go; inp.onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) go(); };
+    };
+    draw();
+  });
+}
 function recordPractice(lesson, nav) {
-  LM.practiceStand(app, { lesson, onStop: (dur) => setTimeout(() => LM.afterPracticeSheet(app, { lesson, dur, onSave: ({ songId, note }) => { D.addRec({ kind: 'practice', lessonId: lesson.id, songId, dur, note }); toast(app, '個人練を保存'); nav.refresh(); } }), 200) });
+  const pickFn = new URLSearchParams(location.search).get('pick') === 'list' ? pickPracticeSong : pickPracticeDrop;
+  pickFn(lesson, (songId) => recordPracticeOf(lesson, songId, nav));
+}
+function recordPracticeOf(lesson, songId, nav) {
+  const learned = (songId ? lesson.notes.filter((n) => n.songId === songId) : lesson.notes).map((n) => n.text);
+  LM.practiceStand(app, { lesson, songId, learned, onStop: (dur) => setTimeout(() => LM.afterPracticeSheet(app, { lesson, dur, songId, fixedSong: true, title: songId ? D.song(songId).title : '個人練の録音', onSave: ({ songId, note }) => { D.addRec({ kind: 'practice', lessonId: lesson.id, songId, dur, note }); toast(app, '個人練を保存'); nav.refresh(); } }), 200) });
 }
 function recordLesson(lesson, nav) {
   recTarget = lesson.id;
@@ -316,12 +459,26 @@ function recordSong(s, nav) {
 }
 const whoTag = (by, attr) => (attr ? '<button class="who ' + by + '" ' + attr + '>' : '<span class="who ' + by + '">') + (by === 't' ? '先生' : '自分') + (attr ? '</button>' : '</span>');
 
-// 曲を選ぶシート（行の曲の付け替え）
-function pickSong(l, current, onPick) {
+// 題を足すシート：扱った曲か、自由な言葉
+function addTopicSheet(l, onAdd) {
   sheet(app, (el, close) => {
-    el.innerHTML = '<div class="tp"><div class="tp-title">曲</div>' + l.songIds.map((id) => '<button class="tp-item" data-s="' + id + '"><b>' + esc(D.song(id).title) + '</b>' + (current === id ? check : '') + '</button>').join('') +
-      '<button class="tp-item" data-s=""><b>曲なし</b>' + (!current ? check : '') + '</button></div>';
-    el.querySelectorAll('[data-s]').forEach((b) => (b.onclick = () => { close(); onPick(b.dataset.s || null); }));
+    const songs = l.songIds.filter((id) => !l.topics.some((t) => t.songId === id));
+    el.innerHTML = '<div class="tp"><div class="tp-title">題を追加</div>' + songs.map((id) => '<button class="tp-item" data-s="' + id + '"><b>♪ ' + esc(D.song(id).title) + '</b></button>').join('') +
+      '<input id="tk-new" class="ap-note" placeholder="例：手首が固まってしまう" autocomplete="off"><button class="ap-save" data-act="ok">追加</button></div>';
+    el.querySelectorAll('[data-s]').forEach((b) => (b.onclick = () => { close(); onAdd(addTopic(l, b.dataset.s)); }));
+    const inp = el.querySelector('#tk-new');
+    const ok = () => { const v = inp.value.trim(); if (!v) { inp.focus(); return; } close(); onAdd(addTopic(l, null, v)); };
+    el.querySelector('[data-act=ok]').onclick = ok; inp.onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) ok(); };
+  });
+}
+// 題を直すシート：名前を変える・題を外す（行は題なしに戻る）
+function topicSheet(l, t, onDone) {
+  sheet(app, (el, close) => {
+    el.innerHTML = '<div class="tp"><div class="tp-title">題</div>' + (t.songId ? '<div class="tp-item"><b>' + topicLabel(t) + '</b></div>' : '<input id="tk-ed" class="ap-note" autocomplete="off"><button class="ap-save" data-act="ok">保存</button>') +
+      '<button class="tp-add" data-act="rm" style="color:var(--rec)">題を外す</button></div>';
+    const inp = el.querySelector('#tk-ed');
+    if (inp) { inp.value = t.title; el.querySelector('[data-act=ok]').onclick = () => { const v = inp.value.trim(); if (v) t.title = v; close(); onDone(); }; }
+    el.querySelector('[data-act=rm]').onclick = () => { l.notes.forEach((n) => { if (n.tk === t.k) { n.tk = null; n.songId = null; } }); l.topics.splice(l.topics.indexOf(t), 1); close(); onDone(); };
   });
 }
 
@@ -332,22 +489,32 @@ function editList(l, key, o) {
   let addBy = 't'; let sorting = false; let openRow = null;
   const items = () => l[key];
   const live = () => Rec.on && recTarget === l.id;
-  const songOf = () => (l.songIds.length === 1 ? l.songIds[0] : l.songIds.includes(lastSong[l.id]) ? lastSong[l.id] : l.songIds[0] || null);
-  const draw = (focusAdd) => {
-    const multi = o.notes && l.songIds.length > 1;
-    box.innerHTML = '<ul>' + items().map((n, i) => {
-      const meta = [];
-      if (o.notes && multi) meta.push('<button data-act="song" class="' + (n.songId ? '' : 'none') + '">' + (n.songId ? '♪ ' + esc(D.song(n.songId).title) : '曲なし') + '</button>');
-      if (o.notes && n.at != null) meta.push(n.live ? '<span class="at live">● ' + D.dur(n.at) + '</span>' : (D.lessonRec(l.id) ? '<button data-act="at" class="at">' + playSm + D.dur(n.at) + '</button>' : ''));
-      return '<li data-i="' + i + '"><div class="row">' + (sorting ? '<button class="minus" data-act="del" aria-label="削除">−</button>' : '') +
-        (o.notes ? whoTag(n.by, 'data-act="who"') : '') +
-        '<div class="tx' + (o.big ? ' big' : '') + '" data-act="edit">' + esc(n.text) + (meta.length ? '<div class="meta">' + meta.join('') + '</div>' : '') + '</div>' +
-        (sorting ? '<span class="grip" data-act="grip">' + grip + '</span>' : '') + '</div>' +
-        (sorting ? '' : '<button class="del" data-act="del">削除</button>') + '</li>';
-    }).join('') + '</ul>' +
-      (multi && !sorting ? '<div class="pick"><span>次の行</span>' + l.songIds.map((id) => '<button data-pick="' + id + '" class="' + (songOf() === id ? 'on' : '') + '">' + esc(D.song(id).title) + '</button>').join('') + '</div>' : '') +
-      (sorting ? '' : '<div class="add">' + (o.notes ? whoTag(addBy, 'data-act="addwho"') : '') + '<input id="el-' + l.id + '-' + key + '" placeholder="＋ 追加" enterkeyhint="next" autocomplete="off"></div>');
-    bind(); if (focusAdd) box.querySelector('.add input').focus();
+  const addRow = (tk) => '<div class="add" data-tk="' + (tk || '') + '">' + (o.notes ? whoTag(addBy, 'data-act="addwho"') : '') + '<input placeholder="＋ 追加" enterkeyhint="next" autocomplete="off"></div>';
+  const rowHtml = (n, i) => {
+    const meta = [];
+    if (o.notes && n.at != null) meta.push(n.live ? '<span class="at live">● ' + D.dur(n.at) + '</span>' : (D.lessonRec(l.id) ? '<button data-act="at" class="at">' + playSm + D.dur(n.at) + '</button>' : ''));
+    return '<li data-i="' + i + '"><div class="row">' + (sorting ? '<button class="minus" data-act="del" aria-label="削除">−</button>' : '') +
+      (o.notes ? whoTag(n.by, 'data-act="who"') : '') +
+      '<div class="tx' + (o.big ? ' big' : '') + '" data-act="edit">' + esc(n.text) + (meta.length ? '<div class="meta">' + meta.join('') + '</div>' : '') + '</div>' +
+      (sorting ? '<span class="grip" data-act="grip">' + grip + '</span>' : '') + '</div>' +
+      (sorting ? '' : '<button class="del" data-act="del">削除</button>') + '</li>';
+  };
+  // focusTk：追加欄にフォーカスを戻す題（題なしは ''）
+  const draw = (focusTk) => {
+    if (!o.notes) {
+      box.innerHTML = '<ul>' + items().map(rowHtml).join('') + '</ul>' + (sorting ? '' : addRow(null));
+    } else {
+      normNotes(l);
+      const groups = [{ k: null }, ...l.topics];
+      box.innerHTML = groups.map((g) => {
+        const rows = items().map((n, i) => [n, i]).filter(([n]) => (n.tk || null) === g.k);
+        if (!g.k && !rows.length && l.topics.length) return ''; // 題があって題なしの行がないときは、題なしの欄を出さない
+        return (g.k ? '<button class="tk-h" data-tk="' + g.k + '">' + topicLabel(g) + '</button>' : '') +
+          '<ul>' + rows.map(([n, i]) => rowHtml(n, i)).join('') + '</ul>' + (sorting ? '' : addRow(g.k));
+      }).join('') + (sorting ? '' : '<button class="tk-add" data-act="addtopic">＋ 題を追加</button>');
+    }
+    bind();
+    if (focusTk != null) { const a = box.querySelector('.add[data-tk="' + focusTk + '"] input'); if (a) a.focus(); }
   };
   const closeOpen = () => { if (openRow) { const r = openRow; r.style.transform = ''; openRow = null; setTimeout(() => r.parentElement.classList.remove('sw'), 320); } };
   const bind = () => {
@@ -355,7 +522,6 @@ function editList(l, key, o) {
       const i = +li.dataset.i; const n = items()[i]; const row = li.querySelector('.row');
       const on = (sel, fn) => { const b = li.querySelector(sel); if (b) b.onclick = (e) => { e.stopPropagation(); fn(e); }; };
       on('[data-act=who]', () => { n.by = n.by === 't' ? 'm' : 't'; draw(); });
-      on('[data-act=song]', () => pickSong(l, n.songId, (sid) => { n.songId = sid; draw(); }));
       on('[data-act=at]', () => playAt(l, n.at));
       li.querySelectorAll('[data-act=del]').forEach((b) => (b.onclick = (e) => { e.stopPropagation(); items().splice(i, 1); sync(l); openRow = null; draw(); }));
       const tx = li.querySelector('[data-act=edit]');
@@ -370,16 +536,21 @@ function editList(l, key, o) {
       if (!sorting) swipe(row);
       else { const g = li.querySelector('[data-act=grip]'); dragSort(g, li); }
     });
-    box.querySelectorAll('[data-pick]').forEach((b) => { b.onpointerdown = (e) => e.preventDefault(); b.onclick = () => { lastSong[l.id] = b.dataset.pick; const v = box.querySelector('.add input').value; draw(); const inp = box.querySelector('.add input'); inp.value = v; inp.focus(); }; });
-    const aw = box.querySelector('[data-act=addwho]'); if (aw) aw.onpointerdown = (e) => e.preventDefault(); if (aw) aw.onclick = () => { addBy = addBy === 't' ? 'm' : 't'; const v = box.querySelector('.add input').value; draw(); const inp = box.querySelector('.add input'); inp.value = v; inp.focus(); };
-    const inp = box.querySelector('.add input'); if (!inp) return;
-    const commit = (keep) => {
-      const v = inp.value; inp.value = ''; if (!v.trim()) return;
-      const item = o.notes ? { text: v.trim(), by: addBy, songId: songOf(), at: live() ? Rec.sec : null, live: live() } : { text: v.trim() };
-      items().push(item); sync(l); if (keep) draw(true); else setTimeout(() => draw(false), 0);
-    };
-    inp.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); commit(true); } });
-    inp.addEventListener('blur', () => commit(false));
+    box.querySelectorAll('.tk-h').forEach((b) => (b.onclick = () => topicSheet(l, topicOf(l, b.dataset.tk), () => { sync(l); draw(); })));
+    const at = box.querySelector('[data-act=addtopic]'); if (at) at.onclick = () => addTopicSheet(l, (t) => { draw(); setTimeout(() => draw(t.k), 380); });
+    box.querySelectorAll('.add').forEach((ad) => {
+      const tk = ad.dataset.tk || null; const inp = ad.querySelector('input');
+      const aw = ad.querySelector('[data-act=addwho]');
+      if (aw) { aw.onpointerdown = (e) => e.preventDefault(); aw.onclick = () => { addBy = addBy === 't' ? 'm' : 't'; const v = inp.value; draw(ad.dataset.tk); box.querySelector('.add[data-tk="' + ad.dataset.tk + '"] input').value = v; }; }
+      const commit = (keep) => {
+        const v = inp.value; inp.value = ''; if (!v.trim()) return;
+        const t = topicOf(l, tk);
+        const item = o.notes ? { text: v.trim(), by: addBy, tk, songId: t ? t.songId : null, at: live() ? Rec.sec : null, live: live() } : { text: v.trim() };
+        items().push(item); sync(l); if (keep) draw(ad.dataset.tk); else setTimeout(() => draw(), 0);
+      };
+      inp.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); commit(true); } });
+      inp.addEventListener('blur', () => commit(false));
+    });
   };
   // 左スワイプで「削除」を出す
   const swipe = (row) => {
@@ -408,14 +579,14 @@ function editList(l, key, o) {
         const lis = [...box.querySelectorAll('li')];
         const to = lis.findIndex((x) => { const r = x.getBoundingClientRect(); return ev.clientY < r.top + r.height / 2; });
         const target = to < 0 ? lis.length - 1 : to > from ? to - 1 : to;
-        if (target !== from && target >= 0) { const arr = items(); const [it] = arr.splice(from, 1); arr.splice(target, 0, it); sync(l); from = target; draw(); const nl = box.querySelectorAll('li')[from]; nl.classList.add('drag'); const ng = nl.querySelector('[data-act=grip]'); g.removeEventListener('pointermove', move); ng.setPointerCapture(e.pointerId); ng.addEventListener('pointermove', move); ng.addEventListener('pointerup', up, { once: true }); }
+        if (target !== from && target >= 0) { const arr = items(); const ref = arr[+lis[to < 0 ? lis.length - 1 : to].dataset.i]; const [it] = arr.splice(from, 1); arr.splice(target, 0, it); if (o.notes && ref !== it) { it.tk = ref.tk; it.songId = ref.songId; normNotes(l); } sync(l); from = arr.indexOf(it); draw(); const nl = box.querySelectorAll('li')[from]; nl.classList.add('drag'); const ng = nl.querySelector('[data-act=grip]'); g.removeEventListener('pointermove', move); ng.setPointerCapture(e.pointerId); ng.addEventListener('pointermove', move); ng.addEventListener('pointerup', up, { once: true }); }
       };
       const up = () => { box.querySelectorAll('li.drag').forEach((x) => x.classList.remove('drag')); };
       g.addEventListener('pointermove', move); g.addEventListener('pointerup', up, { once: true });
     });
   };
   box.setSorting = (v) => { sorting = v; openRow = null; draw(); };
-  draw(false);
+  draw();
   return box;
 }
 function sortableSection(title, list) {
@@ -429,8 +600,10 @@ function sortableSection(title, list) {
 function typesSheet(nav) {
   sheet(app, (el, close) => {
     const draw = () => {
-      el.innerHTML = '<div class="tp"><div class="tp-title">種類</div>' + D.S.types.map((t) => '<button class="tl-item" data-t="' + t.id + '"><span class="nm">' + esc(t.name) + '<small>' + esc(t.teacher || '先生・教室なし') + '</small></span>' + I.chev + '</button>').join('') +
-        '<button class="tp-add" data-act="add">＋ 種類を追加</button></div>';
+      el.innerHTML = '<div class="tp"><div class="tp-title">フォルダ</div>' + D.S.types.map((t) => '<button class="tl-item" data-t="' + t.id + '"><span class="nm">' + esc(t.name) + '<small>' + esc(t.teacher || '先生・教室なし') + '</small></span>' + I.chev + '</button>').join('') +
+        '<button class="tp-add" data-act="add">＋ フォルダを追加</button>' +
+        '<div class="tp-title" style="margin-top:12px">表示</div><button class="sw-row" data-act="homerec"><span>ホームに録音ボタン</span><span class="sw' + (homeRec ? ' on' : '') + '"></span></button></div>';
+      el.querySelector('[data-act=homerec]').onclick = () => { homeRec = !homeRec; draw(); nav.refresh(); };
       el.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => { close(); setTimeout(() => typeEdit(nav, D.type(b.dataset.t)), 400); }));
       el.querySelector('[data-act=add]').onclick = () => { close(); setTimeout(() => typeEdit(nav, null), 400); };
     };
@@ -439,10 +612,28 @@ function typesSheet(nav) {
 }
 function typeEdit(nav, t) {
   sheet(app, (el, close) => {
-    el.innerHTML = '<div class="tp"><div class="tp-title">' + (t ? '種類の編集' : '種類を追加') + '</div>' +
+    el.innerHTML = '<div class="tp"><div class="tp-title">' + (t ? 'フォルダの編集' : 'フォルダを追加') + '</div>' +
       '<input id="te-name" class="ap-note" placeholder="例：バイオリン"><input id="te-teacher" class="ap-note" placeholder="先生・教室（なくてもいい）">' +
-      '<button class="ap-save" data-act="ok">' + (t ? '保存' : '追加') + '</button></div>';
+      '<button class="ap-save" data-act="ok">' + (t ? '保存' : '追加') + '</button>' +
+      (t ? '<button class="tp-add" data-act="del" style="color:var(--rec)">このフォルダを削除</button>' : '') + '</div>';
     const nm = el.querySelector('#te-name'), tc = el.querySelector('#te-teacher');
+    const del = el.querySelector('[data-act=del]');
+    if (del) del.onclick = () => {
+      // 確かめてから消す。レッスン・曲・録音もまとめて消えるので、件数を見せる
+      const ls = D.S.lessons.filter((l) => l.typeId === t.id); const ss = D.songsOf(t.id);
+      const rs = D.S.recs.filter((r) => ls.some((l) => l.id === r.lessonId) || ss.some((sg) => sg.id === r.songId));
+      el.innerHTML = '<div class="tp"><div class="tp-title">「' + esc(t.name) + '」を削除</div>' +
+        '<p style="margin:0;font-size:15px;line-height:1.6;color:var(--muted)">レッスン' + ls.length + '件、曲' + ss.length + '曲、録音' + rs.length + '件も消えます。元に戻せません。</p>' +
+        '<button class="ap-save" data-act="yes" style="background:var(--rec)">削除</button><button class="tp-add" data-act="no">やめる</button></div>';
+      el.querySelector('[data-act=no]').onclick = close;
+      el.querySelector('[data-act=yes]').onclick = () => {
+        const drop = (arr, f) => { for (let i = arr.length - 1; i >= 0; i--) if (f(arr[i])) arr.splice(i, 1); };
+        drop(D.S.recs, (r) => rs.includes(r)); drop(D.S.memos, (m) => ss.some((sg) => sg.id === m.songId));
+        drop(D.S.lessons, (l) => ls.includes(l)); drop(D.S.songs, (sg) => ss.includes(sg)); drop(D.S.types, (x) => x === t);
+        if (cur === t.id) cur = D.S.types[0] ? D.S.types[0].id : null;
+        close(); if (cur) nav.refresh(); else { tab = 'home'; nav.root('hello'); }
+      };
+    };
     if (t) { nm.value = t.name; tc.value = t.teacher; }
     el.querySelector('[data-act=ok]').onclick = () => {
       const n = nm.value.trim(); if (!n) { nm.focus(); return; }
@@ -477,16 +668,20 @@ const screens = {
       bl.querySelector('[data-act=new]').onclick = () => { const nl = newLesson(cur); nav.push('lesson', { id: nl.id }); };
       sc.appendChild(bl); el.appendChild(tabbar(nav)); return;
     }
-    const dockGo = () => { sc.appendChild(h('<div style="height:24px"></div>')); const dock = h('<div class="dock"><button class="go">' + I.mic + '個人練スタート</button></div>'); dock.querySelector('.go').onclick = () => recordPractice(l, nav); el.appendChild(dock); el.appendChild(tabbar(nav)); };
-    const prs0 = D.practiceOf(l.id); const prLine = '個人練 ' + prs0.length + '回' + (prs0.length ? ' · 最後は' + D.rel(prs0[prs0.length - 1].date) : '');
-    const tN = l.notes.filter((n) => n.by === 't'); const mN = l.notes.filter((n) => n.by === 'm');
+    const dockGo = () => {
+      sc.appendChild(h('<div style="height:24px"></div>'));
+      if (homeRec) { const dock = h('<div class="dock"><button class="go">' + I.mic + '個人練を録音</button></div>'); dock.querySelector('.go').onclick = () => recordPractice(l, nav); el.appendChild(dock); }
+      el.appendChild(tabbar(nav));
+    };
     const open = () => nav.push('lesson', { id: l.id });
-    { // 次のレッスンまでにやること＋先生の指摘だけ
-      const hero = h('<div class="v3-hero"><div class="cap"><span>' + D.fmtDate(l.date) + 'のレッスンから ' + D.rel(l.date) + '</span></div><h2>次のレッスンまでに</h2><ul>' + l.hw.map((x) => '<li>' + esc(x.text) + '</li>').join('') + '</ul><div class="st">' + prLine + '</div></div>');
-      sc.appendChild(hero);
-      sc.appendChild(h('<div class="sec">先生に言われたこと</div>'));
-      sc.appendChild(h('<div class="v3-t"><ul>' + tN.slice(0, 3).map((n) => '<li>' + esc(n.text) + '</li>').join('') + '</ul></div>'));
-      const more = h('<button class="v3-more">レッスンのページ' + I.chev + '</button>'); more.onclick = open; sc.appendChild(more);
+    { // 練習すること（宿題）＋学んだこと全部（先生と自分は線の色で分ける）
+      const hero = h('<div class="v3-hero"><div class="cap"><span>' + D.fmtDate(l.date) + '</span><button data-act="open">レッスンのページ' + I.chev + '</button></div><h2>練習すること</h2><ul>' + l.hw.map((x) => '<li>' + esc(x.text) + '</li>').join('') + '</ul></div>');
+      hero.querySelector('[data-act=open]').onclick = open; sc.appendChild(hero);
+      if (l.notes.length) {
+        const vt = h('<div class="v3-t">' + [{ k: null }, ...l.topics].map((g) => { const ns = l.notes.filter((n) => (n.tk || null) === g.k); return ns.length ? '<div class="v3-g' + (g.k ? '' : ' nok') + '">' + (g.k ? '<div class="v3-tk"><span>' + topicLabel(g) + '</span><small>' + ns.length + '</small></div>' : '') + '<ul>' + ns.map((n) => '<li class="' + n.by + '">' + esc(n.text) + (n.by === 'm' ? '<i>自分</i>' : '') + '</li>').join('') + '</ul></div>' : ''; }).join('') + '</div>');
+        vt.querySelectorAll('.v3-tk').forEach((t) => (t.onclick = () => t.parentElement.classList.toggle('open')));
+        sc.appendChild(vt);
+      }
       return dockGo();
     }
   },
@@ -539,7 +734,7 @@ const screens = {
     sc.appendChild(h('<div class="sec">このレッスン後の個人練</div>'));
     const pg = h('<div class="grp"></div>');
     D.practiceOf(l.id).forEach((r) => { const row = h('<div class="pr"><span class="d">' + D.md(r.date) + '</span><span class="n">' + (esc(r.note) || '（一言なし）') + (r.songId ? '<small>' + esc(D.song(r.songId).title) + '</small>' : '') + '</span></div>'); row.appendChild(LM.playBtn(r)); pg.appendChild(row); });
-    const ap = h('<button class="addpr">' + I.mic + '個人練を記録</button>'); ap.onclick = () => recordPractice(l, nav); pg.appendChild(ap);
+    const ap = h('<button class="addpr">' + I.mic + '個人練を録音</button>'); ap.onclick = () => recordPractice(l, nav); pg.appendChild(ap);
     sc.appendChild(pg); sc.appendChild(h('<div style="height:100px"></div>'));
     el.appendChild(player(l));
   },

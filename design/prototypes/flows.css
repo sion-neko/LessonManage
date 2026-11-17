@@ -47,6 +47,7 @@
 .st-time { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .st-lbl { margin-left: auto; font-size: 13px; color: var(--muted); }
 .st-body { flex: 1; overflow-y: auto; padding: 6px 22px 20px; }
+.st-song { font-size: 26px; font-weight: 800; margin: 8px 0 0; }
 .st-k { font-size: 13px; font-weight: 700; color: var(--muted); margin: 18px 0 6px; letter-spacing: .04em; }
 .st-hw, .st-lr { list-style: none; margin: 0; padding: 0; }
 .st-hw li { font-size: 22px; font-weight: 700; line-height: 1.45; padding: 10px 0; border-bottom: 1px solid var(--line); }

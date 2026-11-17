@@ -207,7 +207,7 @@
   function sheet(host, build, opts) {
     opts = opts || {};
     const wrap = document.createElement('div');
-    wrap.className = 'sheet-wrap';
+    wrap.className = 'sheet-wrap' + (opts.center ? ' center' : '');
     wrap.innerHTML = '<div class="sheet-bg"></div><div class="sheet"><div class="sheet-grip"></div><div class="sheet-body"></div></div>';
     host.appendChild(wrap);
     const close = () => { wrap.classList.remove('in'); setTimeout(() => wrap.remove(), 380); opts.onClose && opts.onClose(); };

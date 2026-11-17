@@ -61,8 +61,8 @@
           '<div class="ap">' +
           '<div class="ap-head"><span class="ap-title">' + esc(o.title || '個人練の録音') + '</span><span class="ap-dur">' + D.dur(o.dur) + '</span></div>' +
           (lesson ? '<div class="ap-sub">' + D.fmtDate(lesson.date) + 'のレッスンの後</div>' : '') +
-          '<div class="ap-k">曲</div>' +
-          '<div class="chips">' + chips(songs) + (others.length ? '<details class="ap-more"' + (songs.length ? '' : ' open') + '><summary>ほかの曲</summary><div class="chips">' + chips(others) + '</div></details>' : '') + '</div>' +
+          (o.fixedSong ? '' : '<div class="ap-k">曲</div>' +
+          '<div class="chips">' + chips(songs) + (others.length ? '<details class="ap-more"' + (songs.length ? '' : ' open') + '><summary>ほかの曲</summary><div class="chips">' + chips(others) + '</div></details>' : '') + '</div>') +
           '<div class="ap-k">一言</div>' +
           '<input id="ap-note" class="ap-note" placeholder="例：移動は安定してきた" autocomplete="off">' +
           '<button class="ap-save press" data-act="save">保存</button>' +
@@ -79,7 +79,7 @@
     sheet(host, (el, close) => {
       el.innerHTML = '<div class="tp"><div class="tp-title">' + esc(o.title || '新しいレッスン') + '</div>' +
         D.S.types.map((t) => '<button class="tp-item press" data-t="' + t.id + '"><b>' + esc(t.name) + '</b><span>' + esc(t.teacher) + '</span></button>').join('') +
-        '<button class="tp-add press" data-act="add">＋ 種類を追加</button></div>';
+        '<button class="tp-add press" data-act="add">＋ フォルダを追加</button></div>';
       el.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => { close(); o.onPick(b.dataset.t); }));
       el.querySelector('[data-act=add]').onclick = () => { close(); setTimeout(() => LM.addTypeSheet(host, { onAdd: (t) => o.onPick(t.id) }), 400); };
     });
@@ -87,7 +87,7 @@
 
   LM.addTypeSheet = function (host, o) {
     sheet(host, (el, close) => {
-      el.innerHTML = '<div class="tp"><div class="tp-title">種類を追加</div>' +
+      el.innerHTML = '<div class="tp"><div class="tp-title">フォルダを追加</div>' +
         '<input id="tp-name" class="ap-note" placeholder="例：ピアノ">' +
         '<input id="tp-teacher" class="ap-note" placeholder="先生・教室（なくてもいい）">' +
         '<button class="ap-save press" data-act="ok">追加</button></div>';
@@ -154,13 +154,14 @@
   const { D, Rec, esc, I } = LM;
   LM.practiceStand = function (host, o) {
     const l = o.lesson; const t = D.type(l.typeId);
+    const song = o.songId ? D.song(o.songId) : null; const learned = o.learned || l.learned;
     const el = document.createElement('div');
     el.className = 'stand';
     el.innerHTML =
       '<div class="st-top"><span class="st-dot"></span><span class="st-time">0:00</span><span class="st-lbl">' + esc(t.name) + ' · ' + D.md(l.date) + 'のレッスン後</span></div>' +
-      '<div class="st-body">' +
+      '<div class="st-body">' + (song ? '<div class="st-song">♪ ' + esc(song.title) + '</div>' : '') +
       '<div class="st-k">宿題</div><ul class="st-hw">' + l.homework.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>' +
-      '<div class="st-k">学んだこと</div><ul class="st-lr">' + l.learned.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>' +
+      (learned.length ? '<div class="st-k">' + (song ? 'この曲で学んだこと' : '学んだこと') + '</div><ul class="st-lr">' + learned.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>' : '') +
       '</div>' +
       '<div class="st-foot"><span class="st-hint">ロック中も録音は継続</span><button class="rs-stop press" aria-label="録音を止める"><span></span></button></div>';
     host.appendChild(el);
