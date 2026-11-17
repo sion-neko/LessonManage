@@ -27,9 +27,9 @@
         '<div class="rs-label">' + esc(o.label || '録音') + '</div>' +
         '<div class="rs-time">0:00</div>' +
         '<div class="rs-wave"></div>' +
-        '<div class="rs-hint">' + (o.minimizable ? '画面を閉じてもロック中でも録音は続きます' : 'ロック中も録音は続きます') + '</div>' +
+        '<div class="rs-hint">' + (o.minimizable ? 'ロック中・ほかのアプリでも録音は継続' : 'ロック中も録音は継続') + '</div>' +
         '<div class="rs-row">' +
-        (o.minimizable ? '<button class="rs-min press" data-act="min">メモを書く</button>' : '<span></span>') +
+        (o.minimizable ? '<button class="rs-min press" data-act="min">録音したままメモ</button>' : '<span></span>') +
         '<button class="rs-stop press" data-act="stop" aria-label="録音を止める"><span></span></button>' +
         '<span></span></div></div>';
       const t = el.querySelector('.rs-time'); const w = el.querySelector('.rs-wave');
@@ -162,7 +162,7 @@
       '<div class="st-k">宿題</div><ul class="st-hw">' + l.homework.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>' +
       '<div class="st-k">学んだこと</div><ul class="st-lr">' + l.learned.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>' +
       '</div>' +
-      '<div class="st-foot"><span class="st-hint">ロック中も録音は続きます</span><button class="rs-stop press" aria-label="録音を止める"><span></span></button></div>';
+      '<div class="st-foot"><span class="st-hint">ロック中も録音は継続</span><button class="rs-stop press" aria-label="録音を止める"><span></span></button></div>';
     host.appendChild(el);
     requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('in')));
     if (!Rec.on) Rec.start({ stand: true });
