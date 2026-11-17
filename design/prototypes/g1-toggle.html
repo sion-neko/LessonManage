@@ -319,7 +319,8 @@ function segment(items, value, onPick, cls) {
 }
 function head(nav) {
   const hd = h('<div class="head"></div>');
-  if (D.S.types.length) hd.appendChild(segment(D.S.types.map((t) => [t.id, t.name]), cur, (k) => { cur = k; nav.refresh(); fadeIn(); }));
+  // 種類が1つのときは切り替えを出さない（2つ以上習っている人は少ないため）
+  if (D.S.types.length > 1) hd.appendChild(segment(D.S.types.map((t) => [t.id, t.name]), cur, (k) => { cur = k; nav.refresh(); fadeIn(); }));
   else hd.appendChild(h('<div style="flex:1"></div>'));
   const g = h('<button class="ic" aria-label="種類の編集">' + I.gear + '</button>'); g.onclick = () => typesSheet(nav); hd.appendChild(g);
   return hd;
@@ -613,8 +614,26 @@ function typeEdit(nav, t) {
   sheet(app, (el, close) => {
     el.innerHTML = '<div class="tp"><div class="tp-title">' + (t ? '種類の編集' : '種類を追加') + '</div>' +
       '<input id="te-name" class="ap-note" placeholder="例：バイオリン"><input id="te-teacher" class="ap-note" placeholder="先生・教室（なくてもいい）">' +
-      '<button class="ap-save" data-act="ok">' + (t ? '保存' : '追加') + '</button></div>';
+      '<button class="ap-save" data-act="ok">' + (t ? '保存' : '追加') + '</button>' +
+      (t ? '<button class="tp-add" data-act="del" style="color:var(--rec)">この種類を削除</button>' : '') + '</div>';
     const nm = el.querySelector('#te-name'), tc = el.querySelector('#te-teacher');
+    const del = el.querySelector('[data-act=del]');
+    if (del) del.onclick = () => {
+      // 確かめてから消す。レッスン・曲・録音もまとめて消えるので、件数を見せる
+      const ls = D.S.lessons.filter((l) => l.typeId === t.id); const ss = D.songsOf(t.id);
+      const rs = D.S.recs.filter((r) => ls.some((l) => l.id === r.lessonId) || ss.some((sg) => sg.id === r.songId));
+      el.innerHTML = '<div class="tp"><div class="tp-title">「' + esc(t.name) + '」を削除</div>' +
+        '<p style="margin:0;font-size:15px;line-height:1.6;color:var(--muted)">レッスン' + ls.length + '件、曲' + ss.length + '曲、録音' + rs.length + '件も消えます。元に戻せません。</p>' +
+        '<button class="ap-save" data-act="yes" style="background:var(--rec)">削除</button><button class="tp-add" data-act="no">やめる</button></div>';
+      el.querySelector('[data-act=no]').onclick = close;
+      el.querySelector('[data-act=yes]').onclick = () => {
+        const drop = (arr, f) => { for (let i = arr.length - 1; i >= 0; i--) if (f(arr[i])) arr.splice(i, 1); };
+        drop(D.S.recs, (r) => rs.includes(r)); drop(D.S.memos, (m) => ss.some((sg) => sg.id === m.songId));
+        drop(D.S.lessons, (l) => ls.includes(l)); drop(D.S.songs, (sg) => ss.includes(sg)); drop(D.S.types, (x) => x === t);
+        if (cur === t.id) cur = D.S.types[0] ? D.S.types[0].id : null;
+        close(); if (cur) nav.refresh(); else { tab = 'home'; nav.root('hello'); }
+      };
+    };
     if (t) { nm.value = t.name; tc.value = t.teacher; }
     el.querySelector('[data-act=ok]').onclick = () => {
       const n = nm.value.trim(); if (!n) { nm.focus(); return; }
