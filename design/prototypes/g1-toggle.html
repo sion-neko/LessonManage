@@ -214,6 +214,10 @@ button:active { opacity: .55; }
 .tr li.mli .swr-in .t { padding: 3px 0; }
 .lb, .rb { cursor: pointer; }
 .ask-row .tx { cursor: pointer; }
+/* 聞くことが0件のときは、見出しと「＋ 追加」の1行だけを地の色のまま出す（レッスン中に上の方が重くならないように） */
+.el.ask-empty { background: transparent; }
+.el.ask-empty .add { padding: 2px 16px 4px; }
+.el.ask-empty .add input { font-size: 15px; }
 /* 前回の宿題（新しいレッスンページに畳んで出す） */
 .prevhw { margin: 14px 16px 0; border: 1px solid var(--line); border-radius: 12px; }
 .prevhw .k { display: flex; width: 100%; justify-content: space-between; align-items: center; padding: 11px 14px; font-size: 14px; font-weight: 600; color: var(--muted); text-align: left; }
@@ -567,7 +571,7 @@ function pickPracticeSong(lesson, onPick) {
       const ob = el.querySelector('[data-act=others]'); if (ob) ob.onclick = list;
       const nw = el.querySelector('.tp-new'); const inp = el.querySelector('#pp-new');
       el.querySelector('[data-act=add]').onclick = (e) => { e.currentTarget.hidden = true; nw.hidden = false; nw.style.cssText = 'display:flex;flex-direction:column;gap:10px'; inp.focus(); };
-      const ok = () => { const v = inp.value.trim(); if (!v) { inp.focus(); return; } pick(D.addSong(lesson.typeId, v).id); };
+      const ok = () => { const v = inp.value.trim(); if (!v) { inp.focus(); return; } const r = D.songByName(lesson.typeId, v); if (r.existed) toast(app, LM.sameSongMsg(r.song, 'で録音します')); pick(r.song.id); };
       el.querySelector('[data-act=ok]').onclick = ok; inp.onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) ok(); };
     };
     // ほかの曲：一覧だけ。上の「戻る」で元に戻る
@@ -616,7 +620,7 @@ function pickPracticeDrop(lesson, onPick) {
         pop.querySelectorAll('[data-v]').forEach((b) => (b.onclick = () => { cur = b.dataset.v; shut(); draw(); if (cur === '__new') setTimeout(() => el.querySelector('#pp-new').focus(), 50); }));
       };
       const go = () => {
-        if (cur === '__new') { const v = inp.value.trim(); if (!v) { inp.focus(); return; } const sg = D.addSong(tid, v); close(); setTimeout(() => onPick(sg.id), 380); return; }
+        if (cur === '__new') { const v = inp.value.trim(); if (!v) { inp.focus(); return; } const r = D.songByName(tid, v); if (r.existed) toast(app, LM.sameSongMsg(r.song, 'で録音します')); close(); setTimeout(() => onPick(r.song.id), 380); return; }
         close(); setTimeout(() => onPick(cur || null), 380);
       };
       el.querySelector('[data-act=go]').onclick = go; inp.onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) go(); };
@@ -669,7 +673,8 @@ function addTopicSheet(l, onAdd) {
     const inLesson = l.songIds.filter((id) => !l.topics.some((t) => t.songId === id));
     const others = D.songsOf(l.typeId).filter((sg) => !l.songIds.includes(sg.id)).map((sg) => sg.id);
     const item = (id) => '<button class="tp-item" data-s="' + id + '"><b>♪ ' + esc(D.song(id).title) + '</b>' + (l.songIds.includes(id) ? '' : '<span>扱った曲にも入る</span>') + '</button>';
-    const pickSong = (id) => { if (!l.songIds.includes(id)) D.toggleSong(l.id, id); close(); onAdd(addTopic(l, id)); };
+    // その曲の題がもうあれば、新しく作らずにその題へ（同じ名前の曲を入れたとき）
+    const pickSong = (id) => { if (!l.songIds.includes(id)) D.toggleSong(l.id, id); close(); onAdd(l.topics.find((t) => t.songId === id) || addTopic(l, id)); };
     const bindSongs = () => el.querySelectorAll('[data-s]').forEach((b) => (b.onclick = () => pickSong(b.dataset.s)));
     const main = () => {
       el.innerHTML = '<div class="tp"><div class="tp-title">題を追加</div>' + inLesson.map(item).join('') +
@@ -681,7 +686,7 @@ function addTopicSheet(l, onAdd) {
       const ob = el.querySelector('[data-act=others]'); if (ob) ob.onclick = list;
       const nw = el.querySelector('[data-new]'); const si = el.querySelector('#tk-song');
       el.querySelector('[data-act=newsong]').onclick = (e) => { e.currentTarget.hidden = true; nw.hidden = false; si.focus(); };
-      const songOk = () => { const v = si.value.trim(); if (!v) { si.focus(); return; } pickSong(D.addSong(l.typeId, v).id); };
+      const songOk = () => { const v = si.value.trim(); if (!v) { si.focus(); return; } const r = D.songByName(l.typeId, v); if (r.existed) toast(app, LM.sameSongMsg(r.song, l.topics.some((t) => t.songId === r.song.id) ? 'の題に書きます' : 'を題にしました')); pickSong(r.song.id); };
       el.querySelector('[data-act=songok]').onclick = songOk; si.onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) songOk(); };
       const inp = el.querySelector('#tk-new');
       const ok = () => { const v = inp.value.trim(); if (!v) { inp.focus(); return; } close(); onAdd(addTopic(l, null, v)); };
@@ -978,12 +983,13 @@ function importSheet(nav, f, o) {
       el.querySelector('[data-act=save]').onclick = () => {
         // レッスンにも曲にも付かない録音はどこにも出ないので、どちらかを選んでもらう
         if (!lid && !sid) { toast(app, 'レッスンか曲を選んでください'); return; }
-        if (!asL && sid === '__new') { if (!newName.trim()) { nn.focus(); return; } sid = D.addSong(tid, newName.trim()).id; } // 曲を作るだけ。扱った曲には入れない
+        let same = null; // 同じ名前の曲があれば、作らずにその曲へ
+        if (!asL && sid === '__new') { if (!newName.trim()) { nn.focus(); return; } const sr = D.songByName(tid, newName.trim()); sid = sr.song.id; if (sr.existed) same = sr.song; } // 曲を作るだけ。扱った曲には入れない
         const r = asL ? { kind: 'lesson', lessonId: lid, songId: null, date: D.lesson(lid).date }
           : lid ? { kind: 'practice', lessonId: lid, songId: sid || null, date: f.date < D.lesson(lid).date ? D.lesson(lid).date : f.date }
           : { kind: 'song', lessonId: null, songId: sid, date: f.date };
         D.addRec(Object.assign(r, { dur: f.dur, note: asL ? '' : note, imported: true }));
-        close(); toast(app, '取り込みました'); nav.refresh();
+        close(); toast(app, same ? LM.sameSongMsg(same, 'に取り込みました') : '取り込みました'); nav.refresh();
       };
     };
     draw();
@@ -1023,6 +1029,7 @@ function askEditSheet(a) {
 function askList(typeId, nav) {
   const box = h('<div class="el"></div>');
   const draw = () => {
+    box.classList.toggle('ask-empty', !D.asksOf(typeId).length);
     box.innerHTML = D.asksOf(typeId).map((a) => '<div class="ask-row"><span class="q">?</span><span class="tx" data-ed="' + a.id + '">' + esc(a.text) + '<small>' + (a.songId && D.song(a.songId) ? '♪ ' + esc(D.song(a.songId).title) + ' · ' : '') + D.md(a.date) + 'に書いた</small></span><button class="done" data-a="' + a.id + '">聞けた</button></div>').join('') +
       '<div class="add"><input id="ask-add" placeholder="＋ 追加" autocomplete="off"></div>';
     // 行のタップで、文と曲を直す
@@ -1107,9 +1114,10 @@ function recEditSheet(r) {
       el.querySelector('[data-act=save]').onclick = () => {
         // レッスンにも曲にも付かない録音はどこにも出ないので、どちらかを選んでもらう（取り込みと同じ）
         if (!lid && !sid) { toast(app, 'レッスンか曲を選んでください'); return; }
-        if (sid === '__new') { if (!newName.trim()) { nn.focus(); return; } sid = D.addSong(tid, newName.trim()).id; } // 曲を作るだけ。扱った曲には入れない
+        let same = null; // 同じ名前の曲があれば、作らずにその曲へ
+        if (sid === '__new') { if (!newName.trim()) { nn.focus(); return; } const sr = D.songByName(tid, newName.trim()); sid = sr.song.id; if (sr.existed) same = sr.song; } // 曲を作るだけ。扱った曲には入れない
         Object.assign(r, { note: note.trim(), songId: sid || null, lessonId: lid || null, kind: lid ? 'practice' : 'song', marks });
-        close(); toast(app, '録音を直しました'); nav.refresh();
+        close(); toast(app, same ? LM.sameSongMsg(same, 'に直しました') : '録音を直しました'); nav.refresh();
       };
       el.querySelector('[data-act=del]').onclick = () => { close(); setTimeout(() => recDelConfirm(r), 400); };
     };
@@ -1195,7 +1203,9 @@ function songNameSheet(s, nav, typeId) {
     const ok = () => {
       const v = ti.value.trim(); if (!v) { ti.focus(); return; }
       if (s) { s.title = v; s.sub = su.value.trim(); close(); nav.refresh(); return; }
-      const ns = D.addSong(typeId, v, su.value.trim()); close(); nav.push('song', { id: ns.id });
+      // 同じ名前の曲があれば、作らずにその曲ページを開く（添え書きが空なら入れた添え書きを足す）
+      const r = D.songByName(typeId, v, su.value.trim()); if (r.existed && !r.song.sub && su.value.trim()) r.song.sub = su.value.trim();
+      close(); nav.push('song', { id: r.song.id }); if (r.existed) toast(app, LM.sameSongMsg(r.song, 'を開きました'));
     };
     el.querySelector('[data-act=ok]').onclick = ok; ti.onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) ok(); };
     if (!s) setTimeout(() => ti.focus(), 420);
@@ -1312,7 +1322,8 @@ const screens = {
     sc.appendChild(songs);
     if (D.latest(l.typeId) === l) { const pv = prevHomework(l, nav); if (pv) sc.appendChild(pv); }
     // 次のレッスンで聞くこと：直近のレッスンページにだけ出す（前に書いておいたことを、このレッスンで聞く）
-    if (D.latest(l.typeId) === l && D.asksOf(l.typeId).length) {
+    // 0件でも見出しと「＋ 追加」の1行は出す（聞き終えたあとも、読み返しているときに次に聞くことを書けるように）
+    if (D.latest(l.typeId) === l) {
       sc.appendChild(h('<div class="sec"><span>次のレッスンで聞くこと</span></div>'));
       sc.appendChild(askList(l.typeId, nav));
     }

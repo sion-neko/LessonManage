@@ -110,12 +110,15 @@
           '</div><div class="sp-new"><input id="sp-new" class="ap-note" placeholder="新しい曲の名前"><button class="sp-add press" data-act="new">追加</button></div>' +
           '<button class="ap-save press" data-act="done">完了</button></div>';
         el.querySelectorAll('[data-s]').forEach((b) => (b.onclick = () => { D.toggleSong(lesson.id, b.dataset.s); draw(); }));
-        el.querySelector('[data-act=new]').onclick = () => { const v = el.querySelector('#sp-new').value.trim(); if (!v) return; const s = D.addSong(lesson.typeId, v); D.toggleSong(lesson.id, s.id); draw(); };
+        el.querySelector('[data-act=new]').onclick = () => { const v = el.querySelector('#sp-new').value.trim(); if (!v) return; const r = D.songByName(lesson.typeId, v); if (!lesson.songIds.includes(r.song.id)) D.toggleSong(lesson.id, r.song.id); draw(); if (r.existed) LM.toast(host, LM.sameSongMsg(r.song, 'を選びました')); };
         el.querySelector('[data-act=done]').onclick = () => { close(); onDone && onDone(); };
       };
       draw();
     }, { onClose: onDone });
   };
+
+  // 同じ名前の曲があって新しく作らなかったときの短い通知（長い曲名は詰める）
+  LM.sameSongMsg = function (song, tail) { const t = song.title.length > 9 ? song.title.slice(0, 8).trim() + '…' : song.title; return 'すでにある「' + t + '」' + tail; };
 
   // 箇条書き（1行1項目）。Enterで次の行へ
   LM.bullets = function (lesson, field, cls) {
