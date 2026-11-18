@@ -210,6 +210,10 @@ button:active { opacity: .55; }
 .mk-ed .mk .tx { flex: 1; min-width: 0; }
 .mk-ed .mk button { flex: none; width: 36px; height: 32px; display: grid; place-items: center; color: var(--muted); }
 .mk-ed .mk button svg { width: 16px; height: 16px; }
+/* 曲ページのメモ：タップで直す・左スワイプで削除 */
+.tr li.mli .swr-in .t { padding: 3px 0; }
+.lb, .rb { cursor: pointer; }
+.ask-row .tx { cursor: pointer; }
 /* 前回の宿題（新しいレッスンページに畳んで出す） */
 .prevhw { margin: 14px 16px 0; border: 1px solid var(--line); border-radius: 12px; }
 .prevhw .k { display: flex; width: 100%; justify-content: space-between; align-items: center; padding: 11px 14px; font-size: 14px; font-weight: 600; color: var(--muted); text-align: left; }
@@ -365,7 +369,9 @@ D.S.lessons.forEach(sync);
 D.S.memos.forEach((m) => { m.by = /（先生）/.test(m.text) ? 't' : 'm'; m.text = m.text.replace('（先生）', ''); });
 const newLesson = (typeId) => { const l = D.addLesson(typeId); l.topics = []; l.notes = []; l.hw = []; return l; };
 const teacherOf = (typeId) => (D.type(typeId) && D.type(typeId).teacher) || '先生';
-const notesOfSong = (sid) => D.S.lessons.flatMap((l) => l.notes.filter((n) => n.songId === sid).map((n) => ({ ...n, date: l.date, lesson: l })));
+const notesOfSong = (sid) => D.S.lessons.flatMap((l) => l.notes.filter((n) => n.songId === sid).map((n) => ({ ...n, date: l.date, lesson: l, src: n })));
+// 曲ページの項目から、直す・消すときの対象を作る
+const memoRef = (it) => (it.src ? { n: it.src, lesson: it.lesson } : { m: it.m });
 
 // 最初の状態を見るとき（#empty）はデータを空にする
 // ホームの学んだことの見せ方の案（?v=a 線なし1枚 / ?v=b 題だけ / ?v=c ノート風）
@@ -574,19 +580,28 @@ function pickPracticeSong(lesson, onPick) {
 }
 // 個人練：プルダウン版。前回録った曲を最初から選んでおき、録音開始を押すだけで始められる
 // （一覧版に戻すときは ?pick=list）
+// 曲のプルダウンの並び（録音前・録音を直す・取り込みで共通）：最近録った順の曲 → そのレッスンで扱った曲 → ほかの曲 → 曲なし → ＋ 曲を追加…
+const recsOfFolder = (tid) => D.S.recs.filter((r) => r.kind !== 'lesson' && ((r.songId && D.song(r.songId) && D.song(r.songId).typeId === tid) || (!r.songId && r.lessonId && D.lesson(r.lessonId) && D.lesson(r.lessonId).typeId === tid)))
+  .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.id < b.id ? 1 : -1));
+function songOpts(tid, lesson) {
+  const order = [];
+  recsOfFolder(tid).forEach((r) => { const sg = r.songId && D.song(r.songId); if (sg && !order.includes(sg)) order.push(sg); });
+  (lesson ? lesson.songIds : []).map(D.song).forEach((sg) => { if (sg && !order.includes(sg)) order.push(sg); });
+  D.songsOf(tid).forEach((sg) => { if (!order.includes(sg)) order.push(sg); });
+  return [...order.map((sg) => [sg.id, '♪ ' + sg.title]), ['', '曲なし（スケール・基礎練習など）'], ['__new', '＋ 曲を追加…']];
+}
+// 「＋ 曲を追加…」を選んだときだけ、プルダウンの下に曲名の欄を出す
+const newSongField = (sid) => (sid === '__new' ? '<input id="new-song" class="ap-note" placeholder="曲名" autocomplete="off">' : '');
+const bindNewSong = (el, get, set) => { const i = el.querySelector('#new-song'); if (!i) return { focus() {} }; i.value = get(); i.oninput = () => set(i.value); return i; };
+const songLabel = (sid) => (sid === '__new' ? '＋ 曲を追加…' : sid && D.song(sid) ? '♪ ' + esc(D.song(sid).title) : '曲なし');
 function pickPracticeDrop(lesson, onPick) {
   sheet(app, (el, close) => {
     const tid = lesson.typeId;
-    const recsOfType = D.S.recs.filter((r) => r.kind !== 'lesson' && ((r.songId && D.song(r.songId) && D.song(r.songId).typeId === tid) || (!r.songId && r.lessonId && D.lesson(r.lessonId) && D.lesson(r.lessonId).typeId === tid)))
-      .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.id < b.id ? 1 : -1));
-    const order = [];
-    recsOfType.forEach((r) => { const sg = r.songId && D.song(r.songId); if (sg && !order.includes(sg)) order.push(sg); });
-    lesson.songIds.map(D.song).forEach((sg) => { if (!order.includes(sg)) order.push(sg); });
-    D.songsOf(tid).forEach((sg) => { if (!order.includes(sg)) order.push(sg); });
+    const recsOfType = recsOfFolder(tid);
     let cur = recsOfType.length ? (recsOfType[0].songId || '') : (lesson.songIds[0] || '');
     const draw = () => {
       // プルダウン：シートは下のまま、選択肢の一覧だけ画面の真ん中に出す
-      const opts = [...order.map((sg) => [sg.id, '♪ ' + sg.title]), ['', '曲なし（スケール・基礎練習など）'], ['__new', '＋ 曲を追加…']];
+      const opts = songOpts(tid, lesson);
       const label = (v) => esc((opts.find((o) => o[0] === v) || opts[0])[1]);
       el.innerHTML = '<div class="tp"><div class="tp-title">録音内容</div>' +
         '<button class="ap-note pp-sel" data-act="open">' + label(cur) + '</button>' +
@@ -924,9 +939,10 @@ const FILES = [
   { name: '新規録音 12', dur: 305, date: '2026-11-17' },
 ];
 // 中央に出す選択肢の一覧（プルダウンを開いたときと同じ見た目）
+// 最後が「＋ 曲を追加…」のときは、録音前のプルダウンと同じく色を付けたままにする
 function popList(opts, cur, onPick) {
   const pop = h('<div class="pp-pop-wrap"><div class="pp-pop">' + opts.map(([v, t]) => '<button data-v="' + v + '" class="' + (v === cur ? 'on' : '') + '">' + esc(t) + '</button>').join('') + '</div></div>');
-  pop.querySelector('.pp-pop').lastElementChild.style.color = 'inherit';
+  if (opts[opts.length - 1][0] !== '__new') pop.querySelector('.pp-pop').lastElementChild.style.color = 'inherit';
   app.appendChild(pop); requestAnimationFrame(() => pop.classList.add('in'));
   const shut = () => { pop.classList.remove('in'); setTimeout(() => pop.remove(), 200); };
   pop.onclick = (e) => { if (e.target === pop) shut(); };
@@ -941,26 +957,28 @@ function importRec(nav, o) {
   });
 }
 function importSheet(nav, f, o) {
-  const tid = o.typeId; let lid = o.lessonId || ''; let sid = o.songId || ''; let asL = !!o.asLesson; let note = '';
+  const tid = o.typeId; let lid = o.lessonId || ''; let sid = o.songId || ''; let asL = !!o.asLesson; let note = ''; let newName = '';
   const canLessonRec = (id) => id && !D.lessonRec(id) && !(Rec.on && recTarget === id);
   if (asL && !canLessonRec(lid)) asL = false;
   sheet(app, (el, close) => {
     const draw = () => {
-      const l = lid && D.lesson(lid); const sg = sid && D.song(sid);
+      const l = lid && D.lesson(lid);
       el.innerHTML = '<div class="ap"><div class="ap-head"><span class="ap-title">' + esc(f.name) + '</span><span class="ap-dur">' + D.dur(f.dur) + '</span></div>' +
         '<div class="ap-k">どのレッスンの後か</div><button class="ap-note pp-sel" data-act="lesson">' + (l ? D.fmtDate(l.date, true) + 'のレッスン' : 'レッスンと関係なし') + '</button>' +
         (l ? (canLessonRec(l.id) ? '<button class="tg' + (asL ? ' on' : '') + '" data-act="as"><span class="bx">' + (asL ? check : '') + '</span><span>レッスン録音として取り込む</span></button>'
           : '<div class="ap-sub" style="margin:0">このレッスンにはもうレッスン録音があるので、個人練として入ります</div>') : '') +
-        (asL ? '' : '<div class="ap-k">曲</div><button class="ap-note pp-sel" data-act="song">' + (sg ? '♪ ' + esc(sg.title) : '曲なし') + '</button>' +
+        (asL ? '' : '<div class="ap-k">曲</div><button class="ap-note pp-sel" data-act="song">' + songLabel(sid) + '</button>' + newSongField(sid) +
           '<div class="ap-k">一言</div><input id="im-note" class="ap-note" placeholder="例：先生のお手本" autocomplete="off">') +
         '<button class="ap-save" data-act="save">取り込む</button></div>';
       const ni = el.querySelector('#im-note'); if (ni) { ni.value = note; ni.oninput = () => (note = ni.value); }
       el.querySelector('[data-act=lesson]').onclick = () => popList([...D.lessonsOf(tid).map((x) => [x.id, D.fmtDate(x.date, true) + 'のレッスン']), ['', 'レッスンと関係なし']], lid, (v) => { lid = v; if (asL && !canLessonRec(lid)) asL = false; draw(); });
       const as = el.querySelector('[data-act=as]'); if (as) as.onclick = () => { asL = !asL; draw(); };
-      const sb = el.querySelector('[data-act=song]'); if (sb) sb.onclick = () => popList([...D.songsOf(tid).map((x) => [x.id, '♪ ' + x.title]), ['', '曲なし']], sid, (v) => { sid = v; draw(); });
+      const nn = bindNewSong(el, () => newName, (v) => (newName = v));
+      const sb = el.querySelector('[data-act=song]'); if (sb) sb.onclick = () => popList(songOpts(tid, l), sid, (v) => { sid = v; draw(); if (v === '__new') el.querySelector('#new-song').focus(); });
       el.querySelector('[data-act=save]').onclick = () => {
         // レッスンにも曲にも付かない録音はどこにも出ないので、どちらかを選んでもらう
         if (!lid && !sid) { toast(app, 'レッスンか曲を選んでください'); return; }
+        if (!asL && sid === '__new') { if (!newName.trim()) { nn.focus(); return; } sid = D.addSong(tid, newName.trim()).id; } // 曲を作るだけ。扱った曲には入れない
         const r = asL ? { kind: 'lesson', lessonId: lid, songId: null, date: D.lesson(lid).date }
           : lid ? { kind: 'practice', lessonId: lid, songId: sid || null, date: f.date < D.lesson(lid).date ? D.lesson(lid).date : f.date }
           : { kind: 'song', lessonId: null, songId: sid, date: f.date };
@@ -984,11 +1002,31 @@ function askSheet(typeId, songId) {
     setTimeout(() => inp.focus(), 420);
   });
 }
+// 聞くことを直す：文と曲（曲なしも選べる）
+function askEditSheet(a) {
+  let sid = a.songId && D.song(a.songId) ? a.songId : '';
+  sheet(app, (el, close) => {
+    const draw = () => {
+      const v = el.querySelector('#ask-ed') ? el.querySelector('#ask-ed').value : a.text;
+      el.innerHTML = '<div class="tp"><div class="tp-title">次のレッスンで聞くこと</div><input id="ask-ed" class="ap-note" autocomplete="off">' +
+        '<div class="ap-k">曲</div><button class="ap-note pp-sel" data-act="song">' + songLabel(sid) + '</button>' +
+        '<button class="ap-save" data-act="ok">保存</button></div>';
+      const inp = el.querySelector('#ask-ed'); inp.value = v;
+      // 並びは録音前のプルダウンと同じ（曲を作るところではないので「＋ 曲を追加…」は出さない）
+      el.querySelector('[data-act=song]').onclick = () => popList(songOpts(a.typeId, D.latest(a.typeId)).filter((x) => x[0] !== '__new'), sid, (v2) => { sid = v2; draw(); });
+      const ok = () => { const tx = inp.value.trim(); if (!tx) { inp.focus(); return; } a.text = tx; a.songId = sid || null; close(); nav.refresh(); };
+      el.querySelector('[data-act=ok]').onclick = ok; inp.onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) ok(); };
+    };
+    draw();
+  });
+}
 function askList(typeId, nav) {
   const box = h('<div class="el"></div>');
   const draw = () => {
-    box.innerHTML = D.asksOf(typeId).map((a) => '<div class="ask-row"><span class="q">?</span><span class="tx">' + esc(a.text) + '<small>' + (a.songId && D.song(a.songId) ? '♪ ' + esc(D.song(a.songId).title) + ' · ' : '') + D.md(a.date) + 'に書いた</small></span><button class="done" data-a="' + a.id + '">聞けた</button></div>').join('') +
+    box.innerHTML = D.asksOf(typeId).map((a) => '<div class="ask-row"><span class="q">?</span><span class="tx" data-ed="' + a.id + '">' + esc(a.text) + '<small>' + (a.songId && D.song(a.songId) ? '♪ ' + esc(D.song(a.songId).title) + ' · ' : '') + D.md(a.date) + 'に書いた</small></span><button class="done" data-a="' + a.id + '">聞けた</button></div>').join('') +
       '<div class="add"><input id="ask-add" placeholder="＋ 追加" autocomplete="off"></div>';
+    // 行のタップで、文と曲を直す
+    box.querySelectorAll('[data-ed]').forEach((t) => (t.onclick = () => askEditSheet(D.S.asks.find((x) => x.id === t.dataset.ed))));
     // 「聞けた」で消す。押し間違えたときのために、短い通知から取り消せる
     box.querySelectorAll('[data-a]').forEach((b) => (b.onclick = () => {
       const i = D.S.asks.findIndex((x) => x.id === b.dataset.a); const a = D.S.asks[i];
@@ -1008,8 +1046,9 @@ function askList(typeId, nav) {
 const recTypeId = (r) => (r.lessonId && D.lesson(r.lessonId) ? D.lesson(r.lessonId).typeId : D.song(r.songId).typeId);
 let openSw = null;
 const closeSw = () => { if (!openSw) return; const r = openSw; openSw = null; r.style.transform = ''; setTimeout(() => r.parentElement && r.parentElement.classList.remove('swp'), 320); };
-// wrap：.swr（中に .swr-in と .del）。スワイプ・タップ・削除をつなぐ
-function recRow(wrap, r) {
+// wrap：.swr（中に .swr-in と .del）。スワイプ・タップ・削除をつなぐ（録音・曲ページのメモで共通）
+const recRow = (wrap, r) => swRow(wrap, () => recEditSheet(r), () => recDelConfirm(r));
+function swRow(wrap, onTap, onDel) {
   const row = wrap.querySelector('.swr-in');
   let x0 = null, y0 = 0, dx = 0, moved = false, skip = false;
   // 右端の再生ボタンの上から始めてもスワイプになる（動かさずに離せば再生）
@@ -1026,8 +1065,8 @@ function recRow(wrap, r) {
     else { row.style.transform = ''; if (openSw === row) openSw = null; setTimeout(() => wrap.classList.remove('swp'), 320); }
   };
   row.addEventListener('pointerup', end); row.addEventListener('pointercancel', end);
-  row.addEventListener('click', (e) => { if (skip) { skip = false; return; } if (e.target.closest('button')) return; if (openSw) { closeSw(); return; } recEditSheet(r); });
-  wrap.querySelector('.del').onclick = (e) => { e.stopPropagation(); recDelConfirm(r); };
+  row.addEventListener('click', (e) => { if (skip) { skip = false; return; } if (e.target.closest('button')) return; if (openSw) { closeSw(); return; } onTap(); });
+  wrap.querySelector('.del').onclick = (e) => { e.stopPropagation(); onDel(); };
 }
 // 消す前に、どこから消えるかを出して確かめる（個人練の録音はレッスンページと曲ページの両方から消える）
 function recDelConfirm(r) {
@@ -1050,23 +1089,25 @@ function recDelConfirm(r) {
 // 直すシート：一言・曲・どのレッスンの後か・付箋の削除
 function recEditSheet(r) {
   const tid = recTypeId(r);
-  let lid = r.lessonId || ''; let sid = r.songId || ''; let note = r.note || ''; const marks = (r.marks || []).slice();
+  let lid = r.lessonId || ''; let sid = r.songId || ''; let note = r.note || ''; let newName = ''; const marks = (r.marks || []).slice();
   sheet(app, (el, close) => {
     const draw = () => {
-      const l = lid && D.lesson(lid); const sg = sid && D.song(sid);
+      const l = lid && D.lesson(lid);
       el.innerHTML = '<div class="ap"><div class="ap-head"><span class="ap-title">録音</span><span class="ap-dur">' + D.md(r.date) + ' · ' + D.dur(r.dur) + '</span></div>' +
         '<div class="ap-k">一言</div><input id="re-note" class="ap-note" placeholder="例：移動は安定してきた" autocomplete="off">' +
-        '<div class="ap-k">曲</div><button class="ap-note pp-sel" data-act="song">' + (sg ? '♪ ' + esc(sg.title) : '曲なし') + '</button>' +
+        '<div class="ap-k">曲</div><button class="ap-note pp-sel" data-act="song">' + songLabel(sid) + '</button>' + newSongField(sid) +
         '<div class="ap-k">どのレッスンの後か</div><button class="ap-note pp-sel" data-act="lesson">' + (l ? D.fmtDate(l.date, true) + 'のレッスン' : 'レッスンと関係なし') + '</button>' +
         (marks.length ? '<div class="ap-k">付箋</div><div class="mk-ed">' + marks.map((m, i) => '<div class="mk"><span class="at">' + D.dur(m.at) + '</span><span class="tx">' + esc(m.text) + '</span><button data-mkdel="' + i + '" aria-label="付箋を削除">' + I.x + '</button></div>').join('') + '</div>' : '') +
         '<button class="ap-save" data-act="save">保存</button><button class="tp-add" data-act="del" style="color:var(--rec)">この録音を削除</button></div>';
       const ni = el.querySelector('#re-note'); ni.value = note; ni.oninput = () => (note = ni.value);
-      el.querySelector('[data-act=song]').onclick = () => popList([...D.songsOf(tid).map((x) => [x.id, '♪ ' + x.title]), ['', '曲なし']], sid, (v) => { sid = v; draw(); });
+      const nn = bindNewSong(el, () => newName, (v) => (newName = v));
+      el.querySelector('[data-act=song]').onclick = () => popList(songOpts(tid, l), sid, (v) => { sid = v; draw(); if (v === '__new') el.querySelector('#new-song').focus(); });
       el.querySelector('[data-act=lesson]').onclick = () => popList([...D.lessonsOf(tid).map((x) => [x.id, D.fmtDate(x.date, true) + 'のレッスン']), ['', 'レッスンと関係なし']], lid, (v) => { lid = v; draw(); });
       el.querySelectorAll('[data-mkdel]').forEach((b) => (b.onclick = () => { marks.splice(+b.dataset.mkdel, 1); draw(); }));
       el.querySelector('[data-act=save]').onclick = () => {
         // レッスンにも曲にも付かない録音はどこにも出ないので、どちらかを選んでもらう（取り込みと同じ）
         if (!lid && !sid) { toast(app, 'レッスンか曲を選んでください'); return; }
+        if (sid === '__new') { if (!newName.trim()) { nn.focus(); return; } sid = D.addSong(tid, newName.trim()).id; } // 曲を作るだけ。扱った曲には入れない
         Object.assign(r, { note: note.trim(), songId: sid || null, lessonId: lid || null, kind: lid ? 'practice' : 'song', marks });
         close(); toast(app, '録音を直しました'); nav.refresh();
       };
@@ -1075,6 +1116,43 @@ function recEditSheet(r) {
     draw();
   });
 }
+
+// ── 曲ページのメモを直す・消す ──
+// x：{ m }（曲ページで書いたメモ）か { n, lesson }（レッスンで書いた学んだことの行。レッスンページと同じ行）
+// 直すのは文と先生/自分。レッスンの行を直すと、レッスンページの行も同じく変わる
+function memoSheet(x) {
+  const o = x.m || x.n; const l = x.lesson; let by = o.by;
+  sheet(app, (el, close) => {
+    const draw = () => {
+      const v = el.querySelector('#mm-in') ? el.querySelector('#mm-in').value : o.text;
+      el.innerHTML = '<div class="tp"><div class="tp-title">' + (l ? D.fmtDate(l.date) + 'のレッスンで書いた行' : D.fmtDate(o.date) + 'のメモ') + '</div>' +
+        (l ? '<div class="ap-sub" style="margin:-6px 0 0">レッスンページの学んだことも同じく変わります</div>' : '') +
+        '<div style="display:flex;gap:8px;align-items:center">' + whoTag(by, 'data-act="by"') + '<input id="mm-in" class="ap-note" autocomplete="off"></div>' +
+        '<button class="ap-save" data-act="ok">保存</button>' +
+        (l ? '<button class="tp-add" data-act="go">' + D.md(l.date) + 'のレッスンページへ</button>' : '') +
+        '<button class="tp-add" data-act="del" style="color:var(--rec)">' + (l ? 'この行を削除' : 'このメモを削除') + '</button></div>';
+      const inp = el.querySelector('#mm-in'); inp.value = v;
+      el.querySelector('[data-act=by]').onclick = () => { by = by === 't' ? 'm' : 't'; draw(); };
+      const ok = () => { const tx = inp.value.trim(); if (!tx) { inp.focus(); return; } o.text = tx; o.by = by; if (l) sync(l); close(); nav.refresh(); };
+      el.querySelector('[data-act=ok]').onclick = ok; inp.onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) ok(); };
+      const go = el.querySelector('[data-act=go]'); if (go) go.onclick = () => { close(); Play.stop(); nav.push('lesson', { id: l.id }); };
+      el.querySelector('[data-act=del]').onclick = () => { close(); memoDel(x); };
+    };
+    draw();
+  });
+}
+// 学んだことの行と同じく、確かめずに消す。押し間違えたときのために、短い通知から取り消せる
+function memoDel(x) {
+  const arr = x.m ? D.S.memos : x.lesson.notes; const o = x.m || x.n; const i = arr.indexOf(o); if (i < 0) return;
+  arr.splice(i, 1); if (x.lesson) sync(x.lesson); openSw = null; nav.refresh();
+  toast(app, x.lesson ? D.md(x.lesson.date) + 'のレッスンの行を削除' : 'メモを削除', { label: '取り消す', fn: () => {
+    if (arr.includes(o)) return;
+    if (x.lesson && o.tk && !topicOf(x.lesson, o.tk)) { o.tk = null; o.songId = null; }
+    arr.splice(Math.min(i, arr.length), 0, o); if (x.lesson) sync(x.lesson); nav.refresh();
+  } });
+}
+// まとめの1行（タップで直す、左スワイプで削除）
+const memoRow = (inner, x) => { const w = h('<div class="swr"><div class="swr-in">' + inner + '</div><button class="del">削除</button></div>'); swRow(w, () => memoSheet(x), () => memoDel(x)); return w; };
 
 // ── 曲の名前の変更・削除（曲ページの「…」から） ──
 function songMenu(s, nav) {
@@ -1108,13 +1186,19 @@ function songMenu(s, nav) {
     };
   });
 }
-function songNameSheet(s, nav) {
+// s が null のときは曲を追加（曲タブから）。追加したらその曲ページを開く
+function songNameSheet(s, nav, typeId) {
   sheet(app, (el, close) => {
-    el.innerHTML = '<div class="tp"><div class="tp-title">曲の名前</div><input id="sn-title" class="ap-note" placeholder="曲名" autocomplete="off">' +
-      '<input id="sn-sub" class="ap-note" placeholder="楽章・歌手など（なくてもいい）" autocomplete="off"><button class="ap-save" data-act="ok">保存</button></div>';
-    const ti = el.querySelector('#sn-title'); const su = el.querySelector('#sn-sub'); ti.value = s.title; su.value = s.sub || '';
-    const ok = () => { const v = ti.value.trim(); if (!v) { ti.focus(); return; } s.title = v; s.sub = su.value.trim(); close(); nav.refresh(); };
+    el.innerHTML = '<div class="tp"><div class="tp-title">' + (s ? '曲の名前' : '曲を追加') + '</div><input id="sn-title" class="ap-note" placeholder="曲名" autocomplete="off">' +
+      '<input id="sn-sub" class="ap-note" placeholder="楽章・歌手など（なくてもいい）" autocomplete="off"><button class="ap-save" data-act="ok">' + (s ? '保存' : '追加') + '</button></div>';
+    const ti = el.querySelector('#sn-title'); const su = el.querySelector('#sn-sub'); ti.value = s ? s.title : ''; su.value = s ? s.sub || '' : '';
+    const ok = () => {
+      const v = ti.value.trim(); if (!v) { ti.focus(); return; }
+      if (s) { s.title = v; s.sub = su.value.trim(); close(); nav.refresh(); return; }
+      const ns = D.addSong(typeId, v, su.value.trim()); close(); nav.push('song', { id: ns.id });
+    };
     el.querySelector('[data-act=ok]').onclick = ok; ti.onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) ok(); };
+    if (!s) setTimeout(() => ti.focus(), 420);
   });
 }
 
@@ -1198,11 +1282,14 @@ const screens = {
     el.appendChild(head(nav));
     const sc = h('<div class="scroll"></div>'); el.appendChild(sc);
     const ss = cur ? D.songsOf(cur) : [];
-    if (!ss.length) sc.appendChild(h('<div class="blank"><b>曲はまだありません</b><p>レッスンページの「扱った曲」から追加できます。</p></div>'));
+    // 見出しの横に控えめに「＋ 曲を追加」（「ファイルから」「並べ替え」と同じ形）
+    const sh = h('<div class="sec"><span>曲</span>' + (cur ? '<button class="sub" data-act="addsong">＋ 曲を追加</button>' : '') + '</div>');
+    const asb = sh.querySelector('[data-act=addsong]'); if (asb) asb.onclick = () => songNameSheet(null, nav, cur);
+    sc.appendChild(sh);
+    if (!ss.length) sc.appendChild(h('<div class="blank" style="margin-top:0"><b>曲はまだありません</b><p>上の「＋ 曲を追加」か、レッスンページの「扱った曲」から追加できます。</p></div>'));
     else {
-      sc.appendChild(h('<div class="sec">曲</div>'));
       const list = h('<div class="list"></div>');
-      ss.forEach((s) => { const la = D.lastActivity(s.id); const b = h('<button><span>' + esc(s.title) + '<small>' + esc(s.sub) + (la ? ' · ' + D.rel(la) : '') + '</small></span>' + I.chev + '</button>'); b.onclick = () => nav.push('song', { id: s.id }); list.appendChild(b); });
+      ss.forEach((s) => { const la = D.lastActivity(s.id); const b = h('<button><span>' + esc(s.title) + '<small>' + esc([s.sub, la ? D.rel(la) : ''].filter(Boolean).join(' · ')) + '</small></span>' + I.chev + '</button>'); b.onclick = () => nav.push('song', { id: s.id }); list.appendChild(b); });
       sc.appendChild(list);
     }
     sc.appendChild(h('<div style="height:30px"></div>'));
@@ -1274,9 +1361,10 @@ const screens = {
         sc.appendChild(g); return g;
       };
       // 先生の指摘：レッスンで書いた先生の行と、曲ページで「先生」として書いたメモ（チャットの左側と同じものをそろえる）
-      const tn = [...notesOfSong(s.id).filter((n) => n.by === 't'), ...D.memosOf(s.id).filter((m) => m.by === 't').map((m) => ({ date: m.date, text: m.text }))].sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : 0));
+      const tn = [...notesOfSong(s.id).filter((n) => n.by === 't'), ...D.memosOf(s.id).filter((m) => m.by === 't').map((m) => ({ date: m.date, text: m.text, m }))].sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : 0));
       const groups = []; tn.forEach((n) => { const g = groups[groups.length - 1]; if (g && g.date === n.date) g.items.push(n); else groups.push({ date: n.date, items: [n] }); });
-      block('先生の指摘', groups, (g) => h('<li><span class="d">' + D.fmtDate(g.date, true) + '</span>' + g.items.map((n) => '<span class="t"><span>・' + esc(n.text) + '</span>' + atBtn(n) + '</span>').join('') + '</li>'));
+      // 1行ずつタップで直す・左スワイプで削除（日付の見出しは日ごとに1つ）
+      block('先生の指摘', groups, (g) => { const li = h('<li class="mli"><span class="d">' + D.fmtDate(g.date, true) + '</span></li>'); g.items.forEach((n) => li.appendChild(memoRow('<span class="t"><span>・' + esc(n.text) + '</span>' + atBtn(n) + '</span>', memoRef(n)))); return li; });
       const recs = D.recsOfSong(s.id);
       const rg = block('録音', recs, (r) => {
         const li = h('<li class="rli"><div class="swr"><div class="swr-in"><div class="rrow"><span class="d" style="width:40px">' + D.md(r.date) + '</span><span class="t" style="flex:1;display:block;min-width:0">' + (esc(r.note) || '（一言なし）') + '<small style="display:block;color:var(--muted);font-size:12px">' + (r.kind === 'practice' ? D.md(D.lesson(r.lessonId).date) + 'のレッスン後の個人練' : '曲の録音') + '</small></span></div></div><button class="del">削除</button></div></li>');
@@ -1292,8 +1380,8 @@ const screens = {
       mi.querySelector('.ok').onclick = add; mi.querySelector('input').onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) add(); };
       const askB = h('<button class="ap-ask" style="padding:10px 0 4px">＋ 次のレッスンで聞くこと</button>'); askB.onclick = () => askSheet(s.typeId, s.id);
       const mw = h('<div></div>'); mw.appendChild(mi); mw.appendChild(askB);
-      const mine = [...D.memosOf(s.id).filter((m) => m.by !== 't').map((m) => ({ date: m.date, text: m.text, by: m.by })), ...notesOfSong(s.id).filter((n) => n.by === 'm')].sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : 0));
-      block('自分のメモ', mine, (m) => h('<li><span class="d"><span>' + D.fmtDate(m.date, true) + (m.lesson ? ' · レッスンで' : '') + (m.by === 't' ? ' · 先生' : '') + '</span></span><span class="t"><span>' + esc(m.text) + '</span>' + (m.lesson ? atBtn(m) : '') + '</span></li>'), mw);
+      const mine = [...D.memosOf(s.id).filter((m) => m.by !== 't').map((m) => ({ date: m.date, text: m.text, by: m.by, m })), ...notesOfSong(s.id).filter((n) => n.by === 'm')].sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : 0));
+      block('自分のメモ', mine, (m) => { const li = h('<li class="rli"></li>'); li.appendChild(memoRow('<div style="padding:9px 0"><span class="d"><span>' + D.fmtDate(m.date, true) + (m.lesson ? ' · レッスンで' : '') + '</span></span><span class="t"><span>' + esc(m.text) + '</span>' + (m.lesson ? atBtn(m) : '') + '</span></div>', memoRef(m))); return li; }, mw);
       sc.appendChild(h('<div class="sec">扱ったレッスン</div>'));
       const lg = h('<div class="list"></div>');
       D.lessonsOfSong(s.id).forEach((l) => { const b = h('<button><span>' + D.fmtDate(l.date, true) + '</span>' + I.chev + '</button>'); b.onclick = () => nav.push('lesson', { id: l.id }); lg.appendChild(b); });
@@ -1315,9 +1403,11 @@ const screens = {
       if (it.date !== last) { last = it.date; prevT = ''; log.appendChild(h('<div class="div">' + D.fmtDate(it.date, true) + '</div>')); }
       const isT = it.t === 'tn' || it.t === 'tm'; const cont = isT && prevT === 'T'; prevT = isT ? 'T' : it.t;
       if (it.t === 'lesson') { const b = h('<button class="lmark">' + esc(D.type(it.l.typeId).name) + 'のレッスン' + I.chev + '</button>'); b.onclick = () => nav.push('lesson', { id: it.l.id }); log.appendChild(b); }
-      if (isT) log.appendChild(h('<div class="lb">' + (cont ? '' : '<div class="nm">' + esc(tname) + '</div>') + '<div class="bb">' + esc((it.n || it.m).text) + (it.n ? atBtn(it.n) : '') + '</div></div>'));
-      if (it.t === 'mn') log.appendChild(h('<div class="rb"><small>レッスンで</small>' + esc(it.n.text) + '</div>'));
-      if (it.t === 'mm') log.appendChild(h('<div class="rb">' + esc(it.m.text) + '</div>'));
+      // メモの吹き出しはタップで直すシート（下の「削除」から消せる）。録音の吹き出しと同じ
+      const tapMemo = (b) => { b.onclick = (e) => { if (!e.target.closest('button')) memoSheet(memoRef(it.n || { m: it.m })); }; return b; };
+      if (isT) { const b = tapMemo(h('<div class="lb">' + (cont ? '' : '<div class="nm">' + esc(tname) + '</div>') + '<div class="bb">' + esc((it.n || it.m).text) + (it.n ? atBtn(it.n) : '') + '</div></div>')); log.appendChild(b); }
+      if (it.t === 'mn') log.appendChild(tapMemo(h('<div class="rb"><small>レッスンで</small>' + esc(it.n.text) + '</div>')));
+      if (it.t === 'mm') log.appendChild(tapMemo(h('<div class="rb">' + esc(it.m.text) + '</div>')));
       if (it.t === 'rec') { const r = it.r; const b = h('<div class="rrec"><span class="rl">' + (r.kind === 'practice' ? D.md(D.lesson(r.lessonId).date) + 'のレッスン後の個人練' : '録音') + '</span>' + (r.note ? '<span class="rt">' + esc(r.note) + '</span>' : '') + '<div class="rr"></div>' + (r.marks && r.marks.length ? '<div style="padding:0 4px">' + marksHtml(r) + '</div>' : '') + '</div>'); b.querySelector('.rr').appendChild(LM.playBtn(r)); b.querySelector('.rr').insertAdjacentHTML('beforeend', LM.wave(r.id, 16)); b.onclick = (e) => { if (!e.target.closest('button')) recEditSheet(r); }; log.appendChild(b); }
     });
     bindAt(log);
