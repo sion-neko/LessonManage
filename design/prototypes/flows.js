@@ -169,6 +169,10 @@
       const on = LM.Play.id === rec.id; const going = on && !LM.Play.paused;
       b.innerHTML = '<span class="pb-i">' + (going ? I.pause : I.play) + '</span><span class="pb-t">' + (on ? D.dur(Math.floor(LM.Play.pos)) + ' / ' : '') + D.dur(rec.dur) + '</span>';
       b.classList.toggle('on', on);
+      // 読み上げでは「46:12」だけでは何が起きるか分からないので、日付・曲・長さを読む
+      const sg = rec.songId && D.song(rec.songId);
+      const what = rec.kind === 'lesson' ? D.fmtDate(D.lesson(rec.lessonId).date) + 'のレッスンの録音' : D.md(rec.date) + (rec.kind === 'practice' ? ' 個人練 ' : ' ') + (sg ? sg.title : '曲なし');
+      b.setAttribute('aria-label', what + '、' + D.say(rec.dur) + (going ? 'を一時停止' : (on ? 'を再開' : 'を再生')));
     };
     b.onclick = (e) => { e.stopPropagation(); LM.Play.toggle(rec); };
     const un = LM.Play.sub(() => { if (!b.isConnected) { if (b._seen) un(); return; } b._seen = true; draw(); }); draw();

@@ -161,6 +161,8 @@
       if (n < 31) return Math.floor(n / 7) + '週間前'; return D.md(d);
     },
     dur(sec) { const m = Math.floor(sec / 60), s = sec % 60; return m + ':' + String(s).padStart(2, '0'); },
+    // 読み上げ用の長さ：「12分40秒」「40秒」「1時間2分」
+    say(sec) { sec = Math.floor(sec); const h = Math.floor(sec / 3600), m = Math.floor(sec / 60) % 60, s = sec % 60; return (h ? h + '時間' : '') + (m ? m + '分' : '') + (s || (!h && !m) ? s + '秒' : ''); },
   };
 
   // 録音の疑似動作（実際には録音しない）。経過時間だけ進める

@@ -454,8 +454,8 @@ function recBar(nav) {
   if (!Rec.on || !recTarget) return null;
   // 帯には「停止」を置かない（記入中ずっと上にあり、親指が触れて1タップで止めると、そのレッスンでは録り直せないため）
   // 帯をタップすると録音中のレッスンページへ。そのページにいるときは大きな録音画面を開き、そこで止める
-  const el = h('<button class="recbar" aria-label="録音の画面を開く"><span>●</span><span class="tm">録音中 ' + D.dur(Rec.sec) + '</span>' + I.chev + '</button>');
-  const un = Rec.sub(() => { if (!Rec.on) return un(); el.querySelector('.tm').textContent = '録音中 ' + D.dur(Rec.sec); });
+  const el = h('<button class="recbar" aria-label="録音中 ' + D.say(Rec.sec) + '、録音の画面を開く"><span>●</span><span class="tm">録音中 ' + D.dur(Rec.sec) + '</span>' + I.chev + '</button>');
+  const un = Rec.sub(() => { if (!Rec.on) return un(); el.querySelector('.tm').textContent = '録音中 ' + D.dur(Rec.sec); el.setAttribute('aria-label', '録音中 ' + D.say(Rec.sec) + '、録音の画面を開く'); });
   el.onclick = () => goRecLesson();
   return el;
 }
@@ -585,7 +585,7 @@ function addMark(ctx) {
   }, { onClose: () => setTimeout(after, 0) });
 }
 // 録音の一覧に付箋を並べる。時間をタップするとその位置から再生
-const marksHtml = (r) => (r.marks && r.marks.length ? '<span class="mks">' + r.marks.map((m) => '<span class="mk"><button class="at" data-r="' + r.id + '" data-mk="' + m.at + '">' + playSm + D.dur(m.at) + '</button><span>' + esc(m.text) + '</span></span>').join('') + '</span>' : '');
+const marksHtml = (r) => (r.marks && r.marks.length ? '<span class="mks">' + r.marks.map((m) => '<span class="mk"><button class="at" data-r="' + r.id + '" data-mk="' + m.at + '" aria-label="' + D.say(m.at) + 'から再生">' + playSm + D.dur(m.at) + '</button><span>' + esc(m.text) + '</span></span>').join('') + '</span>' : '');
 const bindMarks = (root) => root.querySelectorAll('[data-mk]').forEach((b) => (b.onclick = (e) => { e.stopPropagation(); const r = D.S.recs.find((x) => x.id === b.dataset.r); if (r) Play.open(r, +b.dataset.mk); }));
 
 // 個人練：先に曲を選んでから録る（曲なし＝スケールや基礎練習）
@@ -900,7 +900,7 @@ function editList(l, key, o) {
   const addRow = (tk) => '<div class="add" data-tk="' + (tk || '') + '">' + (o.notes ? whoTag(addBy, 'data-act="addwho"') : '') + '<input placeholder="' + esc(addPh(tk)) + '" enterkeyhint="next" autocomplete="off"></div>';
   const rowHtml = (n, i) => {
     const meta = [];
-    if (o.notes && n.at != null) meta.push(n.live ? '<span class="at live">● ' + D.dur(n.at) + '</span>' : (D.lessonRec(l.id) ? '<button data-act="at" class="at">' + playSm + D.dur(n.at) + '</button>' : ''));
+    if (o.notes && n.at != null) meta.push(n.live ? '<span class="at live">● ' + D.dur(n.at) + '</span>' : (D.lessonRec(l.id) ? '<button data-act="at" class="at" aria-label="' + D.say(n.at) + 'から再生">' + playSm + D.dur(n.at) + '</button>' : ''));
     return '<li data-i="' + i + '"><div class="row">' + (sorting ? '<button class="minus" data-act="rm" aria-label="削除を出す">−</button>' : '') +
       (o.notes ? whoTag(n.by, 'data-act="who"') : '') +
       '<div class="tx' + (o.big ? ' big' : '') + '" data-act="edit">' + esc(n.text) + (meta.length ? '<div class="meta">' + meta.join('') + '</div>' : '') + '</div>' +
@@ -1046,7 +1046,7 @@ function typesSheet(nav) {
     const draw = () => {
       el.innerHTML = '<div class="tp"><div class="tp-title">フォルダ</div>' + D.S.types.map((t) => '<button class="tl-item" data-t="' + t.id + '"><span class="nm">' + esc(t.name) + '<small>' + esc(t.teacher || '先生・教室なし') + '</small></span>' + I.chev + '</button>').join('') +
         '<button class="tp-add" data-act="add">＋ フォルダを追加</button>' +
-        '<button class="sw-row" data-act="homerec" style="margin-top:12px"><span>「いま」に「個人練を録音」を出す</span><span class="sw' + (homeRec ? ' on' : '') + '"></span></button></div>';
+        '<button class="sw-row" data-act="homerec" role="switch" aria-checked="' + homeRec + '" style="margin-top:12px"><span>「いま」に「個人練を録音」を出す</span><span class="sw' + (homeRec ? ' on' : '') + '"></span></button></div>';
       el.querySelector('[data-act=homerec]').onclick = () => { homeRec = !homeRec; draw(); nav.refresh(); };
       el.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => { close(); setTimeout(() => typeEdit(nav, D.type(b.dataset.t)), 400); }));
       el.querySelector('[data-act=add]').onclick = () => { close(); setTimeout(() => typeEdit(nav, null), 400); };
@@ -1771,7 +1771,7 @@ const screens = {
     top.lastChild.appendChild(segment([['sum', 'まとめ'], ['chat', 'チャット']], songView, (k) => { songView = k; nav.refresh(); fadeIn(); }, 'sm'));
     el.appendChild(top);
     const sc = h('<div class="scroll"></div>'); el.appendChild(sc);
-    const atBtn = (n) => (n.at != null && n.lesson && D.lessonRec(n.lesson.id) ? '<button class="at" data-l="' + n.lesson.id + '" data-tk="' + (n.tk || '') + '" data-at="' + n.at + '">' + playSm + D.dur(n.at) + '</button>' : '');
+    const atBtn = (n) => (n.at != null && n.lesson && D.lessonRec(n.lesson.id) ? '<button class="at" data-l="' + n.lesson.id + '" data-tk="' + (n.tk || '') + '" data-at="' + n.at + '" aria-label="' + D.say(n.at) + 'から再生">' + playSm + D.dur(n.at) + '</button>' : '');
     const bindAt = (root) => { root.querySelectorAll('[data-at]').forEach((b) => (b.onclick = () => playAt(D.lesson(b.dataset.l), +b.dataset.at, b.dataset.tk || null))); bindMarks(root); };
     const pl = h('<div></div>'); pl.appendChild(player({ songId: s.id }));
     if (songView === 'sum') {
