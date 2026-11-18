@@ -235,10 +235,14 @@
     return close;
   }
 
-  function toast(host, text) {
-    const t = document.createElement('div'); t.className = 'toast'; t.textContent = text; host.appendChild(t);
+  // act：{ label, fn } を渡すと、短い通知に「取り消す」などのボタンを添える（少し長めに出す）
+  function toast(host, text, act) {
+    if (act) host.querySelectorAll('.toast.act').forEach((x) => x.remove()); // 取り消せるのは最後の1つだけ
+    const t = document.createElement('div'); t.className = 'toast' + (act ? ' act' : ''); t.textContent = text; host.appendChild(t);
+    const hide = () => { t.classList.remove('in'); setTimeout(() => t.remove(), 400); };
+    if (act) { const b = document.createElement('button'); b.textContent = act.label; b.onclick = () => { hide(); act.fn(); }; t.appendChild(b); }
     requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('in')));
-    setTimeout(() => { t.classList.remove('in'); setTimeout(() => t.remove(), 400); }, 1600);
+    setTimeout(hide, act ? 4000 : 1600);
   }
 
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
