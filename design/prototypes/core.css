@@ -44,3 +44,5 @@ input, textarea { font: inherit; color: inherit; }
 .press { transition: transform .12s ease, opacity .12s ease; }
 .press:active { transform: scale(.97); opacity: .8; }
 @media (prefers-reduced-motion: reduce) { .screen, .sheet, .sheet-bg, .toast { transition: none !important; } }
+/* 録音を止めてから、止めたあとのシートが出るまで、下の画面を押せないようにする（透明） */
+.tap-shield { position: absolute; inset: 0; z-index: 80; }

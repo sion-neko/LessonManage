@@ -734,7 +734,8 @@ function lessonAfter(lesson, r, timed) {
     const ask = () => {
       el.innerHTML = '<div class="tp"><div class="tp-title">レッスンの録音を捨てますか？</div>' +
         '<p class="tp-p">' + D.fmtDate(lesson.date) + 'のレッスンの録音（' + D.dur(dur) + '）を捨てます。' + (timed.length ? '学んだことの' + timed.length + '行に付いた録音の時間も消えます。' : '') + '元に戻せません。</p>' +
-        '<button class="ap-save" data-act="yes" style="background:var(--rec)">捨てる</button><button class="tp-add" data-act="no">やめる</button></div>';
+        // 「やめる」を上、赤い「捨てる」を下に置く。直前に押した「保存しない」の位置には「やめる」が来るので、二度押ししても捨てずに保存のシートに戻るだけ
+        '<button class="tp-add" data-act="no">やめる</button><button class="ap-save" data-act="yes" style="background:var(--rec)">捨てる</button></div>';
       el.querySelector('[data-act=no]').onclick = main; // やめたら保存のシートに戻る
       // 捨てると、その録音中に書いた行の時間も消す（指す録音がなくなるため）
       el.querySelector('[data-act=yes]').onclick = () => { D.removeRec(r); timed.forEach((n) => (n.at = null)); close(); toast(app, 'レッスンの録音を捨てました'); nav.refresh(); };
@@ -1157,7 +1158,8 @@ function moveAsk(el, close, l, tid) {
   el.innerHTML = '<div class="tp"><div class="tp-title">' + tn + 'へ移す</div>' +
     '<p class="tp-p">' + D.fmtDate(l.date) + 'のレッスンを、' + (parts.length ? parts.join('・') + 'ごと' : '') + tn + 'へ移します。</p>' +
     (songs.length ? '<p class="tp-p">' + (same.length ? names(same) + 'は、' + tn + 'にある同じ名前の曲に付け替えます。' : '') + (fresh.length ? names(fresh) + 'は、' + tn + 'に作ります。' : '') + '</p>' : '') +
-    '<button class="ap-save" data-act="yes">移す</button><button class="tp-add" data-act="no">やめる</button></div>';
+    // 「やめる」を上、「移す」を下に置く。開いた「ほかのフォルダへ移す」（メニューの中ほど）やフォルダの行の位置には「やめる」が来るので、二度押ししても移さない
+    '<button class="tp-add" data-act="no">やめる</button><button class="ap-save" data-act="yes">移す</button></div>';
   el.querySelector('[data-act=no]').onclick = close;
   el.querySelector('[data-act=yes]').onclick = () => { moveLesson(l, tid); cur = tid; close(); nav.refresh(); toast(app, '「' + shortName(t.name) + '」へ移しました'); };
 }

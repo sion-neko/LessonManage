@@ -264,11 +264,19 @@
     wrap.className = 'sheet-wrap' + (opts.center ? ' center' : '');
     wrap.innerHTML = '<div class="sheet-bg"></div><div class="sheet"><div class="sheet-grip"></div><div class="sheet-body"></div></div>';
     host.appendChild(wrap);
+    host.querySelectorAll(':scope > .tap-shield').forEach((x) => x.remove()); // 下の画面を止めていた幕は、次のシートが出たら外す（シートの背景が代わりに受ける）
     const close = () => { wrap.classList.remove('in'); setTimeout(() => wrap.remove(), 380); opts.onClose && opts.onClose(); };
     wrap.querySelector('.sheet-bg').addEventListener('click', () => { if (!opts.modal) close(); });
     build(wrap.querySelector('.sheet-body'), close);
     requestAnimationFrame(() => requestAnimationFrame(() => wrap.classList.add('in')));
     return close;
+  }
+
+  // 下の画面を押せないようにする幕。録音を止めてから、止めたあとのシートが出るまでの間に使う（次のシートが出ると外れる。出なかったときは ms 後に外す）
+  // 停止の二度押しが、消えていく録音の画面や下のホーム（「個人練を録音」の帯など）に当たらないように
+  function shield(host, ms) {
+    const s = document.createElement('div'); s.className = 'tap-shield'; host.appendChild(s);
+    setTimeout(() => s.remove(), ms || 1500); return s;
   }
 
   // act：{ label, fn } を渡すと、短い通知に「取り消す」などのボタンを添える（少し長めに出す）
@@ -330,5 +338,5 @@
   window.__taps = 0;
   document.addEventListener('click', (e) => { if (e.target.closest('button, a, [data-tap], input, textarea, label')) window.__taps++; }, true);
 
-  window.LM = { D, Rec, Play, makeNav, sheet, toast, esc, h, I, wave, short };
+  window.LM = { D, Rec, Play, makeNav, sheet, shield, toast, esc, h, I, wave, short };
 })();

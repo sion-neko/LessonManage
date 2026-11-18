@@ -39,7 +39,7 @@
         t.textContent = D.dur(Rec.sec);
         for (let i = 0; i < 3; i++) { bars[k % 40].style.height = (15 + Math.random() * 85) + '%'; k++; }
       });
-      el.querySelector('[data-act=stop]').onclick = () => { un(); const r = Rec.stop(); close(); o.onStop && o.onStop(r ? r.dur : 1); };
+      el.querySelector('[data-act=stop]').onclick = () => { LM.shield(host); un(); const r = Rec.stop(); close(); o.onStop && o.onStop(r ? r.dur : 1); };
       const mn = el.querySelector('[data-act=min]');
       if (mn) mn.onclick = () => { un(); close(); o.onMin && o.onMin(); };
     };
@@ -211,6 +211,7 @@
     const tm = el.querySelector('.st-time');
     const un = Rec.sub(() => { tm.textContent = D.dur(Rec.sec); });
     el.querySelector('.rs-stop').onclick = () => {
+      LM.shield(host); // 止めたあとのシートが出るまで、下の画面を押せないようにする
       un(); const r = Rec.stop(); el.classList.remove('in'); setTimeout(() => el.remove(), 420);
       setTimeout(() => o.onStop && o.onStop(r ? r.dur : 1), 200);
     };
