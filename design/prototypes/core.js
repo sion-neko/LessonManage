@@ -130,7 +130,8 @@
     },
     addRec(o) { const r = Object.assign({ id: nid('r'), date: TODAY, note: '', songId: null, lessonId: null }, o); S.recs.push(r); return r; },
     asksOf: (typeId) => S.asks.filter((a) => a.typeId === typeId),
-    addAsk(typeId, songId, text) { if (!text.trim()) return null; const a = { id: nid('a'), typeId, songId: songId || null, date: TODAY, text: text.trim() }; S.asks.push(a); return a; },
+    // lessonId：書いたレッスン（そのレッスンのページ・その後の個人練から書いたとき）。レッスンをほかのフォルダへ移すとき一緒に移す
+    addAsk(typeId, songId, text, lessonId) { if (!text.trim()) return null; const a = { id: nid('a'), typeId, songId: songId || null, date: TODAY, text: text.trim(), lessonId: lessonId || null }; S.asks.push(a); return a; },
     removeAsk(id) { const i = S.asks.findIndex((a) => a.id === id); if (i >= 0) S.asks.splice(i, 1); },
     addMemo(songId, text) { if (!text.trim()) return null; const m = { id: nid('m'), songId, date: TODAY, text: text.trim() }; S.memos.push(m); return m; },
 
