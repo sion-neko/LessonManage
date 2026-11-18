@@ -65,10 +65,12 @@
           '<div class="chips">' + chips(songs) + (others.length ? '<details class="ap-more"' + (songs.length ? '' : ' open') + '><summary>ほかの曲</summary><div class="chips">' + chips(others) + '</div></details>' : '') + '</div>') +
           '<div class="ap-k">一言</div>' +
           '<input id="ap-note" class="ap-note" placeholder="例：移動は安定してきた" autocomplete="off">' +
+          LM.askField() +
           '<button class="ap-save press" data-act="save">保存</button>' +
           '</div>';
         el.querySelectorAll('[data-song]').forEach((b) => (b.onclick = () => { pick = pick === b.dataset.song ? null : b.dataset.song; const v = el.querySelector('#ap-note').value; const open = el.querySelector('.ap-more') && el.querySelector('.ap-more').open; draw(); el.querySelector('#ap-note').value = v; if (open) el.querySelector('.ap-more').open = true; }));
-        el.querySelector('[data-act=save]').onclick = () => { const note = el.querySelector('#ap-note').value; close(); o.onSave({ songId: pick, note }); };
+        const askVal = LM.bindAskField(el);
+        el.querySelector('[data-act=save]').onclick = () => { const note = el.querySelector('#ap-note').value; const ask = askVal(); close(); o.onSave({ songId: pick, note, ask }); };
       };
       draw();
     }, { modal: true });
@@ -134,18 +136,29 @@
     return box;
   };
 
-  // 再生ボタン付きの録音行
+  // 再生ボタン付きの録音行。同じ録音なら一時停止／再開（位置は保つ）
   LM.playBtn = function (rec, cls) {
     const b = document.createElement('button');
     b.className = 'pb press ' + (cls || '');
     const draw = () => {
-      const on = LM.Play.id === rec.id;
-      b.innerHTML = '<span class="pb-i">' + (on ? I.pause : I.play) + '</span><span class="pb-t">' + (on ? D.dur(LM.Play.pos) + ' / ' : '') + D.dur(rec.dur) + '</span>';
+      const on = LM.Play.id === rec.id; const going = on && !LM.Play.paused;
+      b.innerHTML = '<span class="pb-i">' + (going ? I.pause : I.play) + '</span><span class="pb-t">' + (on ? D.dur(Math.floor(LM.Play.pos)) + ' / ' : '') + D.dur(rec.dur) + '</span>';
       b.classList.toggle('on', on);
     };
     b.onclick = (e) => { e.stopPropagation(); LM.Play.toggle(rec); };
-    LM.Play.sub(draw); draw();
+    const un = LM.Play.sub(() => { if (!b.isConnected) { if (b._seen) un(); return; } b._seen = true; draw(); }); draw();
     return b;
+  };
+
+  // 「次のレッスンで聞くこと」の入力欄（一言のシートに添える。押すまでは畳んでおく）
+  LM.askField = function () {
+    return '<button class="ap-ask" data-act="ask">＋ 次のレッスンで聞くこと</button>' +
+      '<div class="ap-askf" hidden><div class="ap-k" style="margin-bottom:6px">次のレッスンで聞くこと</div><input id="ap-ask" class="ap-note" placeholder="例：20小節目の弓順はこれで合っている？" autocomplete="off"></div>';
+  };
+  LM.bindAskField = function (el) {
+    const b = el.querySelector('[data-act=ask]'); const inp = el.querySelector('#ap-ask'); if (!b) return () => '';
+    b.onclick = () => { b.hidden = true; el.querySelector('.ap-askf').hidden = false; inp.focus(); };
+    return () => inp.value;
   };
 })();
 

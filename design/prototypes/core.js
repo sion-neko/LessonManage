@@ -34,7 +34,7 @@
     ],
     recs: [
       { id: 'r1', kind: 'lesson', lessonId: 'L1', songId: null, date: '2026-11-16', dur: 2772, note: '' },
-      { id: 'r2', kind: 'practice', lessonId: 'L1', songId: 's1', date: '2026-11-16', dur: 200, note: '移動は親指から。まだ音程が上ずる' },
+      { id: 'r2', kind: 'practice', lessonId: 'L1', songId: 's1', date: '2026-11-16', dur: 200, note: '移動は親指から。まだ音程が上ずる', marks: [{ at: 95, text: '移動のあとの音程が上ずる' }] },
       { id: 'r3', kind: 'lesson', lessonId: 'L2', songId: null, date: '2026-11-09', dur: 2690, note: '' },
       { id: 'r4', kind: 'practice', lessonId: 'L2', songId: 's1', date: '2026-11-11', dur: 165, note: '付点は軽くなってきた' },
       { id: 'r5', kind: 'practice', lessonId: 'L2', songId: 's2', date: '2026-11-13', dur: 230, note: 'テンポ72はまだ崩れる' },
@@ -52,6 +52,10 @@
       { id: 'm5', songId: 's5', date: '2026-11-12', text: 'サビの「〜ままで」は息の量で出す' },
       { id: 'm6', songId: 's4', date: '2026-11-15', text: '練習記号Gからの刻みが走る' },
       { id: 'm7', songId: 's2', date: '2026-11-09', text: 'テンポ72が目標' },
+    ],
+    // 次のレッスンで聞くこと（フォルダごと。聞けたら消す）
+    asks: [
+      { id: 'a1', typeId: 't1', songId: 's1', date: '2026-11-17', text: '20小節目からの弓順はこれで合っている？' },
     ],
   };
 
@@ -104,6 +108,9 @@
       if (i >= 0) l.songIds.splice(i, 1); else l.songIds.push(songId);
     },
     addRec(o) { const r = Object.assign({ id: nid('r'), date: TODAY, note: '', songId: null, lessonId: null }, o); S.recs.push(r); return r; },
+    asksOf: (typeId) => S.asks.filter((a) => a.typeId === typeId),
+    addAsk(typeId, songId, text) { if (!text.trim()) return null; const a = { id: nid('a'), typeId, songId: songId || null, date: TODAY, text: text.trim() }; S.asks.push(a); return a; },
+    removeAsk(id) { const i = S.asks.findIndex((a) => a.id === id); if (i >= 0) S.asks.splice(i, 1); },
     addMemo(songId, text) { if (!text.trim()) return null; const m = { id: nid('m'), songId, date: TODAY, text: text.trim() }; S.memos.push(m); return m; },
 
     fmtDate(d, withYear) {
@@ -136,16 +143,27 @@
     emit() { Rec.listeners.forEach((f) => f(Rec)); },
   };
 
-  // 疑似再生
+  // 疑似再生。一時停止しても位置を保つ。速度・5秒戻る/進むつき
   const Play = {
-    id: null, pos: 0, timer: null, listeners: new Set(),
-    toggle(rec) {
-      if (Play.id === rec.id) { Play.stop(); return; }
-      Play.stop(); Play.id = rec.id; Play.pos = 0; Play.len = rec.dur;
-      Play.timer = setInterval(() => { Play.pos += 1; if (Play.pos >= Play.len) Play.stop(); Play.emit(); }, 1000);
+    id: null, rec: null, pos: 0, len: 0, rate: 1, paused: false, timer: null, listeners: new Set(),
+    RATES: [0.5, 0.75, 1, 1.25, 1.5],
+    open(rec, pos) {
+      clearInterval(Play.timer); Play.id = rec.id; Play.rec = rec; Play.len = rec.dur;
+      Play.pos = Math.max(0, Math.min(pos || 0, rec.dur - 1)); Play.run();
+    },
+    run() {
+      clearInterval(Play.timer); Play.paused = false;
+      Play.timer = setInterval(() => { Play.pos = Math.min(Play.len, Play.pos + 0.25 * Play.rate * (window.__playSpeed || 1)); if (Play.pos >= Play.len) Play.pause(); else Play.emit(); }, 250);
       Play.emit();
     },
-    stop() { clearInterval(Play.timer); Play.id = null; Play.pos = 0; Play.emit(); },
+    pause() { clearInterval(Play.timer); Play.timer = null; Play.paused = true; Play.emit(); },
+    resume() { if (!Play.id) return; if (Play.pos >= Play.len) Play.pos = 0; Play.run(); },
+    // 同じ録音なら一時停止／再開、別の録音なら頭から
+    toggle(rec) { if (Play.id === rec.id) { if (Play.paused) Play.resume(); else Play.pause(); return; } Play.open(rec, 0); },
+    seek(d) { if (!Play.id) return; Play.pos = Math.max(0, Math.min(Play.len, Play.pos + d)); Play.emit(); },
+    seekTo(p) { if (!Play.id) return; Play.pos = Math.max(0, Math.min(Play.len, p)); Play.emit(); },
+    nextRate() { const i = Play.RATES.indexOf(Play.rate); Play.rate = Play.RATES[(i + 1) % Play.RATES.length]; Play.emit(); },
+    stop() { clearInterval(Play.timer); Play.timer = null; Play.id = null; Play.rec = null; Play.pos = 0; Play.paused = false; Play.emit(); },
     sub(fn) { Play.listeners.add(fn); return () => Play.listeners.delete(fn); },
     emit() { Play.listeners.forEach((f) => f(Play)); },
   };
@@ -240,6 +258,9 @@
     compose: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/><path d="M17.5 3.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>',
     stop: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2.5"/></svg>',
     gear: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+    more: '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
+    back5: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/><text x="12" y="15.5" font-size="8" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none" font-family="-apple-system,sans-serif">5</text></svg>',
+    fwd5: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4h-4"/><text x="12" y="15.5" font-size="8" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none" font-family="-apple-system,sans-serif">5</text></svg>',
     x: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   };
 
