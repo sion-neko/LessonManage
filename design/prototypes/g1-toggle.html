@@ -88,7 +88,7 @@ button:active { opacity: .55; }
 .el { margin: 0 16px; background: var(--card); border-radius: 12px; overflow: hidden; }
 .el ul { list-style: none; margin: 0; padding: 0; }
 .el li { position: relative; overflow: hidden; border-bottom: .5px solid var(--line); }
-.el .row { position: relative; z-index: 1; display: flex; align-items: baseline; gap: 8px; padding: 10px 14px; background: var(--card); transition: transform .3s cubic-bezier(.3,.8,.3,1), background-color .2s; touch-action: pan-y; }
+.el .row { position: relative; z-index: 1; display: flex; align-items: baseline; gap: 8px; padding: 10px 14px; background: var(--card); transition: transform .3s cubic-bezier(.3,.8,.3,1), margin-right .3s cubic-bezier(.3,.8,.3,1), background-color .2s; touch-action: pan-y; }
 .el .row.hl { background: var(--hl); }
 .el .row .tx { flex: 1; min-width: 0; font-size: 16px; line-height: 1.5; cursor: text; }
 .el .row .tx.big { font-size: 17px; font-weight: 600; }
@@ -102,7 +102,11 @@ button:active { opacity: .55; }
 .el .del { position: absolute; z-index: 0; top: 0; bottom: 0; right: 0; width: 80px; background: var(--rec); color: #fff; font-weight: 600; font-size: 15px; display: grid; place-items: center; border-radius: 0; }
 .el .del:active { opacity: .8; }
 .el .grip { flex: none; align-self: center; color: #c4c4c7; padding: 2px 0 2px 8px; cursor: grab; touch-action: none; }
-.el .minus { flex: none; align-self: center; width: 22px; height: 22px; border-radius: 50%; background: var(--rec); color: #fff; display: grid; place-items: center; font-weight: 700; line-height: 1; }
+.el .minus { flex: none; align-self: center; width: 22px; height: 22px; border-radius: 50%; background: var(--rec); color: #fff; display: grid; place-items: center; font-weight: 700; line-height: 1; transition: transform .25s; }
+/* 並べ替え中に「−」を押した行：iPhone と同じく「−」が縦になり、右に赤い「削除」が出る（押すまでは消さない） */
+.el li.rm .minus { transform: rotate(90deg); }
+.el li.rm .row { margin-right: 80px; }
+.el li.rm .grip { display: none; }
 .el li:not(.swp) .del { visibility: hidden; }
 .el li.drag { z-index: 3; overflow: visible; }
 .el li.drag .row { background: var(--hl); box-shadow: 0 4px 14px rgba(0,0,0,.12); position: relative; z-index: 2; transition: none; }
@@ -714,18 +718,18 @@ function topicSheet(l, t, onDone) {
 // タップで編集、左スワイプで削除、「並べ替え」でつまみを持って移動
 function editList(l, key, o) {
   const box = h('<div class="el"></div>');
-  let addBy = 't'; let sorting = false; let openRow = null;
+  let addBy = 't'; let sorting = false; let openRow = null; let rmLi = null; // rmLi：並べ替え中に「−」で「削除」を出している行
   const items = () => l[key];
   const live = () => Rec.on && recTarget === l.id;
   const addRow = (tk) => '<div class="add" data-tk="' + (tk || '') + '">' + (o.notes ? whoTag(addBy, 'data-act="addwho"') : '') + '<input placeholder="＋ 追加" enterkeyhint="next" autocomplete="off"></div>';
   const rowHtml = (n, i) => {
     const meta = [];
     if (o.notes && n.at != null) meta.push(n.live ? '<span class="at live">● ' + D.dur(n.at) + '</span>' : (D.lessonRec(l.id) ? '<button data-act="at" class="at">' + playSm + D.dur(n.at) + '</button>' : ''));
-    return '<li data-i="' + i + '"><div class="row">' + (sorting ? '<button class="minus" data-act="del" aria-label="削除">−</button>' : '') +
+    return '<li data-i="' + i + '"><div class="row">' + (sorting ? '<button class="minus" data-act="rm" aria-label="削除を出す">−</button>' : '') +
       (o.notes ? whoTag(n.by, 'data-act="who"') : '') +
       '<div class="tx' + (o.big ? ' big' : '') + '" data-act="edit">' + esc(n.text) + (meta.length ? '<div class="meta">' + meta.join('') + '</div>' : '') + '</div>' +
       (sorting ? '<span class="grip" data-act="grip">' + grip + '</span>' : '') + '</div>' +
-      (sorting ? '' : '<button class="del" data-act="del">削除</button>') + '</li>';
+      '<button class="del" data-act="del">削除</button></li>';
   };
   // focusTk：追加欄にフォーカスを戻す題（題なしは ''）
   const draw = (focusTk) => {
@@ -747,6 +751,9 @@ function editList(l, key, o) {
     bind();
     if (focusTk != null) { const a = box.querySelector('.add[data-tk="' + focusTk + '"] input'); if (a) a.focus(); }
   };
+  const closeRm = () => { if (rmLi) { rmLi.classList.remove('rm'); const r = rmLi; rmLi = null; setTimeout(() => r.classList.remove('swp'), 320); } };
+  // 確かめずに消し、短い通知の「取り消す」で元の題・位置に戻す（曲ページのメモと同じ仕組み）
+  const delRow = (it) => { openRow = null; rmLi = null; delWithUndo(items(), it, o.notes ? '学んだことの行を削除' : '宿題の行を削除', () => (box.isConnected ? draw() : nav.refresh()), l); };
   const closeOpen = () => { if (openRow) { const r = openRow; r.style.transform = ''; openRow = null; setTimeout(() => r.parentElement.classList.remove('swp'), 320); } };
   const bind = () => {
     box.querySelectorAll('li').forEach((li) => {
@@ -754,13 +761,17 @@ function editList(l, key, o) {
       const on = (sel, fn) => { const b = li.querySelector(sel); if (b) b.onclick = (e) => { e.stopPropagation(); fn(e); }; };
       on('[data-act=who]', () => { n.by = n.by === 't' ? 'm' : 't'; draw(); });
       on('[data-act=at]', () => playAt(l, n.at, n.tk));
-      li.querySelectorAll('[data-act=del]').forEach((b) => (b.onclick = (e) => { e.stopPropagation(); items().splice(i, 1); sync(l); openRow = null; draw(); }));
+      on('[data-act=del]', () => delRow(n));
+      // 並べ替え中の「−」：押すと右に「削除」を出すだけ。もう一度押すか、ほかを触るとしまう
+      on('[data-act=rm]', () => { if (rmLi === li) { closeRm(); return; } closeRm(); li.classList.add('swp', 'rm'); rmLi = li; });
       const tx = li.querySelector('[data-act=edit]');
       tx.onclick = (e) => {
-        if (sorting || e.target.closest('button')) return;
+        if (e.target.closest('button')) return;
+        if (sorting) { closeRm(); return; }
         if (openRow) { closeOpen(); return; }
         tx.innerHTML = ''; const inp = h('<input class="ed" autocomplete="off">'); inp.value = n.text; tx.appendChild(inp); inp.focus();
-        const done = () => { const v = inp.value.trim(); if (v) n.text = v; else items().splice(i, 1); sync(l); draw(); };
+        // 空にして確定したときも、削除と同じく取り消せる
+        const done = () => { const v = inp.value.trim(); if (v) { n.text = v; sync(l); draw(); } else delRow(n); };
         inp.onkeydown = (ev) => { if (ev.key === 'Enter' && !ev.isComposing) { ev.preventDefault(); inp.blur(); } if (ev.key === 'Escape') { inp.value = n.text; inp.blur(); } };
         inp.onblur = done;
       };
@@ -808,7 +819,7 @@ function editList(l, key, o) {
   // 落とす題は、指がどの題の欄（見出しを含む）にあるかで決める。行のない題・題なしにも落とせる
   const dragSort = (g, li) => {
     g.addEventListener('pointerdown', (e) => {
-      e.preventDefault(); try { g.setPointerCapture(e.pointerId); } catch (_) { /* なくても動く */ }
+      e.preventDefault(); closeRm(); try { g.setPointerCapture(e.pointerId); } catch (_) { /* なくても動く */ }
       const it = items()[+li.dataset.i]; const y0 = e.clientY; let target = null; let lastY = e.clientY;
       const ind = document.createElement('li'); ind.className = 'ind';
       const sc = box.closest('.scroll'); const top0 = sc ? sc.scrollTop : 0;
@@ -841,7 +852,7 @@ function editList(l, key, o) {
       g.addEventListener('pointermove', move); g.addEventListener('pointerup', up); g.addEventListener('pointercancel', up);
     });
   };
-  box.setSorting = (v) => { sorting = v; openRow = null; draw(); };
+  box.setSorting = (v) => { sorting = v; openRow = null; rmLi = null; draw(); };
   draw();
   return box;
 }
@@ -1016,8 +1027,10 @@ function askEditSheet(a) {
       const v = el.querySelector('#ask-ed') ? el.querySelector('#ask-ed').value : a.text;
       el.innerHTML = '<div class="tp"><div class="tp-title">次のレッスンで聞くこと</div><input id="ask-ed" class="ap-note" autocomplete="off">' +
         '<div class="ap-k">曲</div><button class="ap-note pp-sel" data-act="song">' + songLabel(sid) + '</button>' +
-        '<button class="ap-save" data-act="ok">保存</button></div>';
+        '<button class="ap-save" data-act="ok">保存</button><button class="tp-add" data-act="del" style="color:var(--rec)">この質問を削除</button></div>';
       const inp = el.querySelector('#ask-ed'); inp.value = v;
+      // ほかの直すシートと同じく下に削除。聞けたと同じく確かめずに消し、通知の「取り消す」で戻せる
+      el.querySelector('[data-act=del]').onclick = () => { close(); askDel(a, '聞くことを削除'); };
       // 並びは録音前のプルダウンと同じ（曲を作るところではないので「＋ 曲を追加…」は出さない）
       el.querySelector('[data-act=song]').onclick = () => popList(songOpts(a.typeId, D.latest(a.typeId)).filter((x) => x[0] !== '__new'), sid, (v2) => { sid = v2; draw(); });
       const ok = () => { const tx = inp.value.trim(); if (!tx) { inp.focus(); return; } a.text = tx; a.songId = sid || null; close(); nav.refresh(); };
@@ -1025,6 +1038,12 @@ function askEditSheet(a) {
     };
     draw();
   });
+}
+// 聞くことを消す（「聞けた」と直すシートの削除で共通）。押し間違えたときのために、短い通知から取り消せる
+function askDel(a, msg, redraw) {
+  const i = D.S.asks.indexOf(a); if (i < 0) return;
+  D.removeAsk(a.id); (redraw || nav.refresh)();
+  toast(app, msg, { label: '取り消す', fn: () => { if (!D.S.asks.includes(a)) D.S.asks.splice(Math.min(i, D.S.asks.length), 0, a); nav.refresh(); } });
 }
 function askList(typeId, nav) {
   const box = h('<div class="el"></div>');
@@ -1035,11 +1054,7 @@ function askList(typeId, nav) {
     // 行のタップで、文と曲を直す
     box.querySelectorAll('[data-ed]').forEach((t) => (t.onclick = () => askEditSheet(D.S.asks.find((x) => x.id === t.dataset.ed))));
     // 「聞けた」で消す。押し間違えたときのために、短い通知から取り消せる
-    box.querySelectorAll('[data-a]').forEach((b) => (b.onclick = () => {
-      const i = D.S.asks.findIndex((x) => x.id === b.dataset.a); const a = D.S.asks[i];
-      D.removeAsk(a.id); draw();
-      toast(app, '聞けたので消しました', { label: '取り消す', fn: () => { if (!D.S.asks.includes(a)) D.S.asks.splice(Math.min(i, D.S.asks.length), 0, a); nav.refresh(); } });
-    }));
+    box.querySelectorAll('[data-a]').forEach((b) => (b.onclick = () => askDel(D.S.asks.find((x) => x.id === b.dataset.a), '聞けたので消しました', draw)));
     const inp = box.querySelector('#ask-add');
     const commit = (keep) => { const v = inp.value; inp.value = ''; if (D.addAsk(typeId, null, v)) { if (keep) { draw(); box.querySelector('#ask-add').focus(); } else setTimeout(draw, 0); } };
     inp.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); commit(true); } });
@@ -1149,15 +1164,22 @@ function memoSheet(x) {
     draw();
   });
 }
+// 行・メモを確かめずに消し、短い通知の「取り消す」で元の位置に戻す（レッスンページの学んだこと・宿題、曲ページのメモで共通）
+// l：レッスンの行のとき、そのレッスン。戻すときに題が外されていたら題なしに戻す
+function delWithUndo(arr, o, msg, redraw, l) {
+  const i = arr.indexOf(o); if (i < 0) return;
+  arr.splice(i, 1); if (l) sync(l); redraw();
+  toast(app, msg, { label: '取り消す', fn: () => {
+    if (arr.includes(o)) return;
+    // 1行だけのレッスンで消してすぐ戻ると、空のレッスンとして捨てられている。そのときはレッスンごと戻す
+    if (l && !D.S.lessons.includes(l)) { if (!l.blankDropped) return; l.blankDropped = false; D.S.lessons.push(l); }
+    if (l && o.tk && !topicOf(l, o.tk)) { o.tk = null; o.songId = null; }
+    arr.splice(Math.min(i, arr.length), 0, o); if (l) sync(l); redraw();
+  } });
+}
 // 学んだことの行と同じく、確かめずに消す。押し間違えたときのために、短い通知から取り消せる
 function memoDel(x) {
-  const arr = x.m ? D.S.memos : x.lesson.notes; const o = x.m || x.n; const i = arr.indexOf(o); if (i < 0) return;
-  arr.splice(i, 1); if (x.lesson) sync(x.lesson); openSw = null; nav.refresh();
-  toast(app, x.lesson ? D.md(x.lesson.date) + 'のレッスンの行を削除' : 'メモを削除', { label: '取り消す', fn: () => {
-    if (arr.includes(o)) return;
-    if (x.lesson && o.tk && !topicOf(x.lesson, o.tk)) { o.tk = null; o.songId = null; }
-    arr.splice(Math.min(i, arr.length), 0, o); if (x.lesson) sync(x.lesson); nav.refresh();
-  } });
+  delWithUndo(x.m ? D.S.memos : x.lesson.notes, x.m || x.n, x.lesson ? D.md(x.lesson.date) + 'のレッスンの行を削除' : 'メモを削除', () => { openSw = null; nav.refresh(); }, x.lesson);
 }
 // まとめの1行（タップで直す、左スワイプで削除）
 const memoRow = (inner, x) => { const w = h('<div class="swr"><div class="swr-in">' + inner + '</div><button class="del">削除</button></div>'); swRow(w, () => memoSheet(x), () => memoDel(x)); return w; };
@@ -1202,7 +1224,11 @@ function songNameSheet(s, nav, typeId) {
     const ti = el.querySelector('#sn-title'); const su = el.querySelector('#sn-sub'); ti.value = s ? s.title : ''; su.value = s ? s.sub || '' : '';
     const ok = () => {
       const v = ti.value.trim(); if (!v) { ti.focus(); return; }
-      if (s) { s.title = v; s.sub = su.value.trim(); close(); nav.refresh(); return; }
+      if (s) {
+        // 同じフォルダに同じ名前の曲があれば（曲を作る入口と同じ比べ方）、保存せずにまとめるかを聞く
+        const f = D.findSong(s.typeId, v, s); if (f) { mergeAsk(el, close, s, f, su.value.trim()); return; }
+        s.title = v; s.sub = su.value.trim(); close(); nav.refresh(); return;
+      }
       // 同じ名前の曲があれば、作らずにその曲ページを開く（添え書きが空なら入れた添え書きを足す）
       const r = D.songByName(typeId, v, su.value.trim()); if (r.existed && !r.song.sub && su.value.trim()) r.song.sub = su.value.trim();
       close(); nav.push('song', { id: r.song.id }); if (r.existed) toast(app, LM.sameSongMsg(r.song, 'を開きました'));
@@ -1210,6 +1236,41 @@ function songNameSheet(s, nav, typeId) {
     el.querySelector('[data-act=ok]').onclick = ok; ti.onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) ok(); };
     if (!s) setTimeout(() => ti.focus(), 420);
   });
+}
+
+// 名前を変えて同じ名前になった曲を、すでにある曲 f にまとめる。打ち間違えて別の曲ができたときに、録音やメモが2つの曲ページに分かれたままにならないように
+const mergeCounts = (s) => {
+  const ls = D.S.lessons.filter((l) => l.typeId === s.typeId);
+  return { recs: D.S.recs.filter((r) => r.songId === s.id).length, memos: D.S.memos.filter((m) => m.songId === s.id).length,
+    topics: ls.reduce((n, l) => n + l.topics.filter((t) => t.songId === s.id).length, 0), notes: ls.reduce((n, l) => n + l.notes.filter((x) => x.songId === s.id).length, 0),
+    lessons: ls.filter((l) => l.songIds.includes(s.id)).length, asks: D.S.asks.filter((a) => a.songId === s.id).length };
+};
+function mergeAsk(el, close, s, f, sub) {
+  const c = mergeCounts(s);
+  const parts = [c.recs ? '録音' + c.recs + '件' : '', c.memos ? 'メモ' + c.memos + '件' : '', c.topics ? '学んだことの題' + c.topics + 'つ（' + c.notes + '行）' : '',
+    c.lessons ? '扱った曲（レッスン' + c.lessons + '回分）' : '', c.asks ? '聞くこと' + c.asks + '件' : ''].filter(Boolean);
+  el.innerHTML = '<div class="tp"><div class="tp-title">すでに「' + esc(f.title) + '」があります。1つにまとめますか？</div>' +
+    '<p class="tp-p">' + (parts.length ? '「' + esc(s.title) + '」の' + parts.join('・') + 'を「' + esc(f.title) + '」へ移し、' : '移すものはありません。') + '「' + esc(s.title) + '」は消えます。元に戻せません。</p>' +
+    '<button class="ap-save" data-act="yes">まとめる</button><button class="tp-add" data-act="no">やめる</button></div>';
+  el.querySelector('[data-act=no]').onclick = close; // やめたら名前は変えない
+  el.querySelector('[data-act=yes]').onclick = () => { mergeSong(s, f, sub); close(); nav.replace('song', { id: f.id }); toast(app, '「' + (f.title.length > 9 ? f.title.slice(0, 8).trim() + '…' : f.title) + '」にまとめました'); };
+}
+function mergeSong(s, f, sub) {
+  D.S.recs.forEach((r) => { if (r.songId === s.id) r.songId = f.id; });
+  D.S.memos.forEach((m) => { if (m.songId === s.id) m.songId = f.id; });
+  D.S.asks.forEach((a) => { if (a.songId === s.id) a.songId = f.id; });
+  D.S.lessons.forEach((l) => {
+    const j = l.songIds.indexOf(s.id); if (j >= 0) { if (l.songIds.includes(f.id)) l.songIds.splice(j, 1); else l.songIds[j] = f.id; }
+    // 曲の題：同じレッスンに f の題がすでにあれば、行をそちらへ移して題を1つにする
+    l.topics.filter((t) => t.songId === s.id).forEach((t) => {
+      const ft = l.topics.find((x) => x.songId === f.id);
+      if (ft) { l.notes.forEach((n) => { if (n.tk === t.k) n.tk = ft.k; }); l.topics.splice(l.topics.indexOf(t), 1); } else t.songId = f.id;
+    });
+    l.notes.forEach((n) => { if (n.songId === s.id) n.songId = f.id; });
+    normNotes(l); sync(l);
+  });
+  if (!f.sub && (sub || s.sub)) f.sub = sub || s.sub;
+  D.S.songs.splice(D.S.songs.indexOf(s), 1);
 }
 
 // ── 前回の宿題：新しいレッスンページに畳んで出す（レッスンの最初に「宿題どうでした？」と聞かれたときのため） ──
@@ -1309,7 +1370,7 @@ const screens = {
     const l = D.lesson(a.id); const t = D.type(l.typeId); cur = l.typeId;
     const nb = h('<div class="nav"><button class="bk">' + I.back + '戻る</button><button class="mo" aria-label="このレッスンの操作">' + I.more + '</button></div>');
     // 何も書かず録音もしなかったレッスンは、ページを離れるときに捨てる（＋を押しただけで空のレッスンが残り、ホームの宿題が消えないように）
-    nb.querySelector('.bk').onclick = () => { Play.stop(); if (isBlankLesson(l)) dropLesson(l); nav.back(); };
+    nb.querySelector('.bk').onclick = () => { Play.stop(); if (isBlankLesson(l)) { dropLesson(l); l.blankDropped = true; } nav.back(); };
     nb.querySelector('.mo').onclick = () => lessonMenu(l, nav);
     el.appendChild(nb);
     const rb = recBar(nav); if (rb) el.appendChild(rb);

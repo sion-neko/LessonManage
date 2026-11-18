@@ -98,7 +98,8 @@
     addType(name, teacher) { const t = { id: nid('t'), name, teacher: teacher || '' }; S.types.push(t); return t; },
     addSong(typeId, title, sub) { const s = { id: nid('s'), typeId, title, sub: sub || '' }; S.songs.push(s); return s; },
     // 同じフォルダの、同じ名前の曲（全角半角・大文字小文字・空白の違いは同じとみなす）
-    findSong(typeId, title) { const k = (t) => String(t).normalize('NFKC').replace(/\s+/g, '').toLowerCase(); return S.songs.find((s) => s.typeId === typeId && k(s.title) === k(title)) || null; },
+    // except：名前を変えるときの、その曲自身（自分と同じ名前は「同じ名前の曲」としない）
+    findSong(typeId, title, except) { const k = (t) => String(t).normalize('NFKC').replace(/\s+/g, '').toLowerCase(); return S.songs.find((s) => s !== except && s.typeId === typeId && k(s.title) === k(title)) || null; },
     // 曲を作る入口はすべてこれを通す。同じ名前の曲があれば作らずにその曲を返す（existed: true）。録音やメモが2つの曲ページに分かれないように
     songByName(typeId, title, sub) { const f = this.findSong(typeId, title); return f ? { song: f, existed: true } : { song: this.addSong(typeId, title, sub), existed: false }; },
     addLesson(typeId) {
