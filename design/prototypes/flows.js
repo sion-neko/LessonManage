@@ -48,8 +48,16 @@
     return () => closeFn && closeFn();
   };
 
+  // 録音を止めたあとのシートの見出しの行：題・長さと、右端に小さな赤字の「保存しない」
+  // 「保存」はシートの一番下（停止ボタンのあった位置）に置き、「保存しない」は停止ボタンと重ならない見出しの右端に置く。
+  // 停止を二度押ししても「保存」に当たり、残したいテイクを捨てないように
+  LM.apHead = function (title, dur, discard) {
+    return '<div class="ap-head"><span class="ap-title">' + esc(title) + '</span><span class="ap-dur">' + D.dur(dur) + '</span>' +
+      (discard ? '<button class="ap-discard press" data-act="discard">保存しない</button>' : '') + '</div>';
+  };
+
   // 録音を止めたあと：一言（と、押すと開く「次のレッスンで聞くこと」）。曲は録る前に選んでいるので選び直さない（fixedSong）
-  // 「保存」の下に小さな赤字の「保存しない」：確かめずに捨て、通知の「取り消す」でこのシートに戻す（o.onDiscard）
+  // 見出しの右端に小さな赤字の「保存しない」：確かめずに捨て、通知の「取り消す」でこのシートに戻す（o.onDiscard）
   // o.note・o.ask：シートに戻したときに、書いていた一言と聞くことを入れておく
   LM.afterPracticeSheet = function (host, o) {
     const lesson = o.lesson;
@@ -61,7 +69,7 @@
       const draw = () => {
         el.innerHTML =
           '<div class="ap">' +
-          '<div class="ap-head"><span class="ap-title">' + esc(o.title || '個人練の録音') + '</span><span class="ap-dur">' + D.dur(o.dur) + '</span></div>' +
+          LM.apHead(o.title || '個人練の録音', o.dur, !!o.onDiscard) +
           (lesson ? '<div class="ap-sub">' + D.fmtDate(lesson.date) + 'のレッスンの後</div>' : '') +
           (o.fixedSong ? '' : '<div class="ap-k">曲</div>' +
           '<div class="chips">' + chips(songs) + (others.length ? '<details class="ap-more"' + (songs.length ? '' : ' open') + '><summary>ほかの曲</summary><div class="chips">' + chips(others) + '</div></details>' : '') + '</div>') +
@@ -69,7 +77,6 @@
           '<input id="ap-note" class="ap-note" placeholder="例：移動は安定してきた" autocomplete="off">' +
           LM.askField() +
           '<button class="ap-save press" data-act="save">保存</button>' +
-          (o.onDiscard ? '<button class="ap-discard press" data-act="discard">保存しない</button>' : '') +
           '</div>';
         el.querySelectorAll('[data-song]').forEach((b) => (b.onclick = () => { pick = pick === b.dataset.song ? null : b.dataset.song; const v = el.querySelector('#ap-note').value; const open = el.querySelector('.ap-more') && el.querySelector('.ap-more').open; draw(); el.querySelector('#ap-note').value = v; if (open) el.querySelector('.ap-more').open = true; }));
         const askVal = LM.bindAskField(el);

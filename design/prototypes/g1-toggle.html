@@ -690,44 +690,54 @@ function standGroups(lesson, songId) {
 }
 function recordPracticeOf(lesson, songId, nav) {
   const groups = standGroups(lesson, songId); const learned = groups.flatMap((g) => g.items);
-  LM.practiceStand(app, { lesson, songId, learned, groups, onStop: (dur) => setTimeout(() => practiceAfter(lesson, songId, dur, {}), 200) });
+  // 止めた時点で録音を保存する（シートを出したままアプリが終わっても残るように。シートは一言などを足す場所）
+  LM.practiceStand(app, { lesson, songId, learned, groups, onStop: (dur) => { const r = D.addRec({ kind: 'practice', lessonId: lesson.id, songId, dur }); nav.refresh(); setTimeout(() => practiceAfter(lesson, r, {}), 200); } });
 }
-// 個人練を止めたあとのシート。「保存しない」は確かめずに捨て、通知の「取り消す」でこのシートに戻す（書いていた一言・聞くことはそのまま）
-function practiceAfter(lesson, songId, dur, kept) {
-  const raw = D.TODAY; // 録った日（シートに戻してから保存しても、録った日のまま）
-  LM.afterPracticeSheet(app, { lesson, dur, songId, fixedSong: true, title: songId ? D.song(songId).title : '個人練の録音', note: kept.note, ask: kept.ask,
-    onSave: ({ songId, note, ask }) => { D.addRec({ kind: 'practice', lessonId: lesson.id, songId, dur, note, raw: kept.raw || raw }); if (D.addAsk(lesson.typeId, songId, ask || '', lesson.id)) toast(app, '個人練と聞くことを保存しました'); else toast(app, '個人練を保存しました'); nav.refresh(); },
-    onDiscard: (v) => discarded(() => { if (D.lesson(lesson.id)) practiceAfter(lesson, songId, dur, Object.assign({ raw: kept.raw || raw }, v)); }) });
+// 個人練を止めたあとのシート。録音は止めた時点で保存済みで、「保存」で一言と聞くことを足す。
+// 「保存しない」は確かめずに録音を消し、通知の「取り消す」で録音とこのシートを戻す（書いていた一言・聞くことはそのまま）
+function practiceAfter(lesson, r, kept) {
+  LM.afterPracticeSheet(app, { lesson, dur: r.dur, songId: r.songId, fixedSong: true, title: r.songId ? D.song(r.songId).title : '個人練の録音', note: kept.note, ask: kept.ask,
+    onSave: ({ note, ask }) => { r.note = note; if (D.addAsk(lesson.typeId, r.songId, ask || '', lesson.id)) toast(app, '個人練と聞くことを保存しました'); else toast(app, '個人練を保存しました'); nav.refresh(); },
+    onDiscard: (v) => discarded(r, () => { if (D.lesson(lesson.id)) { practiceAfter(lesson, r, v); return true; } }) });
 }
-// 「保存しない」を押したあとの通知。「取り消す」で止めたあとのシートに戻す（ほかの削除と同じく、取り消せるのは最後の通知だけ）
-function discarded(reopen) { nav.refresh(); toast(app, '録音を保存しませんでした', { label: '取り消す', fn: reopen }); }
+// 「保存しない」：録音を消して通知を出す。「取り消す」で録音を戻し、止めたあとのシートに戻す（ほかの削除と同じく、取り消せるのは最後の通知だけ）
+// reopen はシートを開き直せたら true（付く先のレッスン・曲が消えていたら、録音も戻さない）
+function discarded(r, reopen) {
+  const i = D.removeRec(r); nav.refresh();
+  toast(app, '録音を捨てました', { label: '取り消す', fn: () => { D.restoreRec(r, i); if (reopen()) nav.refresh(); else D.removeRec(r); } });
+}
 function recordLesson(lesson, nav) {
   if (Rec.on && recTarget !== lesson.id) { blockedByLessonRec(); return; }
   recTarget = lesson.id;
   LM.recordSheet(app, { label: D.md(lesson.date) + ' ' + D.type(lesson.typeId).name + 'のレッスン', minimizable: true, onMin: () => nav.refresh(),
     onStop: (dur) => {
       const timed = lesson.notes.filter((n) => n.live); // この録音中に書いた行（行の時間がこの録音を指す）
+      // 止めた時点でレッスン録音として保存する（シートを出したままアプリが終わっても、40〜50分の録音が残るように）
+      const r = D.addRec({ kind: 'lesson', lessonId: lesson.id, dur });
       lesson.notes.forEach((n) => (n.live = false)); recTarget = null; nav.refresh();
-      setTimeout(() => lessonAfter(lesson, dur, timed), 420);
+      setTimeout(() => lessonAfter(lesson, r, timed), 420);
     } });
 }
-// レッスンの録音を止めたあとのシート：保存と、小さな赤字の「保存しない」
+// レッスンの録音を止めたあとのシート：一番下に「保存」、見出しの右端に小さな赤字の「保存しない」
+// 録音は止めた時点で保存済み。「保存」はシートを閉じて通知を出すだけ。
 // レッスンの録音は40〜50分あり録り直せないので、「保存しない」だけは確かめてから捨てる（個人練・曲ページの録音は確かめずに捨て、取り消すで戻す）
-function lessonAfter(lesson, dur, timed) {
+function lessonAfter(lesson, r, timed) {
+  const dur = r.dur;
   sheet(app, (el, close) => {
     const main = () => {
-      el.innerHTML = '<div class="ap"><div class="ap-head"><span class="ap-title">レッスンの録音</span><span class="ap-dur">' + D.dur(dur) + '</span></div>' +
+      el.innerHTML = '<div class="ap">' + LM.apHead('レッスンの録音', dur, true) +
         '<div class="ap-sub">' + D.fmtDate(lesson.date) + 'の' + esc(D.type(lesson.typeId).name) + 'のレッスン</div>' +
-        '<button class="ap-save press" data-act="save">保存</button><button class="ap-discard press" data-act="discard">保存しない</button></div>';
-      el.querySelector('[data-act=save]').onclick = () => { close(); D.addRec({ kind: 'lesson', lessonId: lesson.id, dur }); toast(app, 'レッスンの録音を保存しました'); nav.refresh(); };
+        '<button class="ap-save press" data-act="save">保存</button></div>';
+      el.querySelector('[data-act=save]').onclick = () => { close(); toast(app, 'レッスンの録音を保存しました'); nav.refresh(); };
       el.querySelector('[data-act=discard]').onclick = ask;
     };
     const ask = () => {
-      el.innerHTML = '<div class="tp"><div class="tp-title">レッスンの録音を保存しませんか？</div>' +
+      el.innerHTML = '<div class="tp"><div class="tp-title">レッスンの録音を捨てますか？</div>' +
         '<p class="tp-p">' + D.fmtDate(lesson.date) + 'のレッスンの録音（' + D.dur(dur) + '）を捨てます。' + (timed.length ? '学んだことの' + timed.length + '行に付いた録音の時間も消えます。' : '') + '元に戻せません。</p>' +
-        '<button class="ap-save" data-act="yes" style="background:var(--rec)">保存しない</button><button class="tp-add" data-act="no">やめる</button></div>';
+        '<button class="ap-save" data-act="yes" style="background:var(--rec)">捨てる</button><button class="tp-add" data-act="no">やめる</button></div>';
       el.querySelector('[data-act=no]').onclick = main; // やめたら保存のシートに戻る
-      el.querySelector('[data-act=yes]').onclick = () => { timed.forEach((n) => (n.at = null)); close(); toast(app, 'レッスンの録音を保存しませんでした'); nav.refresh(); };
+      // 捨てると、その録音中に書いた行の時間も消す（指す録音がなくなるため）
+      el.querySelector('[data-act=yes]').onclick = () => { D.removeRec(r); timed.forEach((n) => (n.at = null)); close(); toast(app, 'レッスンの録音を捨てました'); nav.refresh(); };
     };
     main();
   }, { modal: true });
@@ -735,29 +745,38 @@ function lessonAfter(lesson, dur, timed) {
 const check = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>';
 function recordSong(s, nav) {
   if (blockedByLessonRec()) return;
-  LM.recordSheet(app, { label: s.title, onStop: (dur) => setTimeout(() => songAfter(s, dur, {}), 420) });
+  // 止めた時点で録音を保存する（既定のとおり直近のレッスン後の個人練。直近のレッスンがなければレッスンと関係ない録音）
+  LM.recordSheet(app, { label: s.title, onStop: (dur) => { const l = D.latest(s.typeId); const r = D.addRec(l ? { kind: 'practice', lessonId: l.id, songId: s.id, dur } : { kind: 'song', songId: s.id, dur }); nav.refresh(); setTimeout(() => songAfter(s, r, {}), 420); } });
 }
-// 曲ページから録ったあとのシート：一言・「＋ 次のレッスンで聞くこと」・「○/○のレッスン後の個人練」（既定でオン）・保存・保存しない
-// st：シートに戻したときの状態（一言・聞くこと・チェック・録った日）
-function songAfter(s, dur, st) {
-  if (!D.song(s.id)) return;
-  const l = D.latest(s.typeId); let link = st.link != null ? st.link && !!l : !!l; let note = st.note || ''; let ask = st.ask || ''; const raw = st.raw || D.TODAY;
+// 曲ページから録ったあとのシート：見出しの右端に「保存しない」、一言・「＋ 次のレッスンで聞くこと」・「○/○のレッスン後の個人練」（既定でオン）・保存
+// 録音は止めた時点で保存済み。「保存」で一言・聞くこと・チェックを反映する
+// st：シートに戻したときの状態（一言・聞くこと・チェック）
+function songAfter(s, r, st) {
+  if (!D.song(s.id)) return false;
+  const dur = r.dur;
+  const l = D.latest(s.typeId); let link = st.link != null ? st.link && !!l : !!l; let note = st.note || ''; let ask = st.ask || '';
   sheet(app, (el, close) => {
     const draw = () => {
-      el.innerHTML = '<div class="ap"><div class="ap-head"><span class="ap-title">' + esc(s.title) + '</span><span class="ap-dur">' + D.dur(dur) + '</span></div>' +
+      el.innerHTML = '<div class="ap">' + LM.apHead(s.title, dur, true) +
         '<div class="ap-k">一言</div><input id="g-note" class="ap-note" placeholder="例：テンポ60で通せた" autocomplete="off">' + LM.askField() +
         (l ? '<button class="tg' + (link ? ' on' : '') + '" data-act="tg"><span class="bx">' + (link ? check : '') + '</span><span>' + D.fmtDate(l.date) + 'のレッスン後の個人練</span></button>' : '') +
-        '<button class="ap-save" data-act="save">保存</button><button class="ap-discard press" data-act="discard">保存しない</button></div>';
+        '<button class="ap-save" data-act="save">保存</button></div>';
       const ni = el.querySelector('#g-note'); ni.value = note; ni.oninput = () => (note = ni.value);
       const askVal = LM.bindAskField(el); if (ask) { el.querySelector('[data-act=ask]').click(); el.querySelector('#ap-ask').value = ask; }
       el.querySelector('#ap-ask').oninput = (e) => (ask = e.target.value);
       const tg = el.querySelector('[data-act=tg]'); if (tg) tg.onclick = () => { link = !link; draw(); };
-      el.querySelector('[data-act=save]').onclick = () => { close(); D.addRec(link ? { kind: 'practice', lessonId: l.id, songId: s.id, dur, note, raw } : { kind: 'song', songId: s.id, dur, note, raw }); toast(app, D.addAsk(s.typeId, s.id, askVal(), link ? l.id : null) ? '録音と聞くことを保存しました' : '録音を保存しました'); nav.refresh(); };
-      // 保存しない：確かめずに捨て、通知の「取り消す」でこのシートに戻す
-      el.querySelector('[data-act=discard]').onclick = () => { close(); discarded(() => songAfter(s, dur, { note, ask: askVal(), link, raw })); };
+      el.querySelector('[data-act=save]').onclick = () => {
+        close();
+        // チェックを外したらレッスンと関係ない録音にする。日付は録った日（r.raw）から決め直す
+        Object.assign(r, link ? { kind: 'practice', lessonId: l.id } : { kind: 'song', lessonId: null }, { note }); r.date = D.recDate(r.kind, r.lessonId, r.raw);
+        toast(app, D.addAsk(s.typeId, s.id, askVal(), link ? l.id : null) ? '録音と聞くことを保存しました' : '録音を保存しました'); nav.refresh();
+      };
+      // 保存しない：確かめずに録音を消し、通知の「取り消す」で録音とこのシートを戻す
+      el.querySelector('[data-act=discard]').onclick = () => { const v = { note, ask: askVal(), link }; close(); discarded(r, () => songAfter(s, r, v)); };
     };
     draw();
   }, { modal: true });
+  return true;
 }
 const whoTag = (by, attr) => (attr ? '<button class="who ' + by + '" ' + attr + '>' : '<span class="who ' + by + '">') + (by === 't' ? '先生' : '自分') + (attr ? '</button>' : '</span>');
 
@@ -1354,9 +1373,11 @@ function recEditSheet(r) {
         if (!lid && !sid) { toast(app, 'レッスンか曲を選んでください'); return; }
         let same = null; // 同じ名前の曲があれば、作らずにその曲へ
         if (sid === '__new') { if (!newName.trim()) { nn.focus(); return; } const sr = D.songByName(tid, newName.trim()); sid = sr.song.id; if (sr.existed) same = sr.song; } // 曲を作るだけ。扱った曲には入れない
+        const moved = (lid || null) !== (r.lessonId || null); // 「どのレッスンの後か」を変えたか
         Object.assign(r, { note: note.trim(), songId: sid || null, lessonId: lid || null, kind: lid ? 'practice' : 'song', marks });
-        // 日付は取り込みと同じ決まりで決め直す（録った日。レッスンより前ならレッスンの日付）。録った日から決めるので、レッスンを戻せば日付も戻る
-        if (!r.raw) r.raw = r.date; r.date = D.recDate(r.kind, r.lessonId, r.raw);
+        // 「どのレッスンの後か」を変えたときだけ、日付を取り込みと同じ決まりで決め直す（録った日。レッスンより前ならレッスンの日付）。
+        // 録った日から決めるので、レッスンを戻せば日付も戻る。一言や曲だけを直したときは日付を変えない（レッスンの日付を変えたあとも、個人練の日付は録った日のまま）
+        if (moved) { if (!r.raw) r.raw = r.date; r.date = D.recDate(r.kind, r.lessonId, r.raw); }
         close(); toast(app, same ? LM.sameSongMsg(same, 'に直しました') : '録音を直しました'); nav.refresh();
       };
       el.querySelector('[data-act=del]').onclick = () => { close(); setTimeout(() => recDelConfirm(r), 400); };

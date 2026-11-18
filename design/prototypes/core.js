@@ -133,6 +133,10 @@
       const l = D.lesson(lessonId); const i = l.songIds.indexOf(songId);
       if (i >= 0) l.songIds.splice(i, 1); else l.songIds.push(songId);
     },
+    // 録音は止めた時点で保存されたものとして扱う（止めたあとのシートを出したままアプリが終わっても残るように）。
+    // 「保存しない」を押したときだけ removeRec で消し、通知の「取り消す」で restoreRec が同じ位置に戻す
+    removeRec(r) { const i = S.recs.indexOf(r); if (i >= 0) S.recs.splice(i, 1); return i; },
+    restoreRec(r, i) { if (!S.recs.includes(r)) S.recs.splice(i >= 0 ? Math.min(i, S.recs.length) : S.recs.length, 0, r); },
     addRec(o) { const r = Object.assign({ id: nid('r'), date: TODAY, note: '', songId: null, lessonId: null }, o); if (!r.raw) r.raw = r.date; r.date = D.recDate(r.kind, r.lessonId, r.raw); S.recs.push(r); return r; },
     asksOf: (typeId) => S.asks.filter((a) => a.typeId === typeId),
     // lessonId：書いたレッスン（そのレッスンのページ・その後の個人練から書いたとき）。レッスンをほかのフォルダへ移すとき一緒に移す
