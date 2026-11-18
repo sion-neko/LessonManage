@@ -102,15 +102,23 @@
   };
 
   // 曲を選ぶ（レッスンで扱った曲）
+  // 並びは最近の動きの新しい順。長い一覧では、しばらく動きのない曲を「ほかの曲（N）」に畳む（選んでいる曲は畳まない）
+  // 並びは開いたときに決めて、選んでいる間は動かさない（選ぶとその曲の動きが今日になり、押した場所から逃げてしまうため）
   LM.songPicker = function (host, lesson, onDone) {
+    const f = D.foldSongs(lesson.typeId);
+    const recent = f.recent.slice(); let old = f.old.filter((s) => !lesson.songIds.includes(s.id));
+    recent.push(...f.old.filter((s) => lesson.songIds.includes(s.id)));
+    let openOld = false;
     sheet(host, (el, close) => {
+      const chip = (s) => '<button class="chip press' + (lesson.songIds.includes(s.id) ? ' on' : '') + '" data-s="' + s.id + '">' + esc(s.title) + '</button>';
       const draw = () => {
-        el.innerHTML = '<div class="tp"><div class="tp-title">扱った曲</div><div class="chips">' +
-          D.songsOf(lesson.typeId).map((s) => '<button class="chip press' + (lesson.songIds.includes(s.id) ? ' on' : '') + '" data-s="' + s.id + '">' + esc(s.title) + '</button>').join('') +
+        el.innerHTML = '<div class="tp"><div class="tp-title">扱った曲</div><div class="chips">' + recent.map(chip).join('') +
+          (old.length ? (openOld ? old.map(chip).join('') : '<button class="chip press chip-more" data-act="old">ほかの曲（' + old.length + '）</button>') : '') +
           '</div><div class="sp-new"><input id="sp-new" class="ap-note" placeholder="新しい曲の名前"><button class="sp-add press" data-act="new">追加</button></div>' +
           '<button class="ap-save press" data-act="done">完了</button></div>';
         el.querySelectorAll('[data-s]').forEach((b) => (b.onclick = () => { D.toggleSong(lesson.id, b.dataset.s); draw(); }));
-        el.querySelector('[data-act=new]').onclick = () => { const v = el.querySelector('#sp-new').value.trim(); if (!v) return; const r = D.songByName(lesson.typeId, v); if (!lesson.songIds.includes(r.song.id)) D.toggleSong(lesson.id, r.song.id); draw(); if (r.existed) LM.toast(host, LM.sameSongMsg(r.song, 'を選びました')); };
+        const ob = el.querySelector('[data-act=old]'); if (ob) ob.onclick = () => { openOld = true; draw(); };
+        el.querySelector('[data-act=new]').onclick = () => { const v = el.querySelector('#sp-new').value.trim(); if (!v) return; const r = D.songByName(lesson.typeId, v); if (!lesson.songIds.includes(r.song.id)) D.toggleSong(lesson.id, r.song.id); if (!recent.includes(r.song)) { old = old.filter((x) => x !== r.song); recent.unshift(r.song); } draw(); if (r.existed) LM.toast(host, LM.sameSongMsg(r.song, 'を選びました')); };
         el.querySelector('[data-act=done]').onclick = () => { close(); onDone && onDone(); };
       };
       draw();
@@ -171,13 +179,15 @@
   LM.practiceStand = function (host, o) {
     const l = o.lesson; const t = D.type(l.typeId);
     const song = o.songId ? D.song(o.songId) : null; const learned = o.learned || l.learned;
+    // groups：見出しごとの学んだこと（曲を選んだときは、その曲の行 → 言葉の題・題なしの行）
+    const groups = (o.groups || [{ k: song ? 'この曲で学んだこと' : '学んだこと', items: learned }]).filter((g) => g.items.length);
     const el = document.createElement('div');
     el.className = 'stand';
     el.innerHTML =
       '<div class="st-top"><span class="st-dot"></span><span class="st-time">0:00</span><span class="st-lbl">' + esc(t.name) + ' · ' + D.md(l.date) + 'のレッスン後</span></div>' +
       '<div class="st-body">' + (song ? '<div class="st-song">♪ ' + esc(song.title) + '</div>' : '') +
       '<div class="st-k">宿題</div><ul class="st-hw">' + l.homework.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>' +
-      (learned.length ? '<div class="st-k">' + (song ? 'この曲で学んだこと' : '学んだこと') + '</div><ul class="st-lr">' + learned.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>' : '') +
+      groups.map((g) => '<div class="st-k">' + esc(g.k) + '</div><ul class="st-lr">' + g.items.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>').join('') +
       '</div>' +
       '<div class="st-foot"><span class="st-hint">ロック中も録音は継続</span><button class="rs-stop press" aria-label="録音を止める"><span></span></button></div>';
     host.appendChild(el);

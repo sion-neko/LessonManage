@@ -80,9 +80,25 @@
     memosOf: (songId) => S.memos.filter((m) => m.songId === songId).sort(byDateDesc),
     songsOf: (typeId) => S.songs.filter((s) => s.typeId === typeId),
     allRecs: () => S.recs.slice().sort(byDateDesc),
+    // 曲の最近の動き：録音・メモ・扱ったレッスン・曲を作った日のうち、いちばん新しい日
     lastActivity(songId) {
-      const ds = [...D.recsOfSong(songId), ...D.memosOf(songId)].map((x) => x.date).sort();
+      const s = D.song(songId);
+      const ds = [...D.recsOfSong(songId), ...D.memosOf(songId), ...D.lessonsOfSong(songId)].map((x) => x.date).concat(s && s.created ? [s.created] : []).sort();
       return ds[ds.length - 1] || null;
+    },
+    // 曲を最近の動きの新しい順に（動きが同じ日・どちらもないときは作った順）
+    songsByActivity(typeId) {
+      const ss = D.songsOf(typeId); const la = new Map(ss.map((s) => [s, D.lastActivity(s.id) || '']));
+      return ss.map((s, i) => [s, i]).sort((a, b) => (la.get(a[0]) < la.get(b[0]) ? 1 : la.get(a[0]) > la.get(b[0]) ? -1 : a[1] - b[1])).map((x) => x[0]);
+    },
+    // 長い一覧（10曲以上）では、3か月（90日）動きのない曲を「ほかの曲（N）」に畳む。9曲までは1画面に収まるので畳まない
+    FOLD_MIN: 10, FOLD_DAYS: 90,
+    foldSongs(typeId) {
+      const all = D.songsByActivity(typeId);
+      if (all.length < D.FOLD_MIN) return { recent: all, old: [] };
+      const lim = new Date(TODAY); lim.setDate(lim.getDate() - D.FOLD_DAYS); const ls = lim.toISOString().slice(0, 10);
+      const isOld = (s) => (D.lastActivity(s.id) || '') < ls;
+      return { recent: all.filter((s) => !isOld(s)), old: all.filter(isOld) };
     },
     // 時系列（曲ページ用）：メモ・録音・レッスンをまとめて新しい順
     songTimeline(songId) {
@@ -96,7 +112,7 @@
     },
 
     addType(name, teacher) { const t = { id: nid('t'), name, teacher: teacher || '' }; S.types.push(t); return t; },
-    addSong(typeId, title, sub) { const s = { id: nid('s'), typeId, title, sub: sub || '' }; S.songs.push(s); return s; },
+    addSong(typeId, title, sub) { const s = { id: nid('s'), typeId, title, sub: sub || '', created: TODAY }; S.songs.push(s); return s; },
     // 同じフォルダの、同じ名前の曲（全角半角・大文字小文字・空白の違いは同じとみなす）
     // except：名前を変えるときの、その曲自身（自分と同じ名前は「同じ名前の曲」としない）
     findSong(typeId, title, except) { const k = (t) => String(t).normalize('NFKC').replace(/\s+/g, '').toLowerCase(); return S.songs.find((s) => s !== except && s.typeId === typeId && k(s.title) === k(title)) || null; },
@@ -118,12 +134,17 @@
     removeAsk(id) { const i = S.asks.findIndex((a) => a.id === id); if (i >= 0) S.asks.splice(i, 1); },
     addMemo(songId, text) { if (!text.trim()) return null; const m = { id: nid('m'), songId, date: TODAY, text: text.trim() }; S.memos.push(m); return m; },
 
-    fmtDate(d, withYear) {
+    // 日付の書き方（全画面で共通）：今年の日付は「11/17」、今年でない日付は「2025/11/24」のように年をつける
+    fmtDate(d) {
       const [y, m, dd] = d.split('-').map(Number);
       const w = '日月火水木金土'[new Date(y, m - 1, dd).getDay()];
-      return (withYear ? y + '/' : '') + m + '/' + dd + '（' + w + '）';
+      return D.md(d) + '（' + w + '）';
     },
-    md(d) { const [, m, dd] = d.split('-').map(Number); return m + '/' + dd; },
+    md(d) { const [y, m, dd] = d.split('-').map(Number); return (String(y) === TODAY.slice(0, 4) ? '' : y + '/') + m + '/' + dd; },
+    // 月の見出し：今年は「10月」、今年でなければ「2025年12月」
+    ym(d) { const [y, m] = d.split('-').map(Number); return (String(y) === TODAY.slice(0, 4) ? '' : y + '年') + m + '月'; },
+    // 合計時間：「1時間17分」「45分」
+    hm(sec) { const m = Math.round(sec / 60); if (!m) return '1分未満'; return (m >= 60 ? Math.floor(m / 60) + '時間' : '') + (m % 60 || m < 60 ? (m % 60) + '分' : ''); },
     rel(d) {
       const ms = new Date(TODAY) - new Date(d); const n = Math.round(ms / 86400000);
       if (n === 0) return '今日'; if (n === 1) return '昨日'; if (n < 7) return n + '日前';
