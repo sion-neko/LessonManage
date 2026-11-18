@@ -272,6 +272,20 @@
     setTimeout(hide, act ? 4000 : 1600);
   }
 
+  // 長い名前を詰める（通知・追加欄の薄い字など、名前を短く出すところで共通）。12文字までならそのまま
+  // 似た名前（ヴィヴァルディ イ短調 第1楽章／第3楽章）を見分けられるよう、前だけでなく後ろも残す（「ヴィヴァルディ…第3楽章」）
+  // 後ろは、空白で区切った最後の言葉が5文字までならその言葉、ほかは最後の4文字。前は残りの字数で、言葉の途中で切れるときは空白まで戻す
+  const SHORT_MAX = 12;
+  function short(name) {
+    const t = String(name).trim(); const cs = [...t]; if (cs.length <= SHORT_MAX) return t;
+    const ws = t.split(/\s+/); const last = [...ws[ws.length - 1]];
+    const tail = (ws.length > 1 && last.length <= 5 ? last.join('') : cs.slice(-4).join('').replace(/^[\s・･、。,.\-ー]+/, ''));
+    const n = SHORT_MAX - 1 - [...tail].length; let head = cs.slice(0, n).join('');
+    if (cs[n] && !/\s/.test(cs[n])) { const i = head.search(/\s\S*$/); if (i >= 3) head = head.slice(0, i); } // 言葉の途中で切れるときは空白まで戻す
+    head = head.trim();
+    return head + '…' + tail;
+  }
+
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   function h(html) { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; }
 
@@ -307,5 +321,5 @@
   window.__taps = 0;
   document.addEventListener('click', (e) => { if (e.target.closest('button, a, [data-tap], input, textarea, label')) window.__taps++; }, true);
 
-  window.LM = { D, Rec, Play, makeNav, sheet, toast, esc, h, I, wave };
+  window.LM = { D, Rec, Play, makeNav, sheet, toast, esc, h, I, wave, short };
 })();

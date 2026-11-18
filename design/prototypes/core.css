@@ -36,6 +36,9 @@ input, textarea { font: inherit; color: inherit; }
 .toast.in { opacity: 1; transform: translate(-50%, 0); }
 .toast.act { display: flex; align-items: center; gap: 12px; padding: 6px 6px 6px 18px; }
 .toast.act button { color: #ffd25e; font-weight: 700; padding: 4px 10px; }
+/* 長い通知は画面の幅で折り返す（曲名の入った通知と「取り消す」が画面からはみ出さないように） */
+.toast { width: max-content; max-width: calc(100% - 24px); white-space: normal; line-height: 1.4; }
+.toast.act button { flex: none; white-space: nowrap; }
 .wave { display: inline-flex; align-items: center; gap: 2px; height: 22px; }
 .wave i { display: block; width: 2.5px; border-radius: 2px; background: currentColor; opacity: .55; }
 .press { transition: transform .12s ease, opacity .12s ease; }

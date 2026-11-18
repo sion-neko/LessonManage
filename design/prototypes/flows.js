@@ -27,7 +27,7 @@
         '<div class="rs-label">' + esc(o.label || '録音') + '</div>' +
         '<div class="rs-time">0:00</div>' +
         '<div class="rs-wave"></div>' +
-        '<div class="rs-hint">' + (o.minimizable ? 'ロック中・ほかのアプリでも録音は継続' : 'ロック中も録音は継続') + '</div>' +
+        '<div class="rs-hint">' + (o.minimizable ? '画面を消しても、ほかのアプリを開いても録音は続きます' : '画面を消しても録音は続きます') + '</div>' +
         '<div class="rs-row">' +
         (o.minimizable ? '<button class="rs-min press" data-act="min">録音したままメモ</button>' : '<span></span>') +
         '<button class="rs-stop press" data-act="stop" aria-label="録音を止める"><span></span></button>' +
@@ -125,8 +125,8 @@
     }, { onClose: onDone });
   };
 
-  // 同じ名前の曲があって新しく作らなかったときの短い通知（長い曲名は詰める）
-  LM.sameSongMsg = function (song, tail) { const t = song.title.length > 9 ? song.title.slice(0, 8).trim() + '…' : song.title; return 'すでにある「' + t + '」' + tail; };
+  // 同じ名前の曲があって新しく作らなかったときの短い通知（長い曲名は詰める。詰め方は LM.short で共通）
+  LM.sameSongMsg = function (song, tail) { return 'すでにある「' + LM.short(song.title) + '」' + tail; };
 
   // 箇条書き（1行1項目）。Enterで次の行へ
   LM.bullets = function (lesson, field, cls) {
@@ -189,7 +189,7 @@
       '<div class="st-k">宿題</div><ul class="st-hw">' + l.homework.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>' +
       groups.map((g) => '<div class="st-k">' + esc(g.k) + '</div><ul class="st-lr">' + g.items.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>').join('') +
       '</div>' +
-      '<div class="st-foot"><span class="st-hint">ロック中も録音は継続</span><button class="rs-stop press" aria-label="録音を止める"><span></span></button></div>';
+      '<div class="st-foot"><span class="st-hint">画面を消しても録音は続きます</span><button class="rs-stop press" aria-label="録音を止める"><span></span></button></div>';
     host.appendChild(el);
     requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('in')));
     if (!Rec.on) Rec.start({ stand: true });
