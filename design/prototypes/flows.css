@@ -57,3 +57,5 @@
 .st-hint { font-size: 13px; color: var(--muted); }
 .ap-ask { align-self: flex-start; font-size: 14px; color: var(--accent); padding: 2px 0; }
 .chip-more { color: var(--accent); border-style: dashed; }
+/* 録音を止めたあとのシートの「保存しない」：保存の下に小さな赤字で（失敗テイクをその場で捨てられるように。目立たせない） */
+.ap-discard { align-self: center; margin-top: -2px; padding: 6px 14px; font-size: 14px; color: var(--rec, #ff3b30); }

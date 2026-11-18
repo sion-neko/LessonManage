@@ -690,34 +690,74 @@ function standGroups(lesson, songId) {
 }
 function recordPracticeOf(lesson, songId, nav) {
   const groups = standGroups(lesson, songId); const learned = groups.flatMap((g) => g.items);
-  LM.practiceStand(app, { lesson, songId, learned, groups, onStop: (dur) => setTimeout(() => LM.afterPracticeSheet(app, { lesson, dur, songId, fixedSong: true, title: songId ? D.song(songId).title : '個人練の録音', onSave: ({ songId, note, ask }) => { D.addRec({ kind: 'practice', lessonId: lesson.id, songId, dur, note }); if (D.addAsk(lesson.typeId, songId, ask || '', lesson.id)) toast(app, '個人練と聞くことを保存しました'); else toast(app, '個人練を保存しました'); nav.refresh(); } }), 200) });
+  LM.practiceStand(app, { lesson, songId, learned, groups, onStop: (dur) => setTimeout(() => practiceAfter(lesson, songId, dur, {}), 200) });
 }
+// 個人練を止めたあとのシート。「保存しない」は確かめずに捨て、通知の「取り消す」でこのシートに戻す（書いていた一言・聞くことはそのまま）
+function practiceAfter(lesson, songId, dur, kept) {
+  const raw = D.TODAY; // 録った日（シートに戻してから保存しても、録った日のまま）
+  LM.afterPracticeSheet(app, { lesson, dur, songId, fixedSong: true, title: songId ? D.song(songId).title : '個人練の録音', note: kept.note, ask: kept.ask,
+    onSave: ({ songId, note, ask }) => { D.addRec({ kind: 'practice', lessonId: lesson.id, songId, dur, note, raw: kept.raw || raw }); if (D.addAsk(lesson.typeId, songId, ask || '', lesson.id)) toast(app, '個人練と聞くことを保存しました'); else toast(app, '個人練を保存しました'); nav.refresh(); },
+    onDiscard: (v) => discarded(() => { if (D.lesson(lesson.id)) practiceAfter(lesson, songId, dur, Object.assign({ raw: kept.raw || raw }, v)); }) });
+}
+// 「保存しない」を押したあとの通知。「取り消す」で止めたあとのシートに戻す（ほかの削除と同じく、取り消せるのは最後の通知だけ）
+function discarded(reopen) { nav.refresh(); toast(app, '録音を保存しませんでした', { label: '取り消す', fn: reopen }); }
 function recordLesson(lesson, nav) {
   if (Rec.on && recTarget !== lesson.id) { blockedByLessonRec(); return; }
   recTarget = lesson.id;
   LM.recordSheet(app, { label: D.md(lesson.date) + ' ' + D.type(lesson.typeId).name + 'のレッスン', minimizable: true, onMin: () => nav.refresh(),
-    onStop: (dur) => { D.addRec({ kind: 'lesson', lessonId: lesson.id, dur }); lesson.notes.forEach((n) => (n.live = false)); recTarget = null; toast(app, 'レッスンの録音を保存しました'); nav.refresh(); } });
+    onStop: (dur) => {
+      const timed = lesson.notes.filter((n) => n.live); // この録音中に書いた行（行の時間がこの録音を指す）
+      lesson.notes.forEach((n) => (n.live = false)); recTarget = null; nav.refresh();
+      setTimeout(() => lessonAfter(lesson, dur, timed), 420);
+    } });
+}
+// レッスンの録音を止めたあとのシート：保存と、小さな赤字の「保存しない」
+// レッスンの録音は40〜50分あり録り直せないので、「保存しない」だけは確かめてから捨てる（個人練・曲ページの録音は確かめずに捨て、取り消すで戻す）
+function lessonAfter(lesson, dur, timed) {
+  sheet(app, (el, close) => {
+    const main = () => {
+      el.innerHTML = '<div class="ap"><div class="ap-head"><span class="ap-title">レッスンの録音</span><span class="ap-dur">' + D.dur(dur) + '</span></div>' +
+        '<div class="ap-sub">' + D.fmtDate(lesson.date) + 'の' + esc(D.type(lesson.typeId).name) + 'のレッスン</div>' +
+        '<button class="ap-save press" data-act="save">保存</button><button class="ap-discard press" data-act="discard">保存しない</button></div>';
+      el.querySelector('[data-act=save]').onclick = () => { close(); D.addRec({ kind: 'lesson', lessonId: lesson.id, dur }); toast(app, 'レッスンの録音を保存しました'); nav.refresh(); };
+      el.querySelector('[data-act=discard]').onclick = ask;
+    };
+    const ask = () => {
+      el.innerHTML = '<div class="tp"><div class="tp-title">レッスンの録音を保存しませんか？</div>' +
+        '<p class="tp-p">' + D.fmtDate(lesson.date) + 'のレッスンの録音（' + D.dur(dur) + '）を捨てます。' + (timed.length ? '学んだことの' + timed.length + '行に付いた録音の時間も消えます。' : '') + '元に戻せません。</p>' +
+        '<button class="ap-save" data-act="yes" style="background:var(--rec)">保存しない</button><button class="tp-add" data-act="no">やめる</button></div>';
+      el.querySelector('[data-act=no]').onclick = main; // やめたら保存のシートに戻る
+      el.querySelector('[data-act=yes]').onclick = () => { timed.forEach((n) => (n.at = null)); close(); toast(app, 'レッスンの録音を保存しませんでした'); nav.refresh(); };
+    };
+    main();
+  }, { modal: true });
 }
 const check = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>';
 function recordSong(s, nav) {
   if (blockedByLessonRec()) return;
-  LM.recordSheet(app, { label: s.title, onStop: (dur) => setTimeout(() => {
-    const l = D.latest(s.typeId); let link = !!l; let note = ''; let ask = '';
-    sheet(app, (el, close) => {
-      const draw = () => {
-        el.innerHTML = '<div class="ap"><div class="ap-head"><span class="ap-title">' + esc(s.title) + '</span><span class="ap-dur">' + D.dur(dur) + '</span></div>' +
-          '<div class="ap-k">一言</div><input id="g-note" class="ap-note" placeholder="例：テンポ60で通せた" autocomplete="off">' + LM.askField() +
-          (l ? '<button class="tg' + (link ? ' on' : '') + '" data-act="tg"><span class="bx">' + (link ? check : '') + '</span><span>' + D.fmtDate(l.date) + 'のレッスン後の個人練</span></button>' : '') +
-          '<button class="ap-save" data-act="save">保存</button></div>';
-        const ni = el.querySelector('#g-note'); ni.value = note; ni.oninput = () => (note = ni.value);
-        const askVal = LM.bindAskField(el); if (ask) { el.querySelector('[data-act=ask]').click(); el.querySelector('#ap-ask').value = ask; }
-        el.querySelector('#ap-ask').oninput = (e) => (ask = e.target.value);
-        const tg = el.querySelector('[data-act=tg]'); if (tg) tg.onclick = () => { link = !link; draw(); };
-        el.querySelector('[data-act=save]').onclick = () => { close(); D.addRec(link ? { kind: 'practice', lessonId: l.id, songId: s.id, dur, note } : { kind: 'song', songId: s.id, dur, note }); toast(app, D.addAsk(s.typeId, s.id, askVal(), link ? l.id : null) ? '録音と聞くことを保存しました' : '録音を保存しました'); nav.refresh(); };
-      };
-      draw();
-    }, { modal: true });
-  }, 420) });
+  LM.recordSheet(app, { label: s.title, onStop: (dur) => setTimeout(() => songAfter(s, dur, {}), 420) });
+}
+// 曲ページから録ったあとのシート：一言・「＋ 次のレッスンで聞くこと」・「○/○のレッスン後の個人練」（既定でオン）・保存・保存しない
+// st：シートに戻したときの状態（一言・聞くこと・チェック・録った日）
+function songAfter(s, dur, st) {
+  if (!D.song(s.id)) return;
+  const l = D.latest(s.typeId); let link = st.link != null ? st.link && !!l : !!l; let note = st.note || ''; let ask = st.ask || ''; const raw = st.raw || D.TODAY;
+  sheet(app, (el, close) => {
+    const draw = () => {
+      el.innerHTML = '<div class="ap"><div class="ap-head"><span class="ap-title">' + esc(s.title) + '</span><span class="ap-dur">' + D.dur(dur) + '</span></div>' +
+        '<div class="ap-k">一言</div><input id="g-note" class="ap-note" placeholder="例：テンポ60で通せた" autocomplete="off">' + LM.askField() +
+        (l ? '<button class="tg' + (link ? ' on' : '') + '" data-act="tg"><span class="bx">' + (link ? check : '') + '</span><span>' + D.fmtDate(l.date) + 'のレッスン後の個人練</span></button>' : '') +
+        '<button class="ap-save" data-act="save">保存</button><button class="ap-discard press" data-act="discard">保存しない</button></div>';
+      const ni = el.querySelector('#g-note'); ni.value = note; ni.oninput = () => (note = ni.value);
+      const askVal = LM.bindAskField(el); if (ask) { el.querySelector('[data-act=ask]').click(); el.querySelector('#ap-ask').value = ask; }
+      el.querySelector('#ap-ask').oninput = (e) => (ask = e.target.value);
+      const tg = el.querySelector('[data-act=tg]'); if (tg) tg.onclick = () => { link = !link; draw(); };
+      el.querySelector('[data-act=save]').onclick = () => { close(); D.addRec(link ? { kind: 'practice', lessonId: l.id, songId: s.id, dur, note, raw } : { kind: 'song', songId: s.id, dur, note, raw }); toast(app, D.addAsk(s.typeId, s.id, askVal(), link ? l.id : null) ? '録音と聞くことを保存しました' : '録音を保存しました'); nav.refresh(); };
+      // 保存しない：確かめずに捨て、通知の「取り消す」でこのシートに戻す
+      el.querySelector('[data-act=discard]').onclick = () => { close(); discarded(() => songAfter(s, dur, { note, ask: askVal(), link, raw })); };
+    };
+    draw();
+  }, { modal: true });
 }
 const whoTag = (by, attr) => (attr ? '<button class="who ' + by + '" ' + attr + '>' : '<span class="who ' + by + '">') + (by === 't' ? '先生' : '自分') + (attr ? '</button>' : '</span>');
 
@@ -771,8 +811,14 @@ function addTopicSheet(l, onAdd) {
       if (r && r.existed) toast(app, LM.sameSongMsg(r.song, l.topics.some((t) => t.songId === id) ? 'の題に書きます' : 'を題にしました'));
       if (!l.songIds.includes(id)) D.toggleSong(l.id, id); close(); onAdd(l.topics.find((t) => t.songId === id) || addTopic(l, id));
     },
-    onWord: (v) => { close(); onAdd(addTopic(l, null, v)); } }));
+    // 同じ名前の曲以外の題がもうあれば、題を増やさずにその題の追加欄へ（曲と同じ。比べ方も同じ名前の曲と同じ）
+    onWord: (v) => {
+      const same = sameWordTopic(l, v); close();
+      if (same) { toast(app, 'すでにある「' + shortName(same.title) + '」の題に書きます'); onAdd(same); } else onAdd(addTopic(l, null, v));
+    } }));
 }
+// そのレッスンの、同じ名前の曲以外の題（except：名前を変えている題自身）
+const sameWordTopic = (l, title, except) => l.topics.find((x) => x !== except && !x.songId && songKey(x.title) === songKey(title)) || null;
 // 題を直すシート：言葉の題は名前を変える、曲の題は曲を変える。どちらも題を外せる（行は題なしに戻る）
 function topicSheet(l, t, onDone) {
   sheet(app, (el, close) => {
@@ -780,7 +826,8 @@ function topicSheet(l, t, onDone) {
     el.innerHTML = '<div class="tp"><div class="tp-title">題</div>' + (t.songId ? '<div class="tp-item"><b>' + topicLabel(t) + '</b></div><button class="tp-item" data-act="song"><b>曲を変える</b><span>' + I.chev + '</span></button>' : '<input id="tk-ed" class="ap-note" autocomplete="off"><button class="ap-save" data-act="ok">保存</button>') +
       '<button class="tp-add" data-act="rm" style="color:var(--rec)">題を外す</button></div>';
     const inp = el.querySelector('#tk-ed');
-    if (inp) { inp.value = t.title; el.querySelector('[data-act=ok]').onclick = () => { const v = inp.value.trim(); if (v) t.title = v; close(); onDone(); }; }
+    // 名前を変える：同じ名前の曲以外の題がそのレッスンにもうあれば、行をそちらへ移して1つにまとめる（曲を変えると同じ。通知の「取り消す」で戻せる）
+    if (inp) { inp.value = t.title; el.querySelector('[data-act=ok]').onclick = () => { const v = inp.value.trim(); close(); if (!v) { onDone(); return; } if (sameWordTopic(l, v, t)) { retopic(l, t, { title: v }); return; } t.title = v; onDone(); }; }
     const nm = shortName(t.songId ? D.song(t.songId).title : t.title);
     // 曲を変える：題の追加と同じ並びで選ぶ。行はそのまま付いていく
     const sb = el.querySelector('[data-act=song]');
@@ -817,7 +864,7 @@ function retopic(l, t, to) {
   if (to.songId && !l.songIds.includes(to.songId)) { if (i >= 0 && !keepOld) l.songIds[i] = to.songId; else l.songIds.push(to.songId); }
   else if (i >= 0 && !keepOld) l.songIds.splice(i, 1);
   normNotes(l); sync(l); nav.refresh();
-  const nm = shortName(to.songId ? D.song(to.songId).title : to.title);
+  const nm = shortName(to.songId ? D.song(to.songId).title : dest ? dest.title : to.title); // まとめたときは、まとめた先の題の名前で出す
   toast(app, dest ? '「' + nm + '」の題にまとめました' : '「' + nm + '」に変えました', { label: '取り消す', fn: undo });
 }
 
@@ -996,16 +1043,20 @@ function typeEdit(nav, t) {
     const nm = el.querySelector('#te-name'), tc = el.querySelector('#te-teacher');
     const del = el.querySelector('[data-act=del]');
     if (del) del.onclick = () => {
-      // 確かめてから消す。レッスン・曲・録音もまとめて消えるので、件数を見せる
+      // 録音中のレッスンがあるフォルダは消さない（レッスンの削除と同じ）
+      if (Rec.on && recTarget && D.lesson(recTarget) && D.lesson(recTarget).typeId === t.id) { close(); toast(app, '録音を止めてから削除できます'); return; }
+      // 確かめてから消す。レッスン・曲・録音・メモ・聞くこともまとめて消えるので、件数を見せる
       const ls = D.S.lessons.filter((l) => l.typeId === t.id); const ss = D.songsOf(t.id);
       const rs = D.S.recs.filter((r) => ls.some((l) => l.id === r.lessonId) || ss.some((sg) => sg.id === r.songId));
+      const ms = D.S.memos.filter((m) => ss.some((sg) => sg.id === m.songId)); const as = D.asksOf(t.id);
       el.innerHTML = '<div class="tp"><div class="tp-title">「' + esc(t.name) + '」を削除</div>' +
-        '<p style="margin:0;font-size:15px;line-height:1.6;color:var(--muted)">レッスン' + ls.length + '件、曲' + ss.length + '曲、録音' + rs.length + '件も消えます。元に戻せません。</p>' +
+        '<p style="margin:0;font-size:15px;line-height:1.6;color:var(--muted)">レッスン' + ls.length + '件、曲' + ss.length + '曲、録音' + rs.length + '件' + (ms.length ? '、メモ' + ms.length + '件' : '') + (as.length ? '、聞くこと' + as.length + '件' : '') + 'も消えます。元に戻せません。</p>' +
         '<button class="ap-save" data-act="yes" style="background:var(--rec)">削除</button><button class="tp-add" data-act="no">やめる</button></div>';
       el.querySelector('[data-act=no]').onclick = close;
       el.querySelector('[data-act=yes]').onclick = () => {
         const drop = (arr, f) => { for (let i = arr.length - 1; i >= 0; i--) if (f(arr[i])) arr.splice(i, 1); };
-        drop(D.S.recs, (r) => rs.includes(r)); drop(D.S.memos, (m) => ss.some((sg) => sg.id === m.songId));
+        if (Play.rec && rs.includes(Play.rec)) Play.stop();
+        drop(D.S.recs, (r) => rs.includes(r)); drop(D.S.memos, (m) => ms.includes(m)); drop(D.S.asks, (a) => as.includes(a));
         drop(D.S.lessons, (l) => ls.includes(l)); drop(D.S.songs, (sg) => ss.includes(sg)); drop(D.S.types, (x) => x === t);
         if (cur === t.id) cur = D.S.types[0] ? D.S.types[0].id : null;
         close(); if (cur) nav.refresh(); else { tab = 'home'; nav.root('hello'); }
@@ -1052,9 +1103,9 @@ function lessonMenu(l, nav) {
     if (mv) mv.onclick = () => { const os = D.S.types.filter((x) => x.id !== l.typeId); if (os.length === 1) moveAsk(el, close, l, os[0].id); else moveFolderPick(el, close, l, os); };
     el.querySelector('[data-act=del]').onclick = () => {
       if (Rec.on && recTarget === l.id) { close(); toast(app, '録音を止めてから削除できます'); return; }
-      const rs = recsOfLesson(l);
+      const rs = recsOfLesson(l); const sp = rs.filter((r) => r.kind === 'practice' && r.songId && D.song(r.songId)); // 曲を選んだ個人練は、曲ページからも消える
       el.innerHTML = '<div class="tp"><div class="tp-title">' + D.fmtDate(l.date) + 'のレッスンを削除</div>' +
-        '<p class="tp-p">学んだこと' + l.notes.length + '行・宿題' + l.hw.length + '行と、' + (rs.length ? '録音' + rs.length + '件（レッスン録音・このレッスン後の個人練）も消えます。' : '録音はありません。') + '元に戻せません。</p>' +
+        '<p class="tp-p">学んだこと' + l.notes.length + '行・宿題' + l.hw.length + '行と、' + (rs.length ? '録音' + rs.length + '件（レッスン録音・このレッスン後の個人練）も消えます。' : '録音はありません。') + (sp.length ? '個人練' + sp.length + '件は曲ページからも消えます。' : '') + '元に戻せません。</p>' +
         '<button class="ap-save" data-act="yes" style="background:var(--rec)">削除</button><button class="tp-add" data-act="no">やめる</button></div>';
       el.querySelector('[data-act=no]').onclick = close;
       el.querySelector('[data-act=yes]').onclick = () => { Play.stop(); dropLesson(l); close(); toast(app, 'レッスンを削除しました'); nav.back(); };
@@ -1167,9 +1218,10 @@ function importSheet(nav, f, o) {
         if (!lid && !sid) { toast(app, 'レッスンか曲を選んでください'); return; }
         let same = null; // 同じ名前の曲があれば、作らずにその曲へ
         if (!asL && sid === '__new') { if (!newName.trim()) { nn.focus(); return; } const sr = D.songByName(tid, newName.trim()); sid = sr.song.id; if (sr.existed) same = sr.song; } // 曲を作るだけ。扱った曲には入れない
-        const r = asL ? { kind: 'lesson', lessonId: lid, songId: null, date: D.lesson(lid).date }
-          : lid ? { kind: 'practice', lessonId: lid, songId: sid || null, date: f.date < D.lesson(lid).date ? D.lesson(lid).date : f.date }
-          : { kind: 'song', lessonId: null, songId: sid, date: f.date };
+        // 日付は D.addRec が決める（レッスン録音はレッスンの日付、個人練はファイルの日付・レッスンより前ならレッスンの日付、関係ない録音はファイルの日付）
+        const r = asL ? { kind: 'lesson', lessonId: lid, songId: null, raw: f.date }
+          : lid ? { kind: 'practice', lessonId: lid, songId: sid || null, raw: f.date }
+          : { kind: 'song', lessonId: null, songId: sid, raw: f.date };
         D.addRec(Object.assign(r, { dur: f.dur, note: asL ? '' : note, imported: true }));
         close(); toast(app, same ? LM.sameSongMsg(same, 'に取り込みました') : '取り込みました'); nav.refresh();
       };
@@ -1303,6 +1355,8 @@ function recEditSheet(r) {
         let same = null; // 同じ名前の曲があれば、作らずにその曲へ
         if (sid === '__new') { if (!newName.trim()) { nn.focus(); return; } const sr = D.songByName(tid, newName.trim()); sid = sr.song.id; if (sr.existed) same = sr.song; } // 曲を作るだけ。扱った曲には入れない
         Object.assign(r, { note: note.trim(), songId: sid || null, lessonId: lid || null, kind: lid ? 'practice' : 'song', marks });
+        // 日付は取り込みと同じ決まりで決め直す（録った日。レッスンより前ならレッスンの日付）。録った日から決めるので、レッスンを戻せば日付も戻る
+        if (!r.raw) r.raw = r.date; r.date = D.recDate(r.kind, r.lessonId, r.raw);
         close(); toast(app, same ? LM.sameSongMsg(same, 'に直しました') : '録音を直しました'); nav.refresh();
       };
       el.querySelector('[data-act=del]').onclick = () => { close(); setTimeout(() => recDelConfirm(r), 400); };
@@ -1700,14 +1754,15 @@ const screens = {
     if (songView === 'sum') {
       const LIM = 3;
       // 空のときは「まだありません」ではなく、どうすればここに出るかを短く出す（題を作らずに書くと曲ページに出ないことに、初めてでも気づけるように）
-      const block = (title, rows, render, extra, empty) => {
+      // 各段は3件まで（先生の指摘は3日分）出し、残りは「すべて（N）」で開く。N はその段の行の数（先生の指摘は「N行」、録音・自分のメモは1件が1行なので「N件」）
+      const block = (title, rows, render, extra, empty, total) => {
         sc.appendChild(h('<div class="sec">' + title + '</div>'));
         const g = h('<div class="grp"></div>'); if (extra) g.appendChild(extra);
         if (!rows.length) g.appendChild(h('<div class="empty">' + esc(empty || 'まだありません') + '</div>'));
         const ul = h('<ul class="tr"></ul>'); g.appendChild(ul);
         const fill = (all) => { ul.innerHTML = ''; (all ? rows : rows.slice(0, LIM)).forEach((r) => ul.appendChild(render(r))); bindAt(ul); };
         fill(false);
-        if (rows.length > LIM) { const m = h('<button class="more">すべて（' + rows.length + '件）</button>'); m.onclick = () => { fill(true); m.remove(); }; g.appendChild(m); }
+        if (rows.length > LIM) { const m = h('<button class="more">すべて（' + (total || rows.length + '件') + '）</button>'); m.onclick = () => { fill(true); m.remove(); }; g.appendChild(m); }
         sc.appendChild(g); return g;
       };
       // 先生の指摘：レッスンで書いた先生の行と、曲ページで「先生」として書いたメモ（チャットの左側と同じものをそろえる）
@@ -1716,7 +1771,7 @@ const screens = {
       // 1行ずつタップで直す・左スワイプで削除（日付の見出しは日ごとに1つ）
       const tq = '「♪ ' + s.title + '」';
       block('先生の指摘', groups, (g) => { const li = h('<li class="mli"><span class="d">' + D.fmtDate(g.date) + '</span></li>'); g.items.forEach((n) => li.appendChild(memoRow('<span class="t"><span>・' + esc(n.text) + '</span>' + atBtn(n) + '</span>', memoRef(n)))); return li; }, null,
-        'レッスンのページで' + tq + 'の題に書いた行が、ここに出ます');
+        'レッスンのページで' + tq + 'の題に書いた行が、ここに出ます', tn.length + '行');
       const recs = D.recsOfSong(s.id);
       const rg = block('録音', recs, recLi, null, '下の「この曲を録音」や、個人練でこの曲を選んで録った録音が、ここに出ます');
       const ar = h('<button class="addpr' + (lessonRecOn() ? ' busy' : '') + '">' + I.mic + 'この曲を録音</button>'); ar.onclick = () => recordSong(s, nav); rg.appendChild(ar);

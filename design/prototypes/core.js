@@ -71,8 +71,13 @@
     type: (id) => S.types.find((t) => t.id === id),
     song: (id) => S.songs.find((s) => s.id === id),
     lesson: (id) => S.lessons.find((l) => l.id === id),
-    lessonsOf: (typeId) => S.lessons.filter((l) => l.typeId === typeId).sort(byDateDesc),
+    // 新しい順。同じ日付なら後に作った方を先に（S.lessons は作った順に並ぶ）
+    lessonsOf: (typeId) => S.lessons.filter((l) => l.typeId === typeId).sort((a, b) => byDateDesc(a, b) || S.lessons.indexOf(b) - S.lessons.indexOf(a)),
+    // 直近のレッスン：日付がいちばん新しいレッスン。同じ日付なら後に作った方（ホーム・前回の宿題・聞くことの欄・曲ページから録る録音と取り込みの既定がこれで決まる）
     latest: (typeId) => D.lessonsOf(typeId)[0] || null,
+    // 録音の日付：レッスン録音はレッスンの日付。個人練は録った日（取り込みはファイルの日付）、ただしレッスンより前ならレッスンの日付。レッスンと関係ない録音は録った日
+    // raw：録った日（取り込みはファイルの日付）。録音を直すシートでレッスンを変えたときも、これから決め直す
+    recDate(kind, lessonId, raw) { const l = lessonId && D.lesson(lessonId); if (!l) return raw; if (kind === 'lesson') return l.date; return raw < l.date ? l.date : raw; },
     lessonRec: (lessonId) => S.recs.find((r) => r.kind === 'lesson' && r.lessonId === lessonId) || null,
     practiceOf: (lessonId) => S.recs.filter((r) => r.kind === 'practice' && r.lessonId === lessonId).sort(byDateAsc),
     recsOfSong: (songId) => S.recs.filter((r) => r.songId === songId).sort(byDateDesc),
@@ -128,7 +133,7 @@
       const l = D.lesson(lessonId); const i = l.songIds.indexOf(songId);
       if (i >= 0) l.songIds.splice(i, 1); else l.songIds.push(songId);
     },
-    addRec(o) { const r = Object.assign({ id: nid('r'), date: TODAY, note: '', songId: null, lessonId: null }, o); S.recs.push(r); return r; },
+    addRec(o) { const r = Object.assign({ id: nid('r'), date: TODAY, note: '', songId: null, lessonId: null }, o); if (!r.raw) r.raw = r.date; r.date = D.recDate(r.kind, r.lessonId, r.raw); S.recs.push(r); return r; },
     asksOf: (typeId) => S.asks.filter((a) => a.typeId === typeId),
     // lessonId：書いたレッスン（そのレッスンのページ・その後の個人練から書いたとき）。レッスンをほかのフォルダへ移すとき一緒に移す
     addAsk(typeId, songId, text, lessonId) { if (!text.trim()) return null; const a = { id: nid('a'), typeId, songId: songId || null, date: TODAY, text: text.trim(), lessonId: lessonId || null }; S.asks.push(a); return a; },

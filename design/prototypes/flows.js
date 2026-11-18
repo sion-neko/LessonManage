@@ -48,7 +48,9 @@
     return () => closeFn && closeFn();
   };
 
-  // 録音を止めたあと：どの曲か＋一言
+  // 録音を止めたあと：一言（と、押すと開く「次のレッスンで聞くこと」）。曲は録る前に選んでいるので選び直さない（fixedSong）
+  // 「保存」の下に小さな赤字の「保存しない」：確かめずに捨て、通知の「取り消す」でこのシートに戻す（o.onDiscard）
+  // o.note・o.ask：シートに戻したときに、書いていた一言と聞くことを入れておく
   LM.afterPracticeSheet = function (host, o) {
     const lesson = o.lesson;
     const songs = lesson ? lesson.songIds.map(D.song) : [];
@@ -67,12 +69,17 @@
           '<input id="ap-note" class="ap-note" placeholder="例：移動は安定してきた" autocomplete="off">' +
           LM.askField() +
           '<button class="ap-save press" data-act="save">保存</button>' +
+          (o.onDiscard ? '<button class="ap-discard press" data-act="discard">保存しない</button>' : '') +
           '</div>';
         el.querySelectorAll('[data-song]').forEach((b) => (b.onclick = () => { pick = pick === b.dataset.song ? null : b.dataset.song; const v = el.querySelector('#ap-note').value; const open = el.querySelector('.ap-more') && el.querySelector('.ap-more').open; draw(); el.querySelector('#ap-note').value = v; if (open) el.querySelector('.ap-more').open = true; }));
         const askVal = LM.bindAskField(el);
         el.querySelector('[data-act=save]').onclick = () => { const note = el.querySelector('#ap-note').value; const ask = askVal(); close(); o.onSave({ songId: pick, note, ask }); };
+        const dc = el.querySelector('[data-act=discard]');
+        if (dc) dc.onclick = () => { const note = el.querySelector('#ap-note').value; const ask = askVal(); close(); o.onDiscard({ note, ask }); };
       };
       draw();
+      if (o.note) el.querySelector('#ap-note').value = o.note;
+      if (o.ask) { el.querySelector('[data-act=ask]').click(); el.querySelector('#ap-ask').value = o.ask; }
     }, { modal: true });
   };
 
@@ -186,7 +193,8 @@
     el.innerHTML =
       '<div class="st-top"><span class="st-dot"></span><span class="st-time">0:00</span><span class="st-lbl">' + esc(t.name) + ' · ' + D.md(l.date) + 'のレッスン後</span></div>' +
       '<div class="st-body">' + (song ? '<div class="st-song">♪ ' + esc(song.title) + '</div>' : '') +
-      '<div class="st-k">宿題</div><ul class="st-hw">' + l.homework.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>' +
+      // 宿題が0件のときは見出しごと出さない（見出しのすぐ下に学んだことが続くと、宿題が抜けたように見えるため）
+      (l.homework.length ? '<div class="st-k">宿題</div><ul class="st-hw">' + l.homework.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>' : '') +
       groups.map((g) => '<div class="st-k">' + esc(g.k) + '</div><ul class="st-lr">' + g.items.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>').join('') +
       '</div>' +
       '<div class="st-foot"><span class="st-hint">画面を消しても録音は続きます</span><button class="rs-stop press" aria-label="録音を止める"><span></span></button></div>';
