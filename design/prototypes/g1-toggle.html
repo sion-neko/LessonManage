@@ -450,12 +450,15 @@ function head(nav, extra) {
   return hd;
 }
 const fadeIn = () => requestAnimationFrame(() => { const s = document.querySelector('.screen.in .scroll'); if (s) { s.classList.remove('fade'); void s.offsetWidth; s.classList.add('fade'); } });
-function recBar(nav) {
+function recBar(nav, here) {
   if (!Rec.on || !recTarget) return null;
   // 帯には「停止」を置かない（記入中ずっと上にあり、親指が触れて1タップで止めると、そのレッスンでは録り直せないため）
   // 帯をタップすると録音中のレッスンページへ。そのページにいるときは大きな録音画面を開き、そこで止める
-  const el = h('<button class="recbar" aria-label="録音中 ' + D.say(Rec.sec) + '、録音の画面を開く"><span>●</span><span class="tm">録音中 ' + D.dur(Rec.sec) + '</span>' + I.chev + '</button>');
-  const un = Rec.sub(() => { if (!Rec.on) return un(); el.querySelector('.tm').textContent = '録音中 ' + D.dur(Rec.sec); el.setAttribute('aria-label', '録音中 ' + D.say(Rec.sec) + '、録音の画面を開く'); });
+  // 読み上げの名前は、押すと何が起きるかに合わせる（録音中のレッスンのページでは録音の画面を開き、ほかの画面ではそのページへ戻るため）
+  const say = () => { const l = D.lesson(recTarget); return '録音中 ' + D.say(Rec.sec) + '、' + (here || !l ? '録音の画面を開く' : D.md(l.date) + ' のレッスンのページへ戻る'); };
+  const el = h('<button class="recbar"><span>●</span><span class="tm">録音中 ' + D.dur(Rec.sec) + '</span>' + I.chev + '</button>');
+  el.setAttribute('aria-label', say());
+  const un = Rec.sub(() => { if (!Rec.on) return un(); el.querySelector('.tm').textContent = '録音中 ' + D.dur(Rec.sec); el.setAttribute('aria-label', say()); });
   el.onclick = () => goRecLesson();
   return el;
 }
@@ -1632,7 +1635,7 @@ const screens = {
       const inp = sb.querySelector('input'); const clr = sb.querySelector('.clr'); inp.value = lessonQ;
       const go = (l, hl) => { lessonsTop = sc.scrollTop; nav.push('lesson', hl ? { id: l.id, hl } : { id: l.id }); };
       const months = () => {
-        // 月の見出しと、その月に録った個人練の回数・時間（録った日で数える）
+        // 月の見出しと、その月の個人練の回数・時間（録音の日付の月で数える。レッスンより前の日付にはならない）
         const ms = new Map(); const m = (d) => { const k = d.slice(0, 7); if (!ms.has(k)) ms.set(k, { ls: [], n: 0, sec: 0 }); return ms.get(k); };
         ls.forEach((l) => m(l.date).ls.push(l));
         recsOfFolder(cur).filter((r) => r.kind === 'practice').forEach((r) => { const x = m(r.date); x.n++; x.sec += r.dur; });
@@ -1703,7 +1706,7 @@ const screens = {
     nb.querySelector('.bk').onclick = () => { Play.stop(); if (isBlankLesson(l)) { dropLesson(l); l.blankDropped = true; } nav.back(); };
     nb.querySelector('.mo').onclick = () => lessonMenu(l, nav);
     el.appendChild(nb);
-    const rb = recBar(nav); if (rb) el.appendChild(rb);
+    const rb = recBar(nav, l.id === recTarget); if (rb) el.appendChild(rb);
     const sc = h('<div class="scroll"></div>'); el.appendChild(sc);
     const tt = h('<div class="ttl"><button class="dt" aria-label="日付を変える">' + D.fmtDate(l.date) + I.chev + '</button><span style="display:block">' + esc(t.name) + (t.teacher ? ' · ' + esc(t.teacher) : '') + '</span></div>');
     tt.querySelector('.dt').onclick = () => dateSheet(l, nav); sc.appendChild(tt);
