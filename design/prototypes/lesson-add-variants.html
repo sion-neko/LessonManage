@@ -110,7 +110,7 @@ const play = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 
 const hs = [5,9,6,12,8,11,7,10,12,9,6,11,10,7,12,9,5,12,8,10,11,6,9,12,7,11,8,12,6,10];
 const wave = () => '<div class="wave">' + hs.map((h) => '<i style="height:' + (h * 2) + 'px"></i>').join('') + '</div>';
 const at = (t) => '<span class="at">' + play + t + '</span>';
-const top = (right) => '<div class="nav"><span>‹ 戻る</span><span>' + (right || '') + '</span></div><div class="ttl"><b>11/17（月）</b><span>バイオリン · ブライアン先生</span></div><div class="songs"><span>♪ ヴィヴァルディ 協奏曲 イ短調</span><span>♪ スケール</span></div>';
+const head = (right) => '<div class="nav"><span>‹ 戻る</span><span>' + (right || '') + '</span></div><div class="ttl"><b>11/17（月）</b><span>バイオリン · ブライアン先生</span></div><div class="songs"><span>♪ ヴィヴァルディ 協奏曲 イ短調</span><span>♪ スケール</span></div>';
 const hw = '<div class="h">宿題</div><ul class="l"><li class="li hw">ヴィヴァルディ 20〜36小節をゆっくり</li><li class="li hw">スケールは3オクターブをテンポ60で</li></ul>';
 const lgd = '<span class="lgd"><span><i></i>先生</span><span><i class="m"></i>自分</span></span>';
 const row = (by, tx, t, cls) => '<li class="li ' + (by === 'm' ? 'm ' : '') + (cls || '') + '"><span class="dot' + (by === 'm' ? ' m' : '') + '"></span><span class="tx">' + tx + '</span>' + (t ? at(t) : '') + '</li>';
@@ -121,7 +121,7 @@ const learned = (extra) => '<div class="h">学んだこと' + lgd + '</div>' +
 
 const F = [
   ['普段', '読むだけの画面。録音の波形にはしおりの旗が立ち、行の時間をタップするとそこから再生。書くときは右下の＋。',
-    top() + '<div class="player"><span class="pb">' + play + '</span><div class="track">' + wave() + '<div class="flags"><b style="left:7%"></b><b style="left:26%"></b><b style="left:42%"></b><b style="left:69%"></b></div></div><span class="d">48:12</span></div>' +
+    head() + '<div class="player"><span class="pb">' + play + '</span><div class="track">' + wave() + '<div class="flags"><b style="left:7%"></b><b style="left:26%"></b><b style="left:42%"></b><b style="left:69%"></b></div></div><span class="d">48:12</span></div>' +
     hw + learned('<div class="tk" style="color:var(--muted)">題なし</div><ul class="l">' + bmk('33:30') + '</ul>') + '<span class="fab">＋</span>'],
   ['録音中', 'レッスンを録音すると、上に帯が出る。帯の「しおり」がいちばん押しやすい場所にある。画面はそのままスクロールして読める。',
     '<div class="nav"><span>‹ 戻る</span><span></span></div><div class="ttl"><b>11/24（月）</b><span>バイオリン · ブライアン先生</span></div>' +
@@ -134,7 +134,7 @@ const F = [
     '<div class="h">学んだこと' + lgd + '</div><div class="tk" style="color:var(--muted)">題なし</div><ul class="l">' + bmk('15:48') + row('t', '弓は根元から', '19:20') + '<li class="li flash"><span class="flagic"></span><span class="tx" style="color:var(--muted)">しおり</span>' + at('24:31') + '</li></ul>' +
     '<div class="bmin"><div class="k"><span>24:31 のしおり</span><span>あとで書く</span></div><div class="row"><span class="who"><span class="dot"></span>先生</span><span class="f">左手は指板に近づける｜</span><span class="ok">決定</span></div><div class="kb"></div></div>'],
   ['＋を押したとき', '何を足すかを上で選び、学んだことなら題と先生／自分も選ぶ。Enterで続けて書ける。前に選んだ題と先生／自分は残る。',
-    top() + hw + '<div class="shade"></div><div class="sheet"><div class="seg"><span>宿題</span><span class="on">学んだこと</span></div>' +
+    head() + hw + '<div class="shade"></div><div class="sheet"><div class="seg"><span>宿題</span><span class="on">学んだこと</span></div>' +
     '<div class="k">題</div><div class="pills"><span class="pill on">♪ ヴィヴァルディ</span><span class="pill">手首が固まってしまう</span><span class="pill">題なし</span><span class="pill">＋ 新しい題</span></div>' +
     '<div class="row"><span class="whob"><span class="dot"></span>先生</span><span class="f">20小節目から弓を多めに｜</span></div><div class="kb" style="margin:0 -14px;height:190px"></div></div>'],
 ];
