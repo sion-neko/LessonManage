@@ -159,7 +159,7 @@
     el.className = 'stand';
     el.innerHTML =
       '<div class="st-top"><span class="st-dot"></span><span class="st-time">0:00</span><span class="st-lbl">' + esc(t.name) + ' · ' + D.md(l.date) + 'のレッスン後</span></div>' +
-      '<div class="st-body">' + (song ? '<div class="st-song">♪ ' + esc(song.title) + '</div>' : '') +
+      '<div class="st-body">' + (song ? '<div class="st-song">' + esc(song.title) + '</div>' : '') +
       '<div class="st-k">やること</div><ul class="st-hw">' + l.homework.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>' +
       (learned.length ? '<div class="st-k">' + (song ? 'この曲で学んだこと' : '学んだこと') + '</div><ul class="st-lr">' + learned.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>' : '') +
       '</div>' +

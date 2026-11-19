@@ -211,7 +211,7 @@ button:active { opacity: .55; }
 .v3-t ul { margin: 0; padding: 0; }
 .v3-t li { list-style: none; position: relative; padding: 5px 0 5px 12px; font-size: 15px; line-height: 1.5; }
 .v3-t li::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 2px; background: var(--teacher); opacity: .6; }
-.v3-t li.m::before { background: #e3b400; opacity: 1; }
+.v3-t li::before { background: #c7c7cc; opacity: 1; }
 .v3-tk small, .v3-t li i { display: none; }
 .pp-sel { appearance: none; -webkit-appearance: none; font-size: 17px; font-weight: 600; padding-right: 36px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8a8e' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 10l5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 18px; }
 .ap-save svg { width: 18px; height: 18px; vertical-align: -3px; }
@@ -267,12 +267,11 @@ button:active { opacity: .55; }
 .ls-list ul { list-style: none; margin: 0; padding: 0; }
 .ls-row { display: flex; gap: 4px; align-items: baseline; padding: 5px 20px; line-height: 1.55; font-size: 16px; }
 .ls-row .tx { flex: 1; min-width: 0; cursor: text; }
-.ls-row.m .tx { color: #636366; }
 .ls-row.hw .tx, .ls-row.hw input, .ls-inl.hw input { font-size: 17px; font-weight: 700; }
-.ls-dot { flex: none; align-self: center; width: 22px; height: 22px; display: grid; place-items: center; margin-left: -7px; }
-.ls-dot i { width: 7px; height: 7px; border-radius: 50%; background: var(--teacher); }
-.ls-dot.m i { background: #e3b400; }
-.ls-at { flex: none; margin-left: 6px; font-size: 12px; color: var(--accent-d); font-weight: 700; font-variant-numeric: tabular-nums; }
+.ls-dot { flex: none; align-self: flex-start; width: 20px; height: 25px; display: grid; place-items: center; margin-left: -7px; }
+.ls-dot i { width: 6px; height: 6px; border-radius: 50%; background: #aeaeb2; }
+.nt { display: inline-flex; vertical-align: -1px; margin-right: 4px; color: var(--muted); }
+.ls-at { flex: none; margin-left: 6px; font-size: 12px; color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
 .ls-at.live { color: var(--rec); }
 .ls-row input, .ls-inl input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font-size: 16px; line-height: 1.55; padding: 0; }
 .ls-inl { display: flex; gap: 4px; align-items: center; padding: 5px 20px; background: #fff7d6; }
@@ -405,7 +404,8 @@ const sampleNotes = {
 };
 const addTopic = (l, songId, title) => { const t = { k: 'k' + (++tkSeq), songId: songId || null, title: songId ? null : title }; l.topics.push(t); return t; };
 const topicOf = (l, k) => (k ? l.topics.find((t) => t.k === k) : null);
-const topicLabel = (t) => (t.songId ? '♪ ' + esc(D.song(t.songId).title) : esc(t.title));
+const noteIc = '<span class="nt"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></span>';
+const topicLabel = (t) => (t.songId ? noteIc + esc(D.song(t.songId).title) : esc(t.title));
 // 行を題の順に並べ直す（同じ題の中の順番は保つ）
 const normNotes = (l) => { const o = (k) => (k ? l.topics.findIndex((t) => t.k === k) : -1); const s2 = [...l.notes].sort((a, b) => o(a.tk) - o(b.tk)); l.notes.splice(0, l.notes.length, ...s2); };
 D.S.lessons.forEach((l) => {
@@ -535,7 +535,7 @@ function pickPracticeDrop(lesson, onPick) {
     let cur = recsOfType.length ? (recsOfType[0].songId || '') : (lesson.songIds[0] || '');
     const draw = () => {
       // プルダウン：シートは下のまま、選択肢の一覧だけ画面の真ん中に出す
-      const opts = [...order.map((sg) => [sg.id, '♪ ' + sg.title]), ['', '曲なし（スケール・基礎練習など）'], ['__new', '＋ 曲を追加…']];
+      const opts = [...order.map((sg) => [sg.id, sg.title]), ['', '曲なし（スケール・基礎練習など）'], ['__new', '＋ 曲を追加…']];
       const label = (v) => esc((opts.find((o) => o[0] === v) || opts[0])[1]);
       el.innerHTML = '<div class="tp"><div class="tp-title">録音内容</div>' +
         '<button class="ap-note pp-sel" data-act="open">' + label(cur) + '</button>' +
@@ -783,7 +783,6 @@ const barsOf = (id, n) => { let x = 0; for (const c of String(id)) x = (x * 31 +
 const tkLabel = (l, tk) => { const t = topicOf(l, tk); return t ? topicLabel(t) : 'トピックなし'; };
 // 曲のトピックと「扱った曲」（曲ページで使う）をそろえる
 const syncSongs = (l) => { l.songIds = l.topics.filter((t) => t.songId).map((t) => t.songId); };
-let addBy = 't'; // 新しく書く行の印（前に選んだものを引き継ぐ）
 let pendingAdd = null; // Enterで続けて書くとき、描き直したあとに開く追加欄
 
 // チャプター：書いた行の時間（と、再生画面で決めた区切り）から、録音をトピックごとの区間に分ける
@@ -808,8 +807,7 @@ function lsList(l, kind, tk, nav) {
   const ul = document.createElement('ul');
   items.forEach((n) => {
     const at = kind === 'note' && n.at != null ? (D.lessonRec(l.id) ? '<button class="ls-at">' + D.dur(n.at) + '</button>' : '<span class="ls-at live">' + D.dur(n.at) + '</span>') : '';
-    const li = h('<li class="ls-row' + (kind === 'hw' ? ' hw' : '') + (n.by === 'm' ? ' m' : '') + '">' + (kind === 'note' ? '<button class="ls-dot ' + n.by + '" aria-label="先生と自分を切り替え"><i></i></button>' : '') + '<span class="tx">' + esc(n.text) + '</span>' + at + '</li>');
-    const dot = li.querySelector('.ls-dot'); if (dot) dot.onclick = (e) => { e.stopPropagation(); n.by = n.by === 't' ? 'm' : 't'; addBy = n.by; nav.refresh(); };
+    const li = h('<li class="ls-row' + (kind === 'hw' ? ' hw' : '') + '">' + (kind === 'note' ? '<span class="ls-dot"><i></i></span>' : '') + '<span class="tx">' + esc(n.text) + '</span>' + at + '</li>');
     const ab = li.querySelector('button.ls-at'); if (ab) ab.onclick = (e) => { e.stopPropagation(); openPlayer(l, n.at, nav); };
     const tx = li.querySelector('.tx');
     tx.onclick = () => { // タップで直す。空にすると消える
@@ -830,18 +828,16 @@ function lsList(l, kind, tk, nav) {
 }
 function openAdd(box, gap, l, kind, tk, nav) {
   gap.hidden = true;
-  const row = h('<div class="ls-inl' + (kind === 'hw' ? ' hw' : '') + '">' + (kind === 'note' ? '<button class="ls-dot ' + addBy + '" aria-label="先生と自分を切り替え"><i></i></button>' : '') + '<input autocomplete="off" enterkeyhint="next"></div>');
+  const row = h('<div class="ls-inl' + (kind === 'hw' ? ' hw' : '') + '">' + (kind === 'note' ? '<span class="ls-dot"><i></i></span>' : '') + '<input autocomplete="off" enterkeyhint="next"></div>');
   box.insertBefore(row, gap);
   const inp = row.querySelector('input');
-  const dot = row.querySelector('.ls-dot');
-  if (dot) { dot.onpointerdown = (e) => e.preventDefault(); dot.onclick = () => { addBy = addBy === 't' ? 'm' : 't'; dot.className = 'ls-dot ' + addBy; }; }
   let done = false;
   const commit = (again) => {
     if (done) return; done = true;
     const v = inp.value.trim();
     if (v) {
       if (kind === 'hw') l.hw.push({ text: v });
-      else { const tp = topicOf(l, tk); const live = Rec.on && recTarget === l.id; l.notes.push({ text: v, by: addBy, tk, songId: tp ? tp.songId : null, at: live ? Rec.sec : null }); }
+      else { const tp = topicOf(l, tk); const live = Rec.on && recTarget === l.id; l.notes.push({ text: v, by: 't', tk, songId: tp ? tp.songId : null, at: live ? Rec.sec : null }); }
       sync(l); if (again) pendingAdd = { lid: l.id, kind, tk };
     }
     nav.refresh();
@@ -863,7 +859,7 @@ function topicPicker(l, onDone) {
         .forEach((x) => (x.topics || []).forEach((t) => { if (!t.songId && !free.some((f) => f.title === t.title)) free.push({ title: t.title, date: x.date }); }));
       const opt = (key, label, on, sm) => '<button class="tps-o' + (on ? ' on' : '') + '" data-o="' + esc(key) + '"><span class="bx">' + (on ? check : '') + '</span>' + label + (sm ? '<small>' + sm + '</small>' : '') + '</button>';
       el.innerHTML = '<div class="tps-sh"><div class="tps-hd"><b>このレッスンのトピック</b><button data-act="done">完了</button></div>' +
-        '<div class="tps-g">曲</div>' + songs.map((s) => opt('s:' + s.id, '♪ ' + esc(s.title), l.topics.some((t) => t.songId === s.id))).join('') +
+        '<div class="tps-g">曲</div>' + songs.map((s) => opt('s:' + s.id, noteIc + esc(s.title), l.topics.some((t) => t.songId === s.id))).join('') +
         (newSong ? '<div class="tps-new"><input id="tps-song" placeholder="曲名" autocomplete="off"><button data-act="addsong">追加</button></div>' : '<button class="tps-more" data-act="newsong">＋ 新しい曲</button>') +
         (free.length ? '<div class="tps-g">曲以外のトピック</div>' + free.map((f) => opt('f:' + f.title, esc(f.title), l.topics.some((t) => t.title === f.title), f.date ? D.md(f.date) : '')).join('') : '') +
         '<div class="tps-g">新しいトピック</div><div class="tps-new"><input id="tps-free" placeholder="例：手首が固まってしまう" autocomplete="off"><button data-act="addfree">追加</button></div></div>';
@@ -1054,7 +1050,7 @@ const screens = {
       const hero = h('<div class="v3-hero"><div class="cap"><span>' + D.fmtDate(l.date) + '</span><button data-act="open">レッスンのページ' + I.chev + '</button></div><h2>やること</h2><ul>' + l.hw.map((x) => '<li>' + esc(x.text) + '</li>').join('') + '</ul></div>');
       hero.querySelector('[data-act=open]').onclick = open; sc.appendChild(hero);
       if (l.notes.length) {
-        const vt = h('<div class="v3-t">' + [{ k: null }, ...l.topics].map((g) => { const ns = l.notes.filter((n) => (n.tk || null) === g.k); return ns.length ? '<div class="v3-g' + (g.k ? '' : ' nok') + '">' + (g.k ? '<div class="v3-tk"><span>' + topicLabel(g) + '</span><small>' + ns.length + '</small></div>' : '') + '<ul>' + ns.map((n) => '<li class="' + n.by + '">' + esc(n.text) + (n.by === 'm' ? '<i>自分</i>' : '') + '</li>').join('') + '</ul></div>' : ''; }).join('') + '</div>');
+        const vt = h('<div class="v3-t">' + [{ k: null }, ...l.topics].map((g) => { const ns = l.notes.filter((n) => (n.tk || null) === g.k); return ns.length ? '<div class="v3-g' + (g.k ? '' : ' nok') + '">' + (g.k ? '<div class="v3-tk"><span>' + topicLabel(g) + '</span><small>' + ns.length + '</small></div>' : '') + '<ul>' + ns.map((n) => '<li>' + esc(n.text) + '</li>').join('') + '</ul></div>' : ''; }).join('') + '</div>');
         vt.querySelectorAll('.v3-tk').forEach((t) => (t.onclick = () => t.parentElement.classList.toggle('open')));
         sc.appendChild(vt);
       }
@@ -1104,7 +1100,7 @@ const screens = {
     sc.appendChild(tps);
     sc.appendChild(h('<div class="ls-h">やること</div>'));
     sc.appendChild(lsList(l, 'hw', null, nav));
-    sc.appendChild(h('<div class="ls-h">学んだこと<span class="ls-lgd"><span><i></i>先生</span><span><i class="m"></i>自分</span></span></div>'));
+    sc.appendChild(h('<div class="ls-h">学んだこと</div>'));
     normNotes(l);
     const noneRows = l.notes.some((n) => !n.tk);
     const groups = l.topics.map((x) => x.k); if (noneRows || !l.topics.length) groups.push(null);
@@ -1120,7 +1116,7 @@ const screens = {
     // このレッスン後の個人練。録る入口は一覧の最後の1行
     sc.appendChild(h('<div class="ls-h">このレッスン後の個人練</div>'));
     const pg = h('<div class="ls-prs"></div>');
-    D.practiceOf(l.id).forEach((r) => { const row = h('<div class="ls-pr"><span class="d">' + D.md(r.date) + '</span><span class="n">' + (esc(r.note) || '（一言なし）') + (r.songId ? '<small>♪ ' + esc(D.song(r.songId).title) + '</small>' : '') + '</span></div>'); row.appendChild(LM.playBtn(r)); pg.appendChild(row); });
+    D.practiceOf(l.id).forEach((r) => { const row = h('<div class="ls-pr"><span class="d">' + D.md(r.date) + '</span><span class="n">' + (esc(r.note) || '（一言なし）') + (r.songId ? '<small>' + noteIc + esc(D.song(r.songId).title) + '</small>' : '') + '</span></div>'); row.appendChild(LM.playBtn(r)); pg.appendChild(row); });
     const ap = h('<button class="ls-prrec">' + I.mic + '個人練を録音</button>'); ap.onclick = () => recordPractice(l, nav); pg.appendChild(ap);
     sc.appendChild(pg); sc.appendChild(h('<div style="height:120px"></div>'));
     el.appendChild(lessonDock(l, nav));
@@ -1148,17 +1144,17 @@ const screens = {
         if (rows.length > LIM) { const m = h('<button class="more">すべて（' + rows.length + '件）</button>'); m.onclick = () => { fill(true); m.remove(); }; g.appendChild(m); }
         sc.appendChild(g); return g;
       };
-      const tn = notesOfSong(s.id).filter((n) => n.by === 't').sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : 0));
+      const tn = notesOfSong(s.id).sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : 0));
       const groups = []; tn.forEach((n) => { const g = groups[groups.length - 1]; if (g && g.date === n.date) g.items.push(n); else groups.push({ date: n.date, items: [n] }); });
-      block('先生の指摘', groups, (g) => h('<li><span class="d">' + D.fmtDate(g.date, true) + '</span>' + g.items.map((n) => '<span class="t"><span>・' + esc(n.text) + '</span>' + atBtn(n) + '</span>').join('') + '</li>'));
+      block('レッスンで学んだこと', groups, (g) => h('<li><span class="d">' + D.fmtDate(g.date, true) + '</span>' + g.items.map((n) => '<span class="t"><span>・' + esc(n.text) + '</span>' + atBtn(n) + '</span>').join('') + '</li>'));
       const recs = D.recsOfSong(s.id);
       const rg = block('録音', recs, (r) => { const li = h('<li style="flex-direction:row;align-items:center;gap:12px"><span class="d" style="width:40px">' + D.md(r.date) + '</span><span class="t" style="flex:1;display:block;min-width:0">' + (esc(r.note) || '（一言なし）') + '<small style="display:block;color:var(--muted);font-size:12px">' + (r.kind === 'practice' ? D.md(D.lesson(r.lessonId).date) + 'のレッスン後の個人練' : '曲の録音') + '</small></span></li>'); li.appendChild(LM.playBtn(r)); return li; });
       const ar = h('<button class="addpr">' + I.mic + 'この曲を録音</button>'); ar.onclick = () => recordSong(s, nav); rg.appendChild(ar);
       const mi = h('<div class="memo-in"><input id="g-memo" placeholder="今日のメモ" autocomplete="off"><button class="ok">追加</button></div>');
       const add = () => { const m = D.addMemo(s.id, mi.querySelector('input').value); if (m) { m.by = 'm'; toast(app, D.md(D.TODAY) + 'のメモとして追加'); nav.refresh(); } };
       mi.querySelector('.ok').onclick = add; mi.querySelector('input').onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) add(); };
-      const mine = [...D.memosOf(s.id).map((m) => ({ date: m.date, text: m.text, by: m.by })), ...notesOfSong(s.id).filter((n) => n.by === 'm')].sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : 0));
-      block('自分のメモ', mine, (m) => h('<li><span class="d"><span>' + D.fmtDate(m.date, true) + (m.lesson ? ' · レッスンで' : '') + (m.by === 't' ? ' · 先生' : '') + '</span></span><span class="t"><span>' + esc(m.text) + '</span>' + (m.lesson ? atBtn(m) : '') + '</span></li>'), mi);
+      const mine = D.memosOf(s.id).map((m) => ({ date: m.date, text: m.text })).sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : 0));
+      block('自分のメモ', mine, (m) => h('<li><span class="d"><span>' + D.fmtDate(m.date, true) + '</span></span><span class="t"><span>' + esc(m.text) + '</span></span></li>'), mi);
       sc.appendChild(h('<div class="sec">扱ったレッスン</div>'));
       const lg = h('<div class="list"></div>');
       D.lessonsOfSong(s.id).forEach((l) => { const b = h('<button><span>' + D.fmtDate(l.date, true) + '</span>' + I.chev + '</button>'); b.onclick = () => nav.push('lesson', { id: l.id }); lg.appendChild(b); });
@@ -1167,11 +1163,11 @@ const screens = {
       el.appendChild(pl);
       return;
     }
-    // チャット：先生の指摘は左、自分のメモ・気づき・録音は右
+    // チャット：レッスンで書いた行は左、曲ページのメモ・録音は右
     const items = [];
     D.lessonsOfSong(s.id).forEach((l) => items.push({ t: 'lesson', date: l.date, o: 0, l }));
-    notesOfSong(s.id).forEach((n) => items.push({ t: n.by === 't' ? 'tn' : 'mn', date: n.date, o: 1, n }));
-    D.memosOf(s.id).forEach((m) => items.push({ t: m.by === 't' ? 'tm' : 'mm', date: m.date, o: 2, m }));
+    notesOfSong(s.id).forEach((n) => items.push({ t: 'tn', date: n.date, o: 1, n }));
+    D.memosOf(s.id).forEach((m) => items.push({ t: 'mm', date: m.date, o: 2, m }));
     D.recsOfSong(s.id).forEach((r) => items.push({ t: 'rec', date: r.date, o: 3, r }));
     items.sort((x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : x.o - y.o));
     const log = h('<div class="log"></div>'); let last = ''; let prevT = '';
@@ -1187,10 +1183,8 @@ const screens = {
     });
     bindAt(log);
     sc.appendChild(log);
-    let by = 'm';
-    const cp = h('<div class="composer"><button class="rec" aria-label="録音">' + I.mic + '</button><button class="who m" data-act="by">自分</button><input id="g-chat" placeholder="メモ" autocomplete="off"><button class="send">追加</button></div>');
-    cp.querySelector('[data-act=by]').onclick = (e) => { by = by === 'm' ? 't' : 'm'; e.currentTarget.className = 'who ' + by; e.currentTarget.textContent = by === 't' ? '先生' : '自分'; };
-    const add = () => { const m = D.addMemo(s.id, cp.querySelector('input').value); if (m) { m.by = by; nav.refresh(); } };
+    const cp = h('<div class="composer"><button class="rec" aria-label="録音">' + I.mic + '</button><input id="g-chat" placeholder="メモ" autocomplete="off"><button class="send">追加</button></div>');
+    const add = () => { const m = D.addMemo(s.id, cp.querySelector('input').value); if (m) nav.refresh(); };
     cp.querySelector('.send').onclick = add; cp.querySelector('input').onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) add(); };
     cp.querySelector('.rec').onclick = () => recordSong(s, nav);
     el.appendChild(cp);
