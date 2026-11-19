@@ -1,264 +1,143 @@
 <title>レッスン画面の書き方案</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
-/* 並べて比べる：案ごとに説明＋スマホ枠（普段／書くとき）。色はプロトタイプ（g1-toggle）と同じ */
+/* C案（普段は読むだけ・「編集」で書く）を、カードを減らした見た目3通りで。並びは 録音 → 宿題 → 学んだこと → 個人練 */
 :root {
-  --desk: #e7e7ec; --bg: #f2f2f7; --card: #ffffff; --fg: #1c1c1e; --muted: #8a8a8e; --line: #dcdce1;
-  --accent: #d29b00; --accent-d: #a87a00; --rec: #ff3b30; --teacher: #3a6ea5; --t-bg: #e6eef7;
-  --me: #8a6500; --me-bg: #fff3c4; --hero: #fff6d6; --seg: #e3e3e8; --hl: #e5e5ea; --page: #e9e9ee; --shade: rgba(0,0,0,.28);
+  --page: #e9e9ee; --bg: #f2f2f7; --paper: #ffffff; --warm: #fbfaf5; --fg: #1c1c1e; --sub: #48484a; --muted: #8a8a8e; --line: #e2e2e6; --rule: #e9e4d6;
+  --accent: #d29b00; --accent-d: #a87a00; --rec: #ff3b30; --teacher: #3a6ea5; --t-bg: #e6eef7; --me: #8a6500; --me-bg: #fff3c4;
+  --hero: #fff6d6; --mark: #ffe68a; --dot-m: #e3b400; --chip: #ffffff;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #000; --card: #1c1c1e; --fg: #f2f2f7; --muted: #8e8e93; --line: #38383a; --t-bg: #1f2c3b; --teacher: #7fb0e6;
-  --me: #f0c040; --me-bg: #3a3014; --hero: #2e2810; --seg: #2c2c2e; --hl: #2c2c2e; --page: #121214; --shade: rgba(0,0,0,.55); color-scheme: dark } }
+  --page: #121214; --bg: #000; --paper: #1c1c1e; --warm: #1b1a17; --fg: #f2f2f7; --sub: #c7c7cc; --muted: #8e8e93; --line: #38383a; --rule: #34312a;
+  --teacher: #7fb0e6; --t-bg: #1f2c3b; --me: #f0c040; --me-bg: #3a3014; --hero: #2e2810; --mark: #6b5510; --chip: #2c2c2e; color-scheme: dark } }
 :root[data-theme="dark"] {
-  --bg: #000; --card: #1c1c1e; --fg: #f2f2f7; --muted: #8e8e93; --line: #38383a; --t-bg: #1f2c3b; --teacher: #7fb0e6;
-  --me: #f0c040; --me-bg: #3a3014; --hero: #2e2810; --seg: #2c2c2e; --hl: #2c2c2e; --page: #121214; --shade: rgba(0,0,0,.55); color-scheme: dark }
+  --page: #121214; --bg: #000; --paper: #1c1c1e; --warm: #1b1a17; --fg: #f2f2f7; --sub: #c7c7cc; --muted: #8e8e93; --line: #38383a; --rule: #34312a;
+  --teacher: #7fb0e6; --t-bg: #1f2c3b; --me: #f0c040; --me-bg: #3a3014; --hero: #2e2810; --mark: #6b5510; --chip: #2c2c2e; color-scheme: dark }
 body { background: var(--page); color: var(--fg); font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; }
 .wrap { max-width: 1100px; margin: 0 auto; padding-block: 28px 60px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 h1 { font-size: 24px; margin: 0 0 6px; }
-.lead { color: var(--muted); font-size: 14px; line-height: 1.7; margin: 0 0 30px; max-width: 62ch; }
-.v { display: grid; grid-template-columns: minmax(0, 280px) 1fr; gap: 24px; padding: 28px 0; border-top: 1px solid var(--line); }
+.lead { color: var(--muted); font-size: 14px; line-height: 1.7; margin: 0 0 24px; max-width: 64ch; }
+.v { display: grid; grid-template-columns: minmax(0, 260px) 1fr; gap: 24px; padding: 28px 0; border-top: 1px solid var(--line); }
 @media (max-width: 760px) { .v { grid-template-columns: 1fr; } }
 .v h2 { font-size: 19px; margin: 0 0 8px; }
 .v h2 span { color: var(--accent-d); margin-right: 6px; }
 .v p { margin: 0 0 10px; font-size: 14px; line-height: 1.7; }
-.pc { font-size: 13px; line-height: 1.7; margin: 0; padding: 0; list-style: none; }
-.pc li { padding-left: 1.3em; text-indent: -1.3em; }
-.pc .g::before { content: "○ "; color: #34a853; }
-.pc .b::before { content: "△ "; color: var(--rec); }
 .phones { display: flex; flex-wrap: wrap; gap: 18px; }
-.ph { width: 290px; max-width: 100%; }
+.ph { width: 300px; max-width: 100%; }
 .ph > small { display: block; font-size: 12px; color: var(--muted); margin: 0 0 6px 4px; }
-.scr { position: relative; height: 560px; border-radius: 30px; background: var(--bg); border: 7px solid #1c1c1e; overflow: hidden; display: flex; flex-direction: column; font-size: 14px; }
-.body { flex: 1; overflow: hidden; padding-bottom: 12px; }
-/* 画面の部品 */
-.nav { display: flex; justify-content: space-between; align-items: center; padding: 30px 14px 2px; color: var(--accent); font-size: 15px; }
-.nav b { font-weight: 600; }
-.ttl { padding: 4px 16px 0; }
-.ttl b { display: block; font-size: 22px; }
+.scr { position: relative; height: 640px; border-radius: 30px; border: 7px solid #1c1c1e; overflow: hidden; font-size: 14px; background: var(--bg); }
+.in { height: 100%; overflow-y: auto; padding-bottom: 30px; }
+
+/* ── 共通の骨組み ── */
+.nav { display: flex; justify-content: space-between; padding: 30px 16px 0; color: var(--accent); font-size: 15px; }
+.ttl { padding: 6px 20px 0; }
+.ttl b { display: block; font-size: 24px; line-height: 1.3; }
 .ttl span { color: var(--muted); font-size: 12px; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 16px 0; }
-.chip { padding: 4px 9px; border-radius: 7px; background: var(--card); font-size: 12px; }
-.sec { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted); padding: 14px 26px 5px; }
-.sec .act { color: var(--accent); font-size: 13px; }
-.sec .pl { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 17px; font-weight: 700; line-height: 1; }
-.card { margin: 0 12px; background: var(--card); border-radius: 11px; padding: 2px 12px; }
-.row { padding: 8px 0; border-bottom: .5px solid var(--line); line-height: 1.5; display: flex; gap: 6px; align-items: baseline; }
-.row:last-child { border-bottom: 0; }
-.row.big { font-size: 15px; font-weight: 600; }
-.tk { font-size: 12px; font-weight: 700; padding: 9px 0 1px; }
+.songs { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 20px 0; font-size: 12px; }
+.songs span { color: var(--sub); }
+.songs .ed { color: var(--accent); }
+.h { font-size: 13px; font-weight: 700; padding: 22px 20px 6px; display: flex; justify-content: space-between; align-items: baseline; }
+.h small { color: var(--muted); font-weight: 400; font-size: 12px; }
+ul { margin: 0; padding: 0; list-style: none; }
+.list { padding: 0 20px; }
+.it { position: relative; display: flex; gap: 8px; align-items: baseline; padding: 4px 0; line-height: 1.55; }
+.it .tx { flex: 1; min-width: 0; }
+.it.m .tx { color: var(--muted); }
+.it .me { font-size: 10px; color: var(--me); background: var(--me-bg); border-radius: 4px; padding: 0 4px; margin-left: 4px; white-space: nowrap; }
+.it .at { flex: none; font-size: 11px; color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
+.tk { font-size: 12px; color: var(--muted); font-weight: 600; padding: 10px 0 2px; }
+.tk:first-child { padding-top: 0; }
+.hw .it { font-size: 16px; font-weight: 700; padding: 5px 0; }
+.rec { margin: 14px 20px 0; display: flex; align-items: center; gap: 10px; }
+.rec .pb { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; flex: none; }
+.rec .pb svg { width: 14px; height: 14px; }
+.rec .wv { flex: 1; height: 22px; background: repeating-linear-gradient(90deg, var(--muted) 0 2px, transparent 2px 5px); opacity: .45; -webkit-mask: linear-gradient(90deg, #000 0 100%); border-radius: 2px; clip-path: polygon(0 40%,5% 20%,10% 55%,15% 10%,20% 45%,25% 25%,30% 60%,35% 15%,40% 50%,45% 30%,50% 5%,55% 45%,60% 20%,65% 55%,70% 25%,75% 40%,80% 10%,85% 50%,90% 30%,95% 45%,100% 20%,100% 100%,0 100%); }
+.rec .d { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.pr .it { font-size: 13px; }
+.pr .it .dt { flex: none; width: 34px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.addpr { color: var(--accent); font-size: 13px; padding: 6px 0; }
+/* 編集のとき */
+.minus { flex: none; align-self: center; width: 18px; height: 18px; border-radius: 50%; background: var(--rec); color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 700; line-height: 1; }
+.grip { flex: none; align-self: center; color: var(--muted); font-size: 14px; }
 .who { flex: none; font-size: 10px; font-weight: 700; padding: 0 5px; border-radius: 4px; line-height: 1.7; color: var(--teacher); background: var(--t-bg); }
 .who.m { color: var(--me); background: var(--me-bg); }
-.tm { margin-left: auto; flex: none; font-size: 11px; color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
-.rec { margin: 0 12px; background: var(--card); border-radius: 11px; padding: 9px 12px; display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 12px; }
-.rec i { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); flex: none; }
-.rec .w { flex: 1; height: 14px; background: repeating-linear-gradient(90deg, var(--line) 0 2px, transparent 2px 4px); border-radius: 2px; }
-.hero { margin: 10px 12px 0; background: var(--hero); border-radius: 13px; padding: 10px 14px 6px; }
-.hero .cap { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--me); font-weight: 700; }
-.hero .row { border-color: rgba(210,155,0,.25); font-weight: 600; font-size: 15px; }
-.addrow { display: flex; align-items: center; gap: 7px; padding: 8px 0; color: var(--accent); }
-.addrow b { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 13px; line-height: 1; }
-.minus { flex: none; width: 16px; height: 16px; border-radius: 50%; background: var(--rec); color: #fff; display: grid; place-items: center; font-size: 12px; font-weight: 700; line-height: 1; align-self: center; }
-.grip { margin-left: auto; color: var(--muted); align-self: center; }
-/* 下の入力欄 */
-.cmp { border-top: .5px solid var(--line); background: var(--card); padding: 8px 10px 18px; display: flex; flex-direction: column; gap: 7px; }
-.seg { display: flex; background: var(--seg); border-radius: 8px; padding: 2px; }
-.seg span { flex: 1; text-align: center; padding: 4px 0; font-size: 12px; font-weight: 600; border-radius: 6px; }
-.seg span.on { background: var(--card); box-shadow: 0 1px 2px rgba(0,0,0,.15); }
-.pills { display: flex; gap: 5px; overflow: hidden; white-space: nowrap; }
-.pill { padding: 3px 9px; border-radius: 12px; border: 1px solid var(--line); font-size: 11px; }
-.pill.on { background: var(--accent); border-color: var(--accent); color: #fff; }
-.inp { display: flex; align-items: center; gap: 6px; }
-.inp .f { flex: 1; height: 32px; border-radius: 16px; border: 1px solid var(--line); padding: 0 12px; display: flex; align-items: center; color: var(--muted); font-size: 13px; background: var(--bg); }
-.inp .f.typing { color: var(--fg); }
-.inp .s { color: var(--accent); font-weight: 700; font-size: 13px; }
-/* シート */
-.shade { position: absolute; inset: 0; background: var(--shade); }
-.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--card); border-radius: 16px 16px 0 0; padding: 14px 14px 22px; display: flex; flex-direction: column; gap: 9px; }
-.sheet .h { font-weight: 700; font-size: 15px; }
-.sheet .k { font-size: 11px; color: var(--muted); }
-.field { border-radius: 10px; background: var(--bg); padding: 10px 12px; font-size: 14px; }
-.btn { border-radius: 11px; background: var(--accent); color: #fff; text-align: center; padding: 11px; font-weight: 700; }
-.kb { height: 120px; background: var(--seg); margin: 0 -14px -22px; }
-/* レッスン中 */
-.live { background: #fff0ef; color: var(--rec); margin: 6px 12px 0; padding: 8px 12px; border-radius: 11px; display: flex; justify-content: space-between; font-weight: 700; font-variant-numeric: tabular-nums; }
-.live span:last-child { background: var(--rec); color: #fff; padding: 1px 10px; border-radius: 10px; font-size: 12px; }
-.feed { padding: 6px 12px; display: flex; flex-direction: column; gap: 6px; }
-.bub { align-self: flex-start; max-width: 86%; background: var(--card); border-radius: 14px 14px 14px 5px; padding: 7px 11px; line-height: 1.45; }
-.bub.m { align-self: flex-end; background: var(--me-bg); border-radius: 14px 14px 5px 14px; }
-.bub.hw { align-self: stretch; max-width: none; background: var(--hero); border-radius: 10px; font-weight: 600; }
-.bub small { display: block; font-size: 10px; color: var(--muted); }
-.bub.hw small { color: var(--me); }
-.untag { color: var(--accent); font-size: 11px; font-weight: 600; margin-left: auto; flex: none; }
-.drag { background: var(--hl); border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,.15); padding-left: 6px; padding-right: 6px; margin: 0 -6px; }
-/* 題カード */
-.tc { margin: 10px 12px 0; background: var(--card); border-radius: 13px; padding: 9px 14px 4px; }
-.tc .th { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 13px; padding-bottom: 2px; }
-.tc .th .pl { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); display: grid; place-items: center; font-size: 15px; line-height: 1; }
-.tc.hw { background: var(--hero); }
-.tc.hw .th { color: var(--me); }
-.tc.hw .th .pl { background: var(--accent); color: #fff; }
-.addtopic { margin: 10px 12px 0; border: 1.5px dashed var(--line); border-radius: 13px; padding: 10px; text-align: center; color: var(--accent); font-weight: 600; font-size: 13px; }
-.rec-sm { margin: 10px 12px 0; }
+.add { display: flex; align-items: center; gap: 8px; padding: 6px 0; color: var(--accent); font-size: 14px; }
+.add b { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 13px; line-height: 1; flex: none; }
+.add.tp { font-weight: 600; padding-top: 10px; }
+.edit .it.m .tx { color: var(--fg); }
+
+/* ── 1：ノート ── 画面全体を白い紙1枚。線も枠もなく、見出しと「・」だけ */
+.v1 { background: var(--paper); }
+.v1 .it:not(.ed)::before { content: "・"; flex: none; color: var(--muted); margin-right: -6px; }
+.v1 .hw .it::before { color: var(--accent); }
+.v1 .h { color: var(--fg); font-size: 15px; }
+
+/* ── 2：罫線ノート ── あたたかい白に罫線。宿題は蛍光ペン */
+.v2 { background: var(--warm); }
+.v2 .h { font-size: 12px; color: var(--muted); letter-spacing: .08em; border-bottom: 1.5px solid var(--fg); margin: 0 20px; padding: 22px 0 4px; }
+.v2 .list .it { border-bottom: 1px solid var(--rule); padding: 7px 0; }
+.v2 .hw .tx span { background: linear-gradient(transparent 58%, var(--mark) 58%); }
+.v2 .tk { padding-top: 12px; color: var(--fg); }
+.v2 .add { border-bottom: 1px solid var(--rule); padding: 8px 0; }
+
+/* ── 3：やわらか ── 灰色の地。宿題だけホームと同じ黄色の面。学んだことは色の点で先生/自分 */
+.v3 { background: var(--bg); }
+.v3 .hwbox { margin: 18px 12px 0; padding: 4px 8px 10px; background: var(--hero); border-radius: 16px; }
+.v3 .hwbox .h { color: var(--me); padding-top: 12px; }
+.v3 .list.lr .it:not(.ed) { padding-left: 14px; }
+.v3 .list.lr .it:not(.ed)::before { content: ""; position: absolute; left: 1px; top: 11px; width: 6px; height: 6px; border-radius: 50%; background: var(--teacher); }
+.v3 .list.lr .it.m:not(.ed)::before { background: var(--dot-m); }
+.v3 .it .me { display: none; }
+.v3 .lgd { font-size: 11px; color: var(--muted); font-weight: 400; display: flex; gap: 10px; }
+.v3 .lgd i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--teacher); margin-right: 4px; vertical-align: 1px; }
+.v3 .lgd i.m { background: var(--dot-m); }
+.v3 .songs span { background: var(--chip); border-radius: 12px; padding: 3px 9px; }
+.v3 .rec { background: var(--chip); border-radius: 22px; padding: 5px 14px 5px 5px; margin: 14px 12px 0; }
 </style>
 
 <div class="wrap">
-<h1>レッスン画面：書き方の案</h1>
-<p class="lead">今の画面は、題ごとの追加欄、「＋ 題を追加」、宿題の追加欄が散らばっていて、どこに書けばいいかが分かりにくい。追加の仕方から画面を組み直した5案。どれも同じ11/17のバイオリンのレッスンで描いています。</p>
-
-<!-- A -->
-<section class="v">
-  <div>
-    <h2><span>A</span>画面下に入力欄を1つ</h2>
-    <p>チャットのように、画面の下にいつも入力欄がある。宿題か学んだことか、どの題か、先生か自分かは入力欄の上で選び、前に選んだものがそのまま残る。上のリストは読む専用で、タップすると直せる。</p>
-    <ul class="pc"><li class="g">書く場所が1つだけなので迷わない</li><li class="g">レッスン中、同じ題に続けて書くのが速い</li><li class="b">入力欄の上の選ぶ部分が場所をとり、リストが見える範囲が狭くなる</li><li class="b">選んだ題を変え忘れると、違う題に入る</li></ul>
-  </div>
-  <div class="phones">
-    <div class="ph"><small>普段</small><div class="scr">
-      <div class="body">
-        <div class="nav"><b>‹ 戻る</b></div>
-        <div class="ttl"><b>11/17（月）</b><span>バイオリン · ブライアン先生</span></div>
-        <div class="sec">宿題</div>
-        <div class="card"><div class="row big">ヴィヴァルディ 20〜36小節をゆっくり</div><div class="row big">スケールは3オクターブをテンポ60で</div></div>
-        <div class="sec">学んだこと</div>
-        <div class="card"><div class="tk">♪ ヴィヴァルディ 協奏曲</div><div class="row"><span class="who">先生</span>3ポジへの移動は親指を先に</div><div class="row"><span class="who m">自分</span>親指を意識すると音程が安定</div><div class="tk">手首が固まってしまう</div><div class="row"><span class="who">先生</span>肩を意識して動かす</div></div>
-      </div>
-      <div class="cmp">
-        <div class="seg"><span>宿題</span><span class="on">学んだこと</span></div>
-        <div class="pills"><span class="pill on">♪ ヴィヴァルディ</span><span class="pill">手首が固まる</span><span class="pill">題なし</span><span class="pill">＋ 題</span></div>
-        <div class="inp"><span class="who">先生</span><span class="f">メモ</span><span class="s">追加</span></div>
-      </div>
-    </div></div>
-  </div>
-</section>
-
-<!-- B -->
-<section class="v">
-  <div>
-    <h2><span>B</span>欄の見出しの＋からシートで書く</h2>
-    <p>「宿題」「学んだこと」の見出しの右に＋を1つずつ置く。押すと下からシートが出て、そこで書く。学んだことのシートでは題と先生/自分も選ぶ。Enterで続けて書ける。</p>
-    <ul class="pc"><li class="g">画面がいちばんすっきりする。読むときに邪魔なものがない</li><li class="g">＋ が2つだけなので押す場所がはっきりしている</li><li class="b">1行書くたびにシートを開くので、レッスン中は少し手間</li><li class="b">書いている間、上のリストが見えにくい</li></ul>
-  </div>
-  <div class="phones">
-    <div class="ph"><small>普段</small><div class="scr">
-      <div class="body">
-        <div class="nav"><b>‹ 戻る</b></div>
-        <div class="ttl"><b>11/17（月）</b><span>バイオリン · ブライアン先生</span></div>
-        <div class="sec">宿題<span class="pl">＋</span></div>
-        <div class="card"><div class="row big">ヴィヴァルディ 20〜36小節をゆっくり</div><div class="row big">スケールは3オクターブをテンポ60で</div></div>
-        <div class="sec">レッスン録音</div>
-        <div class="rec"><i></i><span class="w"></span>48:12</div>
-        <div class="sec">学んだこと<span class="pl">＋</span></div>
-        <div class="card"><div class="tk">♪ ヴィヴァルディ 協奏曲</div><div class="row"><span class="who">先生</span>3ポジへの移動は親指を先に<span class="tm">12:40</span></div><div class="row"><span class="who m">自分</span>親指を意識すると音程が安定</div><div class="tk">手首が固まってしまう</div><div class="row"><span class="who">先生</span>肩を意識して動かす<span class="tm">3:10</span></div></div>
-      </div>
-    </div></div>
-    <div class="ph"><small>＋ を押したとき</small><div class="scr">
-      <div class="body">
-        <div class="nav"><b>‹ 戻る</b></div>
-        <div class="ttl"><b>11/17（月）</b><span>バイオリン · ブライアン先生</span></div>
-      </div>
-      <div class="shade"></div>
-      <div class="sheet">
-        <div class="h">学んだことを追加</div>
-        <div class="k">題</div>
-        <div class="pills"><span class="pill on">♪ ヴィヴァルディ</span><span class="pill">手首が固まる</span><span class="pill">題なし</span><span class="pill">＋ 題</span></div>
-        <div class="seg"><span class="on">先生</span><span>自分</span></div>
-        <div class="field">20小節目からは弓を多めに｜</div>
-        <div class="btn">追加</div>
-        <div class="kb"></div>
-      </div>
-    </div></div>
-  </div>
-</section>
-
-<!-- C -->
-<section class="v">
-  <div>
-    <h2><span>C</span>見る画面と書く画面を切り替える</h2>
-    <p>普段は読むだけの画面で、追加欄も削除もない。右上の「編集」を押したときだけ、追加欄・並べ替え・削除が出る（iPhoneの「リマインダー」や「メモ」の編集と同じ考え方）。</p>
-    <ul class="pc"><li class="g">見返すときはホームと同じくらいすっきり</li><li class="g">今の作り（題ごとの追加欄）をほぼそのまま使える</li><li class="b">書くたびに「編集」を押す手間がある</li><li class="b">編集中の画面は今と同じで、追加欄が多いことは変わらない</li></ul>
-  </div>
-  <div class="phones">
-    <div class="ph"><small>見るとき</small><div class="scr">
-      <div class="body">
-        <div class="nav"><b>‹ 戻る</b><b>編集</b></div>
-        <div class="ttl"><b>11/17（月）</b><span>バイオリン · ブライアン先生</span></div>
-        <div class="hero"><div class="cap">宿題</div><div class="row">ヴィヴァルディ 20〜36小節をゆっくり</div><div class="row">スケールは3オクターブをテンポ60で</div></div>
-        <div class="sec">学んだこと</div>
-        <div class="card"><div class="tk">♪ ヴィヴァルディ 協奏曲</div><div class="row"><span class="who">先生</span>3ポジへの移動は親指を先に</div><div class="row"><span class="who m">自分</span>親指を意識すると音程が安定</div><div class="tk">手首が固まってしまう</div><div class="row"><span class="who">先生</span>肩を意識して動かす</div></div>
-      </div>
-    </div></div>
-    <div class="ph"><small>「編集」を押したとき</small><div class="scr">
-      <div class="body">
-        <div class="nav"><b></b><b>完了</b></div>
-        <div class="ttl"><b>11/17（月）</b><span>バイオリン · ブライアン先生</span></div>
-        <div class="sec">宿題</div>
-        <div class="card"><div class="row"><span class="minus">−</span>ヴィヴァルディ 20〜36小節<span class="grip">≡</span></div><div class="row"><span class="minus">−</span>スケールをテンポ60で<span class="grip">≡</span></div><div class="addrow"><b>＋</b>追加</div></div>
-        <div class="sec">学んだこと</div>
-        <div class="card"><div class="tk">♪ ヴィヴァルディ 協奏曲</div><div class="row"><span class="minus">−</span><span class="who">先生</span>親指を先に<span class="grip">≡</span></div><div class="addrow"><b>＋</b>追加</div><div class="tk">手首が固まってしまう</div><div class="row"><span class="minus">−</span><span class="who">先生</span>肩を意識<span class="grip">≡</span></div><div class="addrow"><b>＋</b>追加</div><div class="addrow"><b>＋</b>題を追加</div></div>
-      </div>
-    </div></div>
-  </div>
-</section>
-
-<!-- D -->
-<section class="v">
-  <div>
-    <h2><span>D</span>レッスン中は流し書き、題はあとで</h2>
-    <p>レッスン中は題も欄も考えず、下の入力欄にどんどん書く（録音中なら時間が付く）。「宿題」だけは入力欄の横のボタンで書き分ける。レッスンが終わってから、題のない行に「題を付ける」で振り分ける。</p>
-    <ul class="pc"><li class="g">レッスン中にいちばん速く書ける。迷う所がない</li><li class="g">題は落ち着いてから考えればいい</li><li class="b">振り分けをしないと、題のない行がたまる</li><li class="b">画面が「書く時」と「まとめる時」で2つになり、作るものが増える</li></ul>
-  </div>
-  <div class="phones">
-    <div class="ph"><small>レッスン中（録音しながら）</small><div class="scr">
-      <div class="body">
-        <div class="nav"><b>‹ 戻る</b></div>
-        <div class="live"><span>● 録音中 24:31</span><span>停止</span></div>
-        <div class="feed">
-          <div class="bub"><small>先生 · 3:10</small>肩を意識して動かすといい</div>
-          <div class="bub"><small>先生 · 12:40</small>3ポジへの移動は親指を先に動かす</div>
-          <div class="bub m"><small>自分 · 18:02</small>親指を意識すると音程が安定する気がする</div>
-          <div class="bub hw"><small>宿題</small>ヴィヴァルディ 20〜36小節をゆっくり</div>
-          <div class="bub"><small>先生 · 24:15</small>20小節目からは弓を多めに</div>
-        </div>
-      </div>
-      <div class="cmp">
-        <div class="inp"><span class="who">先生</span><span class="f typing">スケールは移弦の前に左手を｜</span></div>
-        <div class="pills"><span class="pill on">学んだこと</span><span class="pill">宿題</span></div>
-      </div>
-    </div></div>
-    <div class="ph"><small>終わったあと（まとめ）</small><div class="scr">
-      <div class="body">
-        <div class="nav"><b>‹ 戻る</b></div>
-        <div class="ttl"><b>11/17（月）</b><span>バイオリン · ブライアン先生</span></div>
-        <div class="hero"><div class="cap">宿題</div><div class="row">ヴィヴァルディ 20〜36小節をゆっくり</div></div>
-        <div class="sec">学んだこと</div>
-        <div class="card"><div class="tk">♪ ヴィヴァルディ 協奏曲</div><div class="row"><span class="who">先生</span>親指を先に動かす</div><div class="row"><span class="who m">自分</span>音程が安定する気がする</div>
-          <div class="tk" style="color:var(--muted)">題なし（3）</div>
-          <div class="row"><span class="who">先生</span>肩を意識して動かす<span class="untag">題を付ける</span></div><div class="row"><span class="who">先生</span>弓を多めに<span class="untag">題を付ける</span></div><div class="row"><span class="who">先生</span>移弦の前に左手を<span class="untag">題を付ける</span></div></div>
-      </div>
-    </div></div>
-  </div>
-</section>
-
-<!-- E -->
-<section class="v">
-  <div>
-    <h2><span>E</span>宿題も題もカードにして、カードごとに＋</h2>
-    <p>宿題はホームと同じ黄色のカード、学んだことは題ごとの白いカード。カードの右上の＋で、そのカードに書く。新しい題は一番下の点線のカードから作る。ホームと見た目がそろう。</p>
-    <ul class="pc"><li class="g">「どこに書くか」がカードの見た目で分かる</li><li class="g">ホームの見た目と同じなので、画面を行き来しても迷わない</li><li class="b">＋が題の数だけ並ぶ（ただし今の追加欄よりは小さい）</li><li class="b">題が多いと縦に長くなる</li></ul>
-  </div>
-  <div class="phones">
-    <div class="ph"><small>普段</small><div class="scr">
-      <div class="body">
-        <div class="nav"><b>‹ 戻る</b></div>
-        <div class="ttl"><b>11/17（月）</b><span>バイオリン · ブライアン先生</span></div>
-        <div class="tc hw"><div class="th">宿題<span class="pl">＋</span></div><div class="row big">ヴィヴァルディ 20〜36小節をゆっくり</div><div class="row big">スケールをテンポ60で</div></div>
-        <div class="rec rec-sm"><i></i><span class="w"></span>48:12</div>
-        <div class="tc"><div class="th">♪ ヴィヴァルディ 協奏曲<span class="pl">＋</span></div><div class="row"><span class="who">先生</span>3ポジへの移動は親指を先に</div><div class="row"><span class="who m">自分</span>音程が安定する気がする</div></div>
-        <div class="tc"><div class="th">手首が固まってしまう<span class="pl">＋</span></div><div class="row"><span class="who">先生</span>肩を意識して動かす</div></div>
-        <div class="addtopic">＋ 題を追加</div>
-      </div>
-    </div></div>
-  </div>
-</section>
+<h1>レッスン画面：C案を見た目3通りで</h1>
+<p class="lead">普段は読むだけで、右上の「編集」を押したときだけ追加・並べ替え・削除が出る。並びは 録音 → 宿題 → 学んだこと → 個人練。白いカードをやめて、ノートやメモのように見せる方向で3通り。左が普段、右が「編集」を押したところ。</p>
+<div id="vs"></div>
 </div>
+
+<script>
+const L = {
+  date: '11/17（月）', sub: 'バイオリン · ブライアン先生', songs: ['ヴィヴァルディ 協奏曲 イ短調', 'スケール'], dur: '48:12',
+  hw: ['ヴィヴァルディ 20〜36小節をゆっくり', 'スケールは3オクターブをテンポ60で'],
+  topics: [
+    ['♪ ヴィヴァルディ 協奏曲 イ短調', [['t', '3ポジへの移動は親指を先に動かす', '12:40'], ['t', '20小節目からは弓を多めに使ってフレーズを大きく', '25:05'], ['m', '親指を意識すると音程が安定する気がする', '39:50']]],
+    ['手首が固まってしまう', [['t', '肩を意識して動かすといい', '3:10'], ['t', '弓を返すときに手首を固めない', '4:20']]],
+    ['♪ スケール', [['t', '移弦の前に左手を準備', '33:30']]],
+  ],
+  pr: [['11/18', 'テンポ60で通せた', 'ヴィヴァルディ']],
+};
+const V = [
+  ['1', 'ノート', '画面全体を白い紙1枚にして、枠も線もなくす。見出しと「・」だけで並べる。自分の気づきは灰色の文字と小さな「自分」。いちばん素朴。'],
+  ['2', '罫線ノート', '少しあたたかい白に、ノートの罫線。見出しの下に太めの線。宿題は蛍光ペンを引いたように見せる。紙のノートに近い。'],
+  ['3', 'やわらか', '灰色の地はそのままで、宿題だけホームと同じ黄色の面にする。学んだことは先生=青・自分=黄の点で見分ける（ホームの案と同じ）。録音と曲は丸いタグ。'],
+];
+const play = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>';
+function screen(v, edit) {
+  const row = (tx, extra) => edit ? '<li class="it ed"><span class="minus">−</span>' + (extra || '') + '<span class="tx">' + tx + '</span><span class="grip">≡</span></li>' : '';
+  const add = (t) => edit ? '<li class="add' + (t ? ' tp' : '') + '"><b>＋</b>' + (t || '追加') + '</li>' : '';
+  const hwItems = L.hw.map((x) => edit ? row(x) : '<li class="it"><span class="tx"><span>' + x + '</span></span></li>').join('') + add();
+  const hwSec = '<div class="h">宿題' + (edit ? '<small>並べ替え・削除</small>' : '') + '</div><ul class="list hw">' + hwItems + '</ul>';
+  const lr = L.topics.map(([tk, ns]) => '<li class="tk">' + tk + '</li>' + ns.map(([by, tx, at]) => edit
+    ? row(tx, '<span class="who ' + by + '">' + (by === 't' ? '先生' : '自分') + '</span>')
+    : '<li class="it ' + by + '"><span class="tx">' + tx + (by === 'm' ? '<span class="me">自分</span>' : '') + '</span><span class="at">▶ ' + at + '</span></li>').join('') + add()).join('') + add('題を追加');
+  const lgd = v === '3' && !edit ? '<span class="lgd"><span><i></i>先生</span><span><i class="m"></i>自分</span></span>' : '';
+  return '<div class="scr v' + v + (edit ? ' edit' : '') + '"><div class="in">' +
+    '<div class="nav"><span>' + (edit ? '' : '‹ 戻る') + '</span><span style="font-weight:600">' + (edit ? '完了' : '編集') + '</span></div>' +
+    '<div class="ttl"><b>' + L.date + '</b><span>' + L.sub + '</span></div>' +
+    '<div class="songs">' + L.songs.map((s) => '<span>♪ ' + s + '</span>').join('') + (edit ? '<span class="ed">曲を編集</span>' : '') + '</div>' +
+    '<div class="rec"><span class="pb">' + play + '</span><span class="wv"></span><span class="d">' + L.dur + '</span></div>' +
+    (v === '3' ? '<div class="hwbox">' + hwSec + '</div>' : hwSec) +
+    '<div class="h">学んだこと' + lgd + '</div><ul class="list lr">' + lr + '</ul>' +
+    '<div class="h">このレッスン後の個人練</div><ul class="list pr">' + L.pr.map(([d, n, s]) => '<li class="it"><span class="dt">' + d + '</span><span class="tx">' + n + '<br><small style="color:var(--muted)">' + s + '</small></span></li>').join('') + '<li class="addpr">● 個人練を録音</li></ul>' +
+    '</div></div>';
+}
+document.getElementById('vs').innerHTML = V.map(([v, name, desc]) =>
+  '<section class="v"><div><h2><span>' + v + '</span>' + name + '</h2><p>' + desc + '</p></div><div class="phones">' +
+  '<div class="ph"><small>普段</small>' + screen(v, false) + '</div><div class="ph"><small>「編集」を押したとき</small>' + screen(v, true) + '</div></div></section>').join('');
+</script>
