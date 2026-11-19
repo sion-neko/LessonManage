@@ -1,17 +1,17 @@
 <title>レッスン画面の書き方案</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
-/* 録音を画面の下にまとめる（録る前＝大きな録音ボタン、録音中＝下のパネル、録り終わり＝2案）。再生画面のトピック一覧は、チャプター名の真下に出る暗いメニューに */
+/* 日付の下を「このレッスンのトピック」にする。録音ボタンはアプリの金色のボタンに合わせ、録音中は再生画面と同じ暗い画面にする */
 :root {
   --page: #e9e9ee; --paper: #ffffff; --soft: #f4f3ef; --fg: #1c1c1e; --sub: #48484a; --muted: #8a8a8e; --line: #e8e6e0;
-  --accent: #d29b00; --accent-d: #a87a00; --rec: #ff3b30; --teacher: #3a6ea5; --me-dot: #e3b400; --flash: #fff3cc; --dock: #f7f6f3;
+  --accent: #d29b00; --accent-d: #a87a00; --rec: #ff453a; --teacher: #3a6ea5; --me-dot: #e3b400; --flash: #fff3cc; --dock: #f7f6f3; --chip: #f4f3ef; --shade: rgba(0,0,0,.25);
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --page: #121214; --paper: #1c1c1e; --soft: #2a2a2c; --fg: #f2f2f7; --sub: #c7c7cc; --muted: #8e8e93; --line: #38383a;
-  --teacher: #7fb0e6; --flash: #3a3014; --dock: #232325; color-scheme: dark } }
+  --teacher: #7fb0e6; --flash: #3a3014; --dock: #232325; --chip: #2c2c2e; --shade: rgba(0,0,0,.55); color-scheme: dark } }
 :root[data-theme="dark"] {
   --page: #121214; --paper: #1c1c1e; --soft: #2a2a2c; --fg: #f2f2f7; --sub: #c7c7cc; --muted: #8e8e93; --line: #38383a;
-  --teacher: #7fb0e6; --flash: #3a3014; --dock: #232325; color-scheme: dark }
+  --teacher: #7fb0e6; --flash: #3a3014; --dock: #232325; --chip: #2c2c2e; --shade: rgba(0,0,0,.55); color-scheme: dark }
 body { background: var(--page); color: var(--fg); font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; }
 .wrap { max-width: 1340px; margin: 0 auto; padding-block: 28px 60px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 h1 { font-size: 24px; margin: 0 0 6px; }
@@ -23,12 +23,15 @@ h2.sec { font-size: 18px; margin: 34px 0 6px; padding-top: 22px; border-top: 1px
 .fr > p { font-size: 12px; color: var(--sub); line-height: 1.6; margin: 0 0 8px 4px; min-height: 58px; }
 .scr { position: relative; height: 640px; border-radius: 30px; border: 7px solid #1c1c1e; overflow: hidden; font-size: 14px; background: var(--paper); }
 
-/* レッスン画面 */
 .nav { display: flex; justify-content: space-between; padding: 30px 16px 0; color: var(--accent); font-size: 15px; }
 .ttl { padding: 4px 20px 0; }
 .ttl b { display: block; font-size: 23px; line-height: 1.3; }
 .ttl span { color: var(--muted); font-size: 12px; }
-.songs { padding: 6px 20px 0; font-size: 12px; color: var(--sub); display: flex; gap: 10px; }
+/* このレッスンのトピック */
+.tps { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 20px 0; }
+.tp { padding: 5px 11px; border-radius: 14px; background: var(--chip); font-size: 12px; font-weight: 600; color: var(--sub); }
+.tp.add { background: transparent; border: 1.5px dashed var(--line); color: var(--accent-d); }
+.tp.add.only { padding: 6px 14px; }
 .h { margin: 18px 20px 2px; padding-bottom: 4px; border-bottom: 1px solid var(--line); color: var(--accent-d); font-size: 15px; font-weight: 700; }
 ul.l { margin: 0; padding: 0; list-style: none; }
 .li { display: flex; gap: 8px; align-items: baseline; padding: 5px 20px; line-height: 1.55; }
@@ -37,32 +40,13 @@ ul.l { margin: 0; padding: 0; list-style: none; }
 .dot { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--teacher); align-self: center; margin-right: 4px; }
 .dot.m { background: var(--me-dot); }
 .at { flex: none; font-size: 11px; color: var(--accent-d); font-weight: 700; font-variant-numeric: tabular-nums; }
-.at.live { color: var(--rec); }
 .hw { font-size: 16px; font-weight: 700; }
 .tk { font-size: 12px; font-weight: 700; color: var(--sub); padding: 8px 20px 0; }
-.tk.new { color: var(--accent); font-weight: 600; }
-.gap { height: 26px; }
-.inl { display: flex; align-items: center; gap: 8px; padding: 6px 20px; background: var(--flash); }
-.inl .caret { flex: 1; font-size: 14px; }
-.inl .caret::after { content: "｜"; color: var(--accent); }
-/* 下の録音 */
-.dockr { position: absolute; left: 0; right: 0; bottom: 0; background: var(--dock); border-top: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; padding: 12px 0 24px; }
-.dockr small { font-size: 11px; color: var(--muted); margin-top: 6px; }
-.rbtn { width: 62px; height: 62px; border-radius: 50%; border: 3px solid var(--line); display: grid; place-items: center; background: var(--paper); }
-.rbtn i { width: 48px; height: 48px; border-radius: 50%; background: var(--rec); }
-.rbtn.stop i { width: 22px; height: 22px; border-radius: 5px; }
-.recp { position: absolute; left: 0; right: 0; bottom: 0; background: var(--dock); border-top: 1px solid var(--line); border-radius: 18px 18px 0 0; padding: 14px 18px 22px; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 -6px 20px rgba(0,0,0,.06); }
-.recp .tm { font-size: 30px; font-weight: 300; font-variant-numeric: tabular-nums; }
-.recp .lw { width: 100%; height: 34px; display: flex; align-items: center; gap: 2px; }
-.recp .lw i { flex: 1; background: var(--rec); border-radius: 1px; opacity: .75; }
-.recp .lw i.q { opacity: .2; }
-.recp .st { font-size: 11px; color: var(--rec); font-weight: 700; }
-/* 書いているときの細い録音帯（キーボードの上） */
-.kb { position: absolute; left: 0; right: 0; bottom: 0; height: 180px; background: var(--soft); border-top: 1px solid var(--line); }
-.slim { position: absolute; left: 0; right: 0; bottom: 180px; display: flex; align-items: center; gap: 10px; padding: 7px 14px; background: var(--dock); border-top: 1px solid var(--line); font-size: 13px; }
-.slim .r { width: 8px; height: 8px; border-radius: 50%; background: var(--rec); }
-.slim .t { flex: 1; color: var(--rec); font-weight: 700; font-variant-numeric: tabular-nums; }
-.slim .ok { color: var(--accent-d); font-weight: 700; }
+.gap { height: 24px; }
+/* 録音ボタン：アプリの金色のボタン（個人練の録音と同じ形） */
+.dockr { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px 24px; background: linear-gradient(to top, var(--paper) 70%, transparent); }
+.go { display: flex; align-items: center; justify-content: center; gap: 9px; height: 52px; border-radius: 14px; background: var(--accent); color: #fff; font-size: 16px; font-weight: 700; box-shadow: 0 4px 0 var(--accent-d); }
+.go .rd { width: 10px; height: 10px; border-radius: 50%; background: #fff; }
 /* 録り終わり：下のプレーヤー */
 .pbar { position: absolute; left: 10px; right: 10px; bottom: 18px; display: flex; align-items: center; gap: 10px; padding: 8px 12px 8px 8px; border-radius: 18px; background: var(--dock); border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(0,0,0,.08); }
 .pb { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; flex: none; }
@@ -71,17 +55,24 @@ ul.l { margin: 0; padding: 0; list-style: none; }
 .pbar .wv i { flex: 1; background: var(--muted); opacity: .4; border-radius: 1px; }
 .pbar .wv b { position: absolute; top: -4px; width: 6px; height: 7px; background: var(--accent); clip-path: polygon(0 0,100% 0,100% 100%,50% 72%,0 100%); }
 .pbar .d { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
-/* 録り終わり：上の1行 */
-.rline { margin: 12px 20px 0; display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.rline .pb { width: 28px; height: 28px; }
-.rline .pb svg { width: 10px; height: 10px; }
-.rline .n { flex: 1; font-size: 14px; }
-.rline .n small { color: var(--muted); font-size: 12px; margin-left: 6px; font-variant-numeric: tabular-nums; }
-.rline svg.ch { width: 14px; height: 14px; color: var(--muted); }
+/* トピックを選ぶシート */
+.shade { position: absolute; inset: 0; background: var(--shade); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--paper); border-radius: 18px 18px 0 0; padding: 8px 0 24px; }
+.sheet .grab { width: 36px; height: 5px; border-radius: 3px; background: var(--line); margin: 0 auto 10px; }
+.sheet .st { display: flex; justify-content: space-between; align-items: baseline; padding: 0 18px 6px; }
+.sheet .st b { font-size: 17px; }
+.sheet .st span { color: var(--accent-d); font-weight: 700; font-size: 15px; }
+.sheet .g { font-size: 11px; color: var(--muted); padding: 12px 18px 4px; }
+.sheet .o { display: flex; align-items: center; gap: 12px; padding: 10px 18px; font-size: 15px; }
+.sheet .o .bx { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; color: #fff; font-size: 12px; font-weight: 800; flex: none; }
+.sheet .o.on .bx { background: var(--accent); border-color: var(--accent); }
+.sheet .o small { margin-left: auto; font-size: 11px; color: var(--muted); }
+.sheet .nw { margin: 8px 18px 0; height: 40px; border-radius: 12px; background: var(--soft); display: flex; align-items: center; padding: 0 14px; color: var(--muted); font-size: 14px; }
 
-/* 再生画面 */
+/* 暗い画面（録音中・再生） */
 .pv { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--paper); }
 .pv .top { position: relative; background: #18181a; color: #fff; padding: 30px 16px 16px; }
+.pv.full .top { flex: 1; display: flex; flex-direction: column; }
 .pv .bar1 { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; font-size: 14px; color: rgba(255,255,255,.8); }
 .pv .bar1 .cl { display: inline-flex; align-items: center; gap: 2px; }
 .pv .bar1 .cl svg { width: 18px; height: 18px; }
@@ -106,98 +97,74 @@ ul.l { margin: 0; padding: 0; list-style: none; }
 .pv .ctl svg.sk { width: 34px; height: 34px; }
 .pv .ctl .pp { width: 52px; height: 52px; border-radius: 50%; background: #fff; display: flex; gap: 5px; align-items: center; justify-content: center; }
 .pv .ctl .pp i { width: 4px; height: 17px; background: #18181a; border-radius: 1px; }
-.pv .cmh { font-size: 11px; color: var(--muted); padding: 10px 16px 2px; }
-.pv .cm { flex: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; padding: 2px 0 6px; }
-.pv .c { display: flex; gap: 8px; align-items: baseline; padding: 5px 16px; line-height: 1.5; font-size: 13px; }
-.pv .c .tm { flex: none; width: 36px; font-size: 11px; color: var(--accent-d); font-weight: 700; font-variant-numeric: tabular-nums; }
-.pv .c .tx { flex: 1; min-width: 0; }
-.pv .c.cur { background: var(--flash); }
-.pv .c.old { opacity: .5; }
-.pv .c.cg { font-size: 11px; color: var(--muted); font-weight: 700; padding-bottom: 0; }
-.ipt { border-top: 1px solid var(--line); padding: 8px 10px 22px; display: flex; gap: 8px; align-items: center; background: var(--paper); }
-.ipt .f { flex: 1; min-width: 0; height: 36px; border-radius: 18px; background: var(--soft); display: flex; align-items: center; padding: 0 14px; color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; }
-.ipt .go { flex: none; background: var(--accent); color: #fff; font-weight: 700; border-radius: 18px; padding: 9px 14px; font-size: 13px; }
-/* チャプターのメニュー：チップの真下に、暗い面になじむ形で */
-.cmenu { position: absolute; left: 50%; top: 132px; transform: translateX(-50%); width: 236px; background: rgba(58,58,62,.97); border-radius: 14px; box-shadow: 0 12px 34px rgba(0,0,0,.45); overflow: hidden; z-index: 5; color: #fff; }
-.cmenu::before { content: ""; position: absolute; }
-.cmenu .o { display: flex; align-items: center; gap: 10px; padding: 11px 14px; font-size: 14px; border-top: .5px solid rgba(255,255,255,.12); }
-.cmenu .o:first-child { border-top: 0; }
-.cmenu .o .ck { width: 14px; flex: none; color: var(--accent); font-weight: 700; }
-.cmenu .o .n { flex: 1; min-width: 0; }
-.cmenu .o small { font-size: 11px; color: rgba(255,255,255,.5); font-variant-numeric: tabular-nums; }
-.cmenu .o.new { color: var(--accent); }
-.dim { position: absolute; inset: 0; background: rgba(0,0,0,.18); z-index: 4; }
+/* 録音中 */
+.recnow { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+.recnow .st { font-size: 12px; font-weight: 700; color: var(--rec); display: flex; align-items: center; gap: 6px; }
+.recnow .st i { width: 8px; height: 8px; border-radius: 50%; background: var(--rec); }
+.recnow .tm { font-size: 60px; font-weight: 200; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.recnow .lw { width: 100%; height: 80px; display: flex; align-items: center; gap: 2px; margin-top: 6px; }
+.recnow .lw i { flex: 1; border-radius: 1px; background: var(--accent); }
+.recnow .lw i.q { background: rgba(255,255,255,.15); }
+.recnow .lv { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 6px; text-align: center; line-height: 1.6; }
+.stopb { margin: 0 auto 6px; width: 74px; height: 74px; border-radius: 50%; border: 3px solid rgba(255,255,255,.3); display: grid; place-items: center; }
+.stopb i { width: 26px; height: 26px; border-radius: 6px; background: #fff; }
+.stopl { text-align: center; font-size: 12px; color: rgba(255,255,255,.6); margin-bottom: 8px; }
 </style>
 
 <div class="wrap">
-<h1>レッスン画面：録音を下に、チャプターのメニュー</h1>
+<h1>レッスン画面：トピックと録音</h1>
 
-<h2 class="sec">レッスン画面の録音（画面の下にまとめる）</h2>
-<p class="lead">録音はいつも画面の下に置く。録る前は大きな録音ボタン、録音中は下のパネル（時間と波形）、書いているあいだはキーボードの上の細い帯になる。録り終わったあとの置き場所は2案。</p>
-<div class="phones" id="pl"></div>
+<h2 class="sec">日付の下を「このレッスンのトピック」に</h2>
+<p class="lead">日付の下にあった曲（扱った曲）を、このレッスンのトピックにする。ここで選んだトピックが、学んだことの見出しとして並ぶ。曲もトピックの1つなので、曲を選べば今までの「扱った曲」と同じ。「＋」から、このフォルダの曲や前のレッスンのトピックを選ぶか、新しく書く。学んだことの一番下にあった「＋ 新しいトピック」はなくす。</p>
+<div class="phones" id="pt"></div>
 
-<h2 class="sec">再生画面：チャプターのメニュー</h2>
-<p class="lead">一覧を画面の真ん中に出していたのをやめて、チャプター名の真下に、暗い面になじむメニューとして出す。各チャプターの時間の範囲も添える。</p>
-<div class="phones" id="pp"></div>
+<h2 class="sec">録音</h2>
+<p class="lead">録音ボタンは、ホームの「個人練を録音」と同じ金色のボタンにそろえた。録音中は操作しないので、画面全体を録音の画面にする（再生画面と同じ暗い色で、時間と波形と停止だけ）。録り終わると下にプレーヤーが残る。</p>
+<div class="phones" id="pr"></div>
 </div>
 
 <script>
 const play = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>';
-const chev = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5 5 5-5"/></svg>';
-const right = '<svg class="ch" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+const mic = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>';
 const down = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
-const skip = (fwd) => '<svg class="sk" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"' + (fwd ? ' style="transform:scaleX(-1)"' : '') + '><path d="M9 9.5A10 10 0 1 1 6 16"/><path d="M9 4v5.5h-5.5"/><text x="16" y="20" font-size="9" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none"' + (fwd ? ' transform="scale(-1,1) translate(-32,0)"' : '') + '>15</text></svg>';
 const hs = [5,9,6,12,8,11,7,10,12,9,6,11,10,7,12,9,5,12,8,10,11,6,9,12,7,11,8,12,6,10,9,7,11,6,12,8,10,7,9,11,6,12,8,10];
 const fr = ([b, p, html]) => '<div class="fr"><b>' + b + '</b><p>' + p + '</p><div class="scr">' + html + '</div></div>';
-
-// ── レッスン画面 ──
-const head = (date) => '<div class="nav"><span>‹ 戻る</span><span></span></div><div class="ttl"><b>' + (date || '11/17（月）') + '</b><span>バイオリン · ブライアン先生</span></div><div class="songs"><span>♪ ヴィヴァルディ 協奏曲 イ短調</span><span>♪ スケール</span></div>';
-const row = (by, tx, t, live) => '<li class="li ' + (by === 'm' ? 'm' : '') + '"><span class="dot' + (by === 'm' ? ' m' : '') + '"></span><span class="tx">' + tx + '</span>' + (t ? '<span class="at' + (live ? ' live' : '') + '">' + t + '</span>' : '') + '</li>';
-const empty = '<div class="h">やること</div><div class="gap"></div><div class="h">学んだこと</div><div class="gap"></div><div class="tk new">＋ 新しいトピック</div>';
-const during = (insert) => '<div class="h">やること</div><div class="gap"></div><div class="h">学んだこと</div><div class="tk">♪ ヴィヴァルディ 協奏曲</div><ul class="l">' + row('t', '冒頭の付点はもっと軽く', '7:02', true) + row('t', '弓は根元から', '19:20', true) + '</ul>' + (insert || '<div class="gap"></div><div class="tk new">＋ 新しいトピック</div>');
+const row = (by, tx, t) => '<li class="li ' + (by === 'm' ? 'm' : '') + '"><span class="dot' + (by === 'm' ? ' m' : '') + '"></span><span class="tx">' + tx + '</span>' + (t ? '<span class="at">' + t + '</span>' : '') + '</li>';
+const head = (date, tps) => '<div class="nav"><span>‹ 戻る</span><span></span></div><div class="ttl"><b>' + date + '</b><span>バイオリン · ブライアン先生</span></div><div class="tps">' + tps + '</div>';
+const chips = (arr) => arr.map((t) => '<span class="tp">' + t + '</span>').join('') + '<span class="tp add">＋</span>';
 const full = '<div class="h">やること</div><ul class="l"><li class="li hw">ヴィヴァルディ 20〜36小節をゆっくり</li><li class="li hw">スケールをテンポ60で</li></ul><div class="gap"></div>' +
   '<div class="h">学んだこと</div><div class="tk">♪ ヴィヴァルディ 協奏曲</div><ul class="l">' + row('t', '3ポジへの移動は親指を先に', '12:40') + row('m', '親指を意識すると音程が安定') + '</ul><div class="gap"></div>' +
-  '<div class="tk">手首が固まってしまう</div><ul class="l">' + row('t', '肩を意識して動かす', '3:10') + '</ul>';
-const liveWave = '<div class="lw">' + hs.slice(0, 36).map((h, i) => '<i class="' + (i > 30 ? 'q' : '') + '" style="height:' + (h * 2.6) + 'px"></i>').join('') + '</div>';
-const L = [
-  ['録る前', '画面の下に大きな録音ボタンだけ。押せばすぐ録音が始まる。',
-    head('11/24（月）') + empty + '<div class="dockr"><span class="rbtn"><i></i></span><small>レッスンを録音</small></div>'],
-  ['録音中', '下のパネルに時間と波形。停止ボタンも同じ場所。上の画面はそのまま書ける。',
-    head('11/24（月）') + during() + '<div class="recp"><span class="st">● 録音中</span><span class="tm">24:31</span>' + liveWave + '<span class="rbtn stop"><i></i></span></div>'],
-  ['録音中に書いているとき', 'キーボードが出ているあいだは、録音はキーボードの上の細い帯になる。書いた行には赤い時間が付く。',
-    head('11/24（月）') + during('<div class="inl"><span class="dot"></span><span class="caret">左手は指板に近づける</span></div>') + '<div class="slim"><span class="r"></span><span class="t">録音中 24:31</span><span class="ok">完了</span></div><div class="kb"></div>'],
-  ['録り終わり：案1 下にプレーヤー', '録音ボタンがあった場所が、そのままプレーヤーになる。録音はいつも下、と覚えればいい。タップで再生画面。',
-    head() + full + '<div class="pbar"><span class="pb">' + play + '</span><div class="wv">' + hs.slice(0, 26).map((h) => '<i style="height:' + (h * 2) + 'px"></i>').join('') + '<b style="left:7%"></b><b style="left:26%"></b><b style="left:42%"></b><b style="left:69%"></b></div><span class="d">48:12</span></div>'],
-  ['録り終わり：案2 上に1行だけ', '録音は日付の下に1行だけ。画面の下は空く。いちばんすっきりするが、録音中と置き場所が変わる。',
-    head() + '<div class="rline"><span class="pb">' + play + '</span><span class="n">レッスン録音<small>48:12 · しおり4</small></span>' + right + '</div>' + full],
+  '<div class="tk">手首が固まってしまう</div><ul class="l">' + row('t', '肩を意識して動かす', '3:10') + '</ul><div class="gap"></div><div class="tk">♪ スケール</div><div class="gap"></div>';
+const fresh = (tps) => '<div class="h">やること</div><div class="gap"></div><div class="h">学んだこと</div>' + tps.map((t) => '<div class="tk">' + t + '</div><div class="gap"></div>').join('');
+const recBtn = '<div class="dockr"><div class="go">' + mic + 'レッスンを録音</div></div>';
+const sheet = '<div class="shade"></div><div class="sheet"><div class="grab"></div><div class="st"><b>このレッスンのトピック</b><span>完了</span></div>' +
+  '<div class="g">曲</div>' + [['♪ ヴィヴァルディ 協奏曲 イ短調', 1, '前回も'], ['♪ カイザー 練習曲', 0, ''], ['♪ スケール', 1, ''], ['♪ 第九', 0, '']].map(([t, on, s]) => '<div class="o' + (on ? ' on' : '') + '"><span class="bx">' + (on ? '✓' : '') + '</span>' + t + '<small>' + s + '</small></div>').join('') +
+  '<div class="g">前のレッスンのトピック</div>' + [['手首が固まってしまう', 0, '11/10']].map(([t, on, s]) => '<div class="o' + (on ? ' on' : '') + '"><span class="bx"></span>' + t + '<small>' + s + '</small></div>').join('') +
+  '<div class="nw">新しいトピック（例：肩に力が入る）</div></div>';
+const T = [
+  ['レッスンを作ったところ', 'まだトピックがないので「＋ トピック」だけ。',
+    head('11/24（月）', '<span class="tp add only">＋ トピック</span>') + fresh([]) + recBtn],
+  ['＋を押したとき', 'このフォルダの曲と、前のレッスンで使ったトピックが並ぶ。押して丸を付けるだけ。新しいものは下に書く。',
+    head('11/24（月）', '<span class="tp add only">＋ トピック</span>') + fresh([]) + sheet],
+  ['選んだあと', '選んだトピックが日付の下に並び、学んだことの見出しにもなる。見出しの下の余白をタップして書く。',
+    head('11/24（月）', chips(['♪ ヴィヴァルディ', '♪ スケール'])) + fresh(['♪ ヴィヴァルディ 協奏曲', '♪ スケール']) + recBtn],
 ];
 
-// ── 再生画面 ──
-const chapters = [[0, 22, '手首'], [22, 64, '♪ ヴィヴァルディ'], [64, 100, '♪ スケール']];
 const flagsAt = [7, 26, 42, 69];
-function pv(now, pct, chapName, comments, extra) {
-  const bars = hs.map((h, i) => '<i class="' + ((i + .5) / hs.length * 100 < pct ? 'p' : '') + '" style="height:' + (h * 4) + 'px"></i>').join('');
-  const cuts = chapters.map(([a, b, n]) => '<span class="' + (pct >= a && pct < b ? 'on' : '') + '" style="left:calc(' + a + '% + 1px);width:calc(' + (b - a) + '% - 2px)"></span><small style="left:' + a + '%">' + n + '</small>').join('');
-  return '<div class="pv"><div class="top"><div class="bar1"><span class="cl">' + down + '閉じる</span><b>11/17のレッスン</b><span class="sp">1.0x</span></div>' +
-    '<div class="now">' + now + '</div><div class="chap"><span>' + chapName + chev + '</span></div>' +
-    '<div class="wv">' + bars + flagsAt.map((x) => '<b class="fl" style="left:' + x + '%"></b>').join('') + '<b class="head" style="left:' + pct + '%"></b></div>' +
-    '<div class="cuts">' + cuts + '</div><div class="ends"><span>0:00</span><span>48:12</span></div>' +
-    '<div class="ctl">' + skip(false) + '<span class="pp"><i></i><i></i></span>' + skip(true) + '</div></div>' +
-    '<div class="cmh">ここまでのしおり</div><div class="cm">' + comments + '</div>' +
-    '<div class="ipt"><span class="f">16:05 にしおり（名前はなくてもいい）</span><span class="go">追加</span></div>' + (extra || '') + '</div>';
-}
-const c = (t, tx, cls) => '<div class="c ' + (cls || '') + '"><span class="tm">' + t + '</span><span class="tx">' + tx + '</span></div>';
-const cg = (n) => '<div class="c cg">' + n + '</div>';
-const cm = cg('手首が固まってしまう') + c('3:10', '肩を意識して動かすといい', 'old') + c('4:20', '弓を返すときに手首を固めない', 'old') + cg('♪ ヴィヴァルディ 協奏曲') + c('12:40', '3ポジへの移動は親指を先に動かす');
-const menu = '<div class="dim"></div><div class="cmenu">' +
-  [['手首が固まってしまう', '0:00–10:36'], ['♪ ヴィヴァルディ 協奏曲', '10:36–30:50', true], ['♪ スケール', '30:50–48:12'], ['トピックなし', '']].map(([n, r, on]) => '<div class="o"><span class="ck">' + (on ? '✓' : '') + '</span><span class="n">' + n + '</span><small>' + r + '</small></div>').join('') +
-  '<div class="o new"><span class="ck">＋</span><span class="n">新しいトピック</span></div></div>';
-const P = [
-  ['再生中', 'チャプター名をタップすると、すぐ下にメニューが出る。',
-    pv('16:05', 33, '♪ ヴィヴァルディ', cm)],
-  ['チャプター名をタップしたとき', '暗い面になじむメニュー。今のチャプターに✓、右に時間の範囲。画面全体を暗くしすぎない。',
-    pv('16:05', 33, '♪ ヴィヴァルディ', cm, menu)],
+const chapters = [[0, 22, '手首'], [22, 64, '♪ ヴィヴァルディ'], [64, 100, '♪ スケール']];
+const recScreen = '<div class="pv full"><div class="top"><div class="bar1"><span></span><b>11/24のレッスン</b><span></span></div>' +
+  '<div class="recnow"><span class="st"><i></i>録音中</span><span class="tm">24:31</span><div class="lw">' + hs.concat(hs.slice(0, 10)).slice(0, 48).map((h, i) => '<i class="' + (i > 40 ? 'q' : '') + '" style="height:' + (h * 5) + 'px"></i>').join('') + '</div>' +
+  '<div class="lv">画面を消しても録音は続きます</div></div>' +
+  '<span class="stopb"><i></i></span><div class="stopl">停止</div></div></div>';
+const R = [
+  ['録る前', '金色の大きなボタン（ホームの「個人練を録音」と同じ形）。',
+    head('11/24（月）', chips(['♪ ヴィヴァルディ', '♪ スケール'])) + fresh(['♪ ヴィヴァルディ 協奏曲', '♪ スケール']) + recBtn],
+  ['録音中', '画面全体が録音の画面になる。時間・波形・停止だけ。',
+    recScreen],
+  ['録り終わったあと', 'ボタンがあった場所に小さなプレーヤー。タップで再生画面（チャプターつき）。',
+    head('11/17（月）', chips(['♪ ヴィヴァルディ', '手首が固まってしまう', '♪ スケール'])) + full +
+    '<div class="pbar"><span class="pb">' + play + '</span><div class="wv">' + hs.slice(0, 26).map((h) => '<i style="height:' + (h * 2) + 'px"></i>').join('') + flagsAt.map((x) => '<b style="left:' + x + '%"></b>').join('') + '</div><span class="d">48:12</span></div>'],
 ];
-document.getElementById('pl').innerHTML = L.map(fr).join('');
-document.getElementById('pp').innerHTML = P.map(fr).join('');
+document.getElementById('pt').innerHTML = T.map(fr).join('');
+document.getElementById('pr').innerHTML = R.map(fr).join('');
 </script>
