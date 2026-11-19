@@ -44,7 +44,6 @@ ul.l { margin: 0; padding: 0; list-style: none; }
 .at svg { width: 8px; height: 8px; }
 .hw { font-size: 16px; font-weight: 700; }
 .tk { font-size: 12px; font-weight: 700; color: var(--sub); padding: 8px 20px 0; }
-.bmk .tx { color: var(--muted); }
 .bmk .tx u { text-decoration: none; color: var(--accent-d); font-size: 12px; margin-left: 4px; }
 .flagic { flex: none; width: 8px; height: 10px; background: var(--accent); clip-path: polygon(0 0,100% 0,100% 100%,50% 72%,0 100%); align-self: center; margin-right: 2px; }
 .flash { background: var(--flash); }
@@ -59,6 +58,18 @@ ul.l { margin: 0; padding: 0; list-style: none; }
 .flags b::before { content: ""; position: absolute; top: 0; left: 0; width: 7px; height: 6px; background: var(--accent); clip-path: polygon(0 0,100% 50%,0 100%); }
 .player .d { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .recbtn { margin: 12px 20px 0; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border-radius: 12px; background: var(--rec-bg); color: var(--rec); font-weight: 700; }
+/* 聞き返し中のプレーヤー */
+.fp { position: absolute; left: 10px; right: 10px; bottom: 18px; display: flex; align-items: center; gap: 10px; padding: 9px 9px 9px 12px; border-radius: 16px; background: rgba(30,30,32,.95); color: #fff; box-shadow: 0 8px 22px rgba(0,0,0,.25); }
+.fp .pz { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,.15); display: flex; gap: 3px; align-items: center; justify-content: center; flex: none; }
+.fp .pz i { width: 3px; height: 11px; background: #fff; border-radius: 1px; }
+.fp .pt { flex: 1; min-width: 0; font-size: 11px; color: rgba(255,255,255,.7); }
+.fp .pt b { display: block; font-size: 14px; color: #fff; font-variant-numeric: tabular-nums; }
+.fp .bar { height: 3px; border-radius: 2px; background: rgba(255,255,255,.25); margin-top: 5px; overflow: hidden; }
+.fp .bar i { display: block; height: 100%; background: var(--accent); }
+.fp .bm { background: var(--accent); color: #fff; font-weight: 700; border-radius: 14px; padding: 8px 12px; font-size: 13px; display: flex; align-items: center; gap: 5px; flex: none; }
+.fp .bm .flagic { background: #fff; }
+.toast { position: absolute; left: 50%; bottom: 96px; transform: translateX(-50%); background: rgba(30,30,32,.9); color: #fff; font-size: 12px; padding: 7px 14px; border-radius: 16px; white-space: nowrap; }
+.bmk .tx { color: var(--fg); }
 /* 録音中の帯 */
 .live { margin: 10px 12px 0; background: var(--rec-bg); border-radius: 16px; padding: 8px 8px 8px 14px; display: flex; align-items: center; gap: 8px; }
 .live .tm { flex: 1; color: var(--rec); font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -92,14 +103,14 @@ ul.l { margin: 0; padding: 0; list-style: none; }
 
 <div class="wrap">
 <h1>レッスン画面：案2 ＋ しおり</h1>
-<p class="lead">案2（白一色、先生／自分は丸の色）をもとに、しおりを脇役として入れた。しおりはレッスンを録音しているときだけ出るボタンで、押すとその時間の行が学んだことに入る。言葉はその場で書いても、あとで足してもいい。並びは 録音 → 宿題 → 学んだこと → 個人練。</p>
+<p class="lead">案2（白一色、先生／自分は丸の色）をもとに、しおりを脇役として入れた。しおりはレッスンの録音を聞き返しているときに押すボタンで、いま聞いている位置の行が学んだことに入る。言葉を書かなければ「しおり 1」「しおり 2」と番号つきの名前になる。並びは 録音 → 宿題 → 学んだこと → 個人練。</p>
 <div class="phones" id="ps"></div>
 <div class="notes">
   <h2>決めたこと・まだ決めていないこと</h2>
   <ul>
     <li>しおりで入った行は「題なし」に入る。あとで行を長押しして題に移す（今の並べ替えと同じ）</li>
     <li>書く入口は右下の＋ひとつ。行のタップで直す、左スワイプで消す、は今と同じ</li>
-    <li>録音中は＋より「しおり」を目立たせる。しおりの欄で言葉まで書けるので、レッスン中はこれだけで足りるはず</li>
+    <li>レッスンの録音中にはしおりを出さない（録音中に印を付けることはないため）</li>
     <li>まだ決めていないこと：＋を入れたい場所までドラッグする（Things 3 のやり方）を入れるか。最初は押すだけにしておき、要るかは触ってから決めたい</li>
   </ul>
 </div>
@@ -114,7 +125,9 @@ const head = (right) => '<div class="nav"><span>‹ 戻る</span><span>' + (righ
 const hw = '<div class="h">宿題</div><ul class="l"><li class="li hw">ヴィヴァルディ 20〜36小節をゆっくり</li><li class="li hw">スケールは3オクターブをテンポ60で</li></ul>';
 const lgd = '<span class="lgd"><span><i></i>先生</span><span><i class="m"></i>自分</span></span>';
 const row = (by, tx, t, cls) => '<li class="li ' + (by === 'm' ? 'm ' : '') + (cls || '') + '"><span class="dot' + (by === 'm' ? ' m' : '') + '"></span><span class="tx">' + tx + '</span>' + (t ? at(t) : '') + '</li>';
-const bmk = (t, cls) => '<li class="li bmk ' + (cls || '') + '"><span class="flagic"></span><span class="tx">しおり<u>言葉を足す</u></span>' + at(t) + '</li>';
+const bmk = (n, t, cls) => '<li class="li bmk ' + (cls || '') + '"><span class="flagic"></span><span class="tx">しおり ' + n + '</span>' + at(t) + '</li>';
+// 聞き返し中の下のプレーヤー（しおりボタンつき）
+const fp = (pos, pct) => '<div class="fp"><span class="pz"><i></i><i></i></span><div class="pt"><span>11/17のレッスン</span><b>' + pos + ' / 48:12</b><div class="bar"><i style="width:' + pct + '%"></i></div></div><span class="bm"><span class="flagic"></span>しおり</span></div>';
 const learned = (extra) => '<div class="h">学んだこと' + lgd + '</div>' +
   '<div class="tk">♪ ヴィヴァルディ 協奏曲</div><ul class="l">' + row('t', '3ポジへの移動は親指を先に動かす', '12:40') + row('t', '20小節目からは弓を多めに', '20:15') + row('m', '親指を意識すると音程が安定する気がする', '') + '</ul>' +
   '<div class="tk">手首が固まってしまう</div><ul class="l">' + row('t', '肩を意識して動かすといい', '3:10') + '</ul>' + (extra || '');
@@ -122,17 +135,13 @@ const learned = (extra) => '<div class="h">学んだこと' + lgd + '</div>' +
 const F = [
   ['普段', '読むだけの画面。録音の波形にはしおりの旗が立ち、行の時間をタップするとそこから再生。書くときは右下の＋。',
     head() + '<div class="player"><span class="pb">' + play + '</span><div class="track">' + wave() + '<div class="flags"><b style="left:7%"></b><b style="left:26%"></b><b style="left:42%"></b><b style="left:69%"></b></div></div><span class="d">48:12</span></div>' +
-    hw + learned('<div class="tk" style="color:var(--muted)">題なし</div><ul class="l">' + bmk('33:30') + '</ul>') + '<span class="fab">＋</span>'],
-  ['録音中', 'レッスンを録音すると、上に帯が出る。帯の「しおり」がいちばん押しやすい場所にある。画面はそのままスクロールして読める。',
-    '<div class="nav"><span>‹ 戻る</span><span></span></div><div class="ttl"><b>11/24（月）</b><span>バイオリン · ブライアン先生</span></div>' +
-    '<div class="live"><span class="tm">● 録音中 24:31</span><span class="bm"><span class="flagic"></span>しおり</span><span class="st"><i></i></span></div>' +
-    '<div class="h">宿題</div><ul class="l"><li class="li" style="color:var(--muted)">（まだなし）</li></ul>' +
-    '<div class="h">学んだこと' + lgd + '</div><div class="tk">♪ ヴィヴァルディ 協奏曲</div><ul class="l">' + row('t', '冒頭の付点はもっと軽く', '7:02') + '</ul><div class="tk" style="color:var(--muted)">題なし</div><ul class="l">' + bmk('15:48') + row('t', '弓は根元から', '19:20') + '</ul>' + '<span class="fab" style="opacity:.55;transform:scale(.85)">＋</span>'],
-  ['しおりを押した直後', 'その時間の行がすぐ入る。下にひとこと欄が出るが、書かずに閉じてもいい。先生／自分もここで切り替え。',
-    '<div class="nav"><span>‹ 戻る</span><span></span></div><div class="ttl"><b>11/24（月）</b><span>バイオリン · ブライアン先生</span></div>' +
-    '<div class="live"><span class="tm">● 録音中 24:35</span><span class="bm"><span class="flagic"></span>しおり</span><span class="st"><i></i></span></div>' +
-    '<div class="h">学んだこと' + lgd + '</div><div class="tk" style="color:var(--muted)">題なし</div><ul class="l">' + bmk('15:48') + row('t', '弓は根元から', '19:20') + '<li class="li flash"><span class="flagic"></span><span class="tx" style="color:var(--muted)">しおり</span>' + at('24:31') + '</li></ul>' +
-    '<div class="bmin"><div class="k"><span>24:31 のしおり</span><span>あとで書く</span></div><div class="row"><span class="who"><span class="dot"></span>先生</span><span class="f">左手は指板に近づける｜</span><span class="ok">決定</span></div><div class="kb"></div></div>'],
+    hw + learned('<div class="tk" style="color:var(--muted)">題なし</div><ul class="l">' + bmk(1, '33:30') + '</ul>') + '<span class="fab">＋</span>'],
+  ['録音を聞き返しているとき', 'レッスンの録音を再生すると、下にプレーヤーが出る。プレーヤーの「しおり」を押すと、いま聞いている位置に印が付く。再生中は＋を隠す。',
+    head() + '<div class="player"><span class="pb">' + play + '</span><div class="track">' + wave() + '<div class="flags"><b style="left:7%"></b><b style="left:26%"></b><b style="left:42%"></b><b style="left:69%"></b></div></div><span class="d">48:12</span></div>' +
+    hw + learned('<div class="tk" style="color:var(--muted)">題なし</div><ul class="l">' + bmk(1, '33:30') + '</ul>') + fp('24:31', 51)],
+  ['しおりを押した直後', '何も書かなくても「しおり 2」のように番号つきの名前で入る。あとで行をタップすれば名前を書き換えられる。入る先は学んだことの「題なし」。',
+    head() + '<div class="player"><span class="pb">' + play + '</span><div class="track">' + wave() + '<div class="flags"><b style="left:7%"></b><b style="left:26%"></b><b style="left:42%"></b><b style="left:51%"></b><b style="left:69%"></b></div></div><span class="d">48:12</span></div>' +
+    hw + learned('<div class="tk" style="color:var(--muted)">題なし</div><ul class="l">' + bmk(2, '24:31', 'flash') + bmk(1, '33:30') + '</ul>') + '<div class="toast">しおり 2 を追加</div>' + fp('24:33', 51)],
   ['＋を押したとき', '何を足すかを上で選び、学んだことなら題と先生／自分も選ぶ。Enterで続けて書ける。前に選んだ題と先生／自分は残る。',
     head() + hw + '<div class="shade"></div><div class="sheet"><div class="seg"><span>宿題</span><span class="on">学んだこと</span></div>' +
     '<div class="k">題</div><div class="pills"><span class="pill on">♪ ヴィヴァルディ</span><span class="pill">手首が固まってしまう</span><span class="pill">題なし</span><span class="pill">＋ 新しい題</span></div>' +
