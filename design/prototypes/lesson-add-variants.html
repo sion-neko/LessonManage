@@ -108,6 +108,18 @@ ul.l { margin: 0; padding: 0; list-style: none; }
 .recnow .lv { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 6px; text-align: center; line-height: 1.6; }
 .stopb { margin: 0 auto 6px; width: 74px; height: 74px; border-radius: 50%; border: 3px solid rgba(255,255,255,.3); display: grid; place-items: center; }
 .stopb i { width: 26px; height: 26px; border-radius: 6px; background: #fff; }
+.pv .bar1 .more { justify-self: end; font-size: 13px; letter-spacing: 1px; color: #fff; background: rgba(255,255,255,.14); border-radius: 12px; padding: 2px 9px; }
+.dim { position: absolute; inset: 0; background: rgba(0,0,0,.18); z-index: 4; }
+.mmenu { position: absolute; right: 12px; top: 58px; width: 200px; background: rgba(58,58,62,.97); border-radius: 14px; box-shadow: 0 12px 34px rgba(0,0,0,.45); overflow: hidden; z-index: 5; color: #fff; }
+.mmenu .o { display: flex; justify-content: space-between; padding: 12px 14px; font-size: 14px; border-top: .5px solid rgba(255,255,255,.12); }
+.mmenu .o:first-child { border-top: 0; }
+.mmenu .o small { color: rgba(255,255,255,.5); }
+.mmenu .o.del { color: var(--rec); }
+.cdlg { position: absolute; left: 30px; right: 30px; top: 210px; z-index: 5; background: var(--paper); border-radius: 16px; padding: 18px 18px 10px; box-shadow: 0 12px 40px rgba(0,0,0,.3); text-align: center; }
+.cdlg b { font-size: 16px; }
+.cdlg p { font-size: 12px; color: var(--sub); line-height: 1.7; margin: 8px 0 12px; }
+.cbtn { padding: 11px; border-top: .5px solid var(--line); font-size: 15px; color: var(--accent-d); font-weight: 600; margin: 0 -18px; }
+.cbtn.del { color: var(--rec); font-weight: 700; }
 .recbar { position: absolute; left: 10px; right: 10px; bottom: 18px; display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; border-radius: 18px; background: #18181a; color: #fff; box-shadow: 0 6px 18px rgba(0,0,0,.2); }
 .recbar .r { width: 9px; height: 9px; border-radius: 50%; background: var(--rec); }
 .recbar .t { flex: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -161,6 +173,20 @@ const recScreen = '<div class="pv full"><div class="top"><div class="bar1"><span
   '<div class="recnow"><span class="st"><i></i>録音中</span><span class="tm">24:31</span><div class="lw">' + hs.concat(hs.slice(0, 10)).slice(0, 48).map((h, i) => '<i class="' + (i > 40 ? 'q' : '') + '" style="height:' + (h * 5) + 'px"></i>').join('') + '</div>' +
   '<div class="lv">画面を消しても録音は続きます</div></div>' +
   '<span class="stopb"><i></i></span><div class="stopl">停止</div></div></div>';
+// 再生画面（右上の「…」から録音を削除）
+const skip = (fwd) => '<svg class="sk" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"' + (fwd ? ' style="transform:scaleX(-1)"' : '') + '><path d="M9 9.5A10 10 0 1 1 6 16"/><path d="M9 4v5.5h-5.5"/><text x="16" y="20" font-size="9" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none"' + (fwd ? ' transform="scale(-1,1) translate(-32,0)"' : '') + '>15</text></svg>';
+const pvDel = (extra) => {
+  const pct = 33;
+  const bars = hs.map((h, i) => '<i class="' + ((i + .5) / hs.length * 100 < pct ? 'p' : '') + '" style="height:' + (h * 4) + 'px"></i>').join('');
+  const cuts = chapters.map(([a, b, n]) => '<span class="' + (pct >= a && pct < b ? 'on' : '') + '" style="left:calc(' + a + '% + 1px);width:calc(' + (b - a) + '% - 2px)"></span><small style="left:' + a + '%">' + n + '</small>').join('');
+  return '<div class="pv"><div class="top"><div class="bar1"><span class="cl">' + down + '閉じる</span><b>11/17のレッスン</b><span class="more">•••</span></div>' +
+    '<div class="now">16:05</div><div class="chap"><span>♪ ヴィヴァルディ</span></div>' +
+    '<div class="wv">' + bars + flagsAt.map((x) => '<b class="fl" style="left:' + x + '%"></b>').join('') + '<b class="head" style="left:' + pct + '%"></b></div>' +
+    '<div class="cuts">' + cuts + '</div><div class="ends"><span>0:00</span><span>48:12</span></div>' +
+    '<div class="ctl">' + skip(false) + '<span class="pp"><i></i><i></i></span>' + skip(true) + '</div></div>' + (extra || '') + '</div>';
+};
+const moreMenu = '<div class="dim"></div><div class="mmenu"><div class="o">再生の速さ<small>1.0x</small></div><div class="o del">録音を削除</div></div>';
+const confirmDel = '<div class="dim" style="background:rgba(0,0,0,.45)"></div><div class="cdlg"><b>この録音を削除</b><p>48:12 の録音が消えます。元に戻せません。<br>書いた行は残ります（録音の時間は外れます）。名前のないしおりは消えます。</p><div class="cbtn del">削除</div><div class="cbtn">やめる</div></div>';
 const R = [
   ['録る前', '金色の大きなボタン（ホームの「個人練を録音」と同じ形）。',
     head('11/24（月）', chips(['♪ ヴィヴァルディ', '♪ スケール'])) + fresh(['♪ ヴィヴァルディ 協奏曲', '♪ スケール']) + recBtn],
@@ -173,6 +199,12 @@ const R = [
     head('11/17（月）', chips(['♪ ヴィヴァルディ', '手首が固まってしまう', '♪ スケール'])) + full +
     '<div class="pbar"><span class="pb">' + play + '</span><div class="wv">' + hs.slice(0, 26).map((h) => '<i style="height:' + (h * 2) + 'px"></i>').join('') + flagsAt.map((x) => '<b style="left:' + x + '%"></b>').join('') + '</div><span class="d">48:12</span></div>'],
 ];
+R.push(
+  ['再生画面の「•••」', '録音の削除は再生画面の右上「•••」から。間違えて録ったときは、停止して下のプレーヤーから再生画面を開き、ここから消す。再生の速さもここへ移す。',
+    pvDel(moreMenu)],
+  ['削除の確認', '元に戻せないので確認を挟む。何が消えて何が残るかを書いておく。',
+    pvDel(confirmDel)],
+);
 document.getElementById('pt').innerHTML = T.map(fr).join('');
 document.getElementById('pr').innerHTML = R.map(fr).join('');
 </script>
