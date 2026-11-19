@@ -120,6 +120,13 @@ ul.l { margin: 0; padding: 0; list-style: none; }
 .cdlg p { font-size: 12px; color: var(--sub); line-height: 1.7; margin: 8px 0 12px; }
 .cbtn { padding: 11px; border-top: .5px solid var(--line); font-size: 15px; color: var(--accent-d); font-weight: 600; margin: 0 -18px; }
 .cbtn.del { color: var(--rec); font-weight: 700; }
+.prr { display: flex; align-items: center; gap: 8px; margin: 3px 14px; padding: 6px 8px 6px 10px; border-radius: 12px; background: var(--soft); }
+.prr .pd { flex: none; width: 36px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.prr .pn { flex: 1; min-width: 0; font-size: 13px; }
+.prr .pn small { display: block; font-size: 11px; color: var(--muted); }
+.prr .ppb { width: 26px; height: 26px; border-radius: 50%; background: var(--paper); color: var(--accent-d); display: grid; place-items: center; flex: none; }
+.prr .ppb svg { width: 10px; height: 10px; }
+.cnt { flex: none; align-self: center; font-size: 11px; font-weight: 700; color: var(--accent-d); background: var(--flash); border-radius: 10px; padding: 2px 8px; }
 .recbar { position: absolute; left: 10px; right: 10px; bottom: 18px; display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; border-radius: 18px; background: #18181a; color: #fff; box-shadow: 0 6px 18px rgba(0,0,0,.2); }
 .recbar .r { width: 9px; height: 9px; border-radius: 50%; background: var(--rec); }
 .recbar .t { flex: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -138,6 +145,10 @@ ul.l { margin: 0; padding: 0; list-style: none; }
 <h2 class="sec">録音</h2>
 <p class="lead">録音ボタンは、ホームの「個人練を録音」と同じ金色のボタンにそろえた。録音中は画面全体を録音の画面にする（再生画面と同じ暗い色で、時間と波形と停止）。左上の「閉じる」で、録音したままレッスン画面に戻れる。録り終わると下にプレーヤーが残る。</p>
 <div class="phones" id="pr"></div>
+
+<h2 class="sec">個人練の録音の見せ方（3案）</h2>
+<p class="lead">個人練はホームの「個人練を録音」で録る（録る前に曲を選ぶ）。その録音を、レッスン画面のどこにどう出すか。</p>
+<div class="phones" id="pk"></div>
 </div>
 
 <script>
@@ -205,6 +216,23 @@ R.push(
   ['削除の確認', '元に戻せないので確認を挟む。何が消えて何が残るかを書いておく。',
     pvDel(confirmDel)],
 );
+// ── 個人練の見せ方 ──
+const pbar = '<div class="pbar"><span class="pb">' + play + '</span><div class="wv">' + hs.slice(0, 26).map((h) => '<i style="height:' + (h * 2) + 'px"></i>').join('') + flagsAt.map((x) => '<b style="left:' + x + '%"></b>').join('') + '</div><span class="d">48:12</span></div>';
+const pr = (d, n, s) => '<li class="prr"><span class="pd">' + d + '</span><span class="pn">' + n + (s ? '<small>' + s + '</small>' : '') + '</span><span class="ppb">' + play + '</span></li>';
+const top3 = head('11/17（月）', chips(['♪ ヴィヴァルディ', '手首が固まってしまう', '♪ スケール']));
+const hwBlock = '<div class="h">やること</div><ul class="l"><li class="li hw">ヴィヴァルディ 20〜36小節をゆっくり</li><li class="li hw">スケールをテンポ60で</li></ul>';
+const K = [
+  ['案1：一番下にまとめる', '学んだことの下に「このレッスン後の個人練」として日付順に並べる。今の作りと同じ。いちばん分かりやすいが、画面の下のほうで目立たない。',
+    top3 + hwBlock + '<div class="h">学んだこと</div><div class="tk">♪ ヴィヴァルディ 協奏曲</div><ul class="l">' + row('t', '3ポジへの移動は親指を先に', '12:40') + '</ul><div class="tk">手首が固まってしまう</div><ul class="l">' + row('t', '肩を意識して動かす', '3:10') + '</ul>' +
+    '<div class="h">このレッスン後の個人練</div><ul class="l">' + pr('11/20', 'テンポ60で通せた', '♪ ヴィヴァルディ') + pr('11/18', '（一言なし）', '♪ スケール') + '</ul>' + pbar],
+  ['案2：トピックの中に出す', '個人練は曲を選んで録るので、その曲のトピックの中に出す。「先生にこう言われた → 練習してこうなった」が同じ場所で見える。曲なしの個人練は「トピックなし」に。',
+    top3 + hwBlock + '<div class="h">学んだこと</div><div class="tk">♪ ヴィヴァルディ 協奏曲</div><ul class="l">' + row('t', '3ポジへの移動は親指を先に', '12:40') + row('m', '親指を意識すると音程が安定') + pr('11/20', 'テンポ60で通せた', '') + '</ul>' +
+    '<div class="tk">手首が固まってしまう</div><ul class="l">' + row('t', '肩を意識して動かす', '3:10') + '</ul><div class="tk">♪ スケール</div><ul class="l">' + pr('11/18', '（一言なし）', '') + '</ul>' + pbar],
+  ['案3：やることの横に回数だけ', 'やることの各行に、その曲を何回練習したかを小さく出す。タップすると録音の一覧。画面は増えないが、どの録音かは開くまで分からない。',
+    top3 + '<div class="h">やること</div><ul class="l"><li class="li hw"><span class="tx">ヴィヴァルディ 20〜36小節をゆっくり</span><span class="cnt">個人練 2</span></li><li class="li hw"><span class="tx">スケールをテンポ60で</span><span class="cnt">個人練 1</span></li></ul>' +
+    '<div class="h">学んだこと</div><div class="tk">♪ ヴィヴァルディ 協奏曲</div><ul class="l">' + row('t', '3ポジへの移動は親指を先に', '12:40') + row('m', '親指を意識すると音程が安定') + '</ul><div class="tk">手首が固まってしまう</div><ul class="l">' + row('t', '肩を意識して動かす', '3:10') + '</ul>' + pbar],
+];
+document.getElementById('pk').innerHTML = K.map(fr).join('');
 document.getElementById('pt').innerHTML = T.map(fr).join('');
 document.getElementById('pr').innerHTML = R.map(fr).join('');
 </script>
