@@ -9,7 +9,7 @@
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page: #121214; color-scheme: dark } }
 :root[data-theme="dark"] { --page: #121214; color-scheme: dark }
 body { background: var(--page); color: var(--fg); font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; }
-.wrap { max-width: 1700px; margin: 0 auto; padding-block: 28px 60px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: 2000px; margin: 0 auto; padding-block: 28px 60px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 h1 { font-size: 24px; margin: 0 0 6px; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) h1, :root:not([data-theme="light"]) .lead, :root:not([data-theme="light"]) .fr > b, :root:not([data-theme="light"]) .fr > p { color: #f2f2f7; } }
 :root[data-theme="dark"] h1, :root[data-theme="dark"] .lead, :root[data-theme="dark"] .fr > b, :root[data-theme="dark"] .fr > p { color: #f2f2f7; }
@@ -60,6 +60,8 @@ ul { list-style: none; margin: 0; padding: 0; }
 /* ── C：色を減らす。時間は灰色、自分の気づきも黒い文字（違いは丸の色だけ） ── */
 .vc .at { color: var(--muted); font-weight: 500; }
 .vc .row.m .tx { color: var(--fg); }
+/* ── 先生／自分を分けない：丸も凡例もなくす ── */
+.vx .dot, .vx .lgd { display: none; }
 </style>
 
 <div class="wrap">
@@ -92,6 +94,7 @@ const V = [
   ['＋B 行の間をあける', '1つの指摘ずつ拾いやすく。', 'va vb', true],
   ['＋C 色を減らす', '時間は灰色、自分の気づきも黒い文字に。', 'va vb vc', true],
   ['＋♪をやめる', '曲の名前に♪を付けない。', 'va vb vc', false],
+  ['＋先生／自分を分けない', '丸と凡例をなくす。文字だけが並ぶ。', 'va vb vc vx', false],
 ];
 document.getElementById('ps').innerHTML = V.map(([b, p, cls, note]) => '<div class="fr"><b>' + b + '</b><p>' + p + '</p>' + screen(cls, note) + '</div>').join('');
 </script>
