@@ -126,6 +126,11 @@ ul.l { margin: 0; padding: 0; list-style: none; }
 .prr .pn small { display: block; font-size: 11px; color: var(--muted); }
 .prr .ppb { width: 26px; height: 26px; border-radius: 50%; background: var(--paper); color: var(--accent-d); display: grid; place-items: center; flex: none; }
 .prr .ppb svg { width: 10px; height: 10px; }
+.prrec { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 6px 14px 0; padding: 10px; border-radius: 12px; border: 1.5px dashed var(--line); color: var(--accent-d); font-weight: 700; font-size: 14px; }
+.prrec svg { width: 16px; height: 16px; }
+.scrl { position: absolute; left: 0; right: 0; bottom: 0; top: -150px; }
+.psel { margin: 6px 18px 0; height: 46px; border-radius: 12px; background: var(--soft); display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-size: 15px; font-weight: 600; }
+.psel svg { width: 16px; height: 16px; color: var(--muted); }
 .cnt { flex: none; align-self: center; font-size: 11px; font-weight: 700; color: var(--accent-d); background: var(--flash); border-radius: 10px; padding: 2px 8px; }
 .recbar { position: absolute; left: 10px; right: 10px; bottom: 18px; display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; border-radius: 18px; background: #18181a; color: #fff; box-shadow: 0 6px 18px rgba(0,0,0,.2); }
 .recbar .r { width: 9px; height: 9px; border-radius: 50%; background: var(--rec); }
@@ -146,8 +151,8 @@ ul.l { margin: 0; padding: 0; list-style: none; }
 <p class="lead">録音ボタンは、ホームの「個人練を録音」と同じ金色のボタンにそろえた。録音中は画面全体を録音の画面にする（再生画面と同じ暗い色で、時間と波形と停止）。左上の「閉じる」で、録音したままレッスン画面に戻れる。録り終わると下にプレーヤーが残る。</p>
 <div class="phones" id="pr"></div>
 
-<h2 class="sec">個人練の録音の見せ方（3案）</h2>
-<p class="lead">個人練はホームの「個人練を録音」で録る（録る前に曲を選ぶ）。その録音を、レッスン画面のどこにどう出すか。</p>
+<h2 class="sec">個人練の録音</h2>
+<p class="lead">案1（一番下にまとめる）に決定。録る入口は、個人練の一覧の最後に1行だけ置く（ホームの「個人練を録音」も今のまま）。図は画面を下までスクロールしたところ。</p>
 <div class="phones" id="pk"></div>
 </div>
 
@@ -232,7 +237,17 @@ const K = [
     top3 + '<div class="h">やること</div><ul class="l"><li class="li hw"><span class="tx">ヴィヴァルディ 20〜36小節をゆっくり</span><span class="cnt">個人練 2</span></li><li class="li hw"><span class="tx">スケールをテンポ60で</span><span class="cnt">個人練 1</span></li></ul>' +
     '<div class="h">学んだこと</div><div class="tk">♪ ヴィヴァルディ 協奏曲</div><ul class="l">' + row('t', '3ポジへの移動は親指を先に', '12:40') + row('m', '親指を意識すると音程が安定') + '</ul><div class="tk">手首が固まってしまう</div><ul class="l">' + row('t', '肩を意識して動かす', '3:10') + '</ul>' + pbar],
 ];
-document.getElementById('pk').innerHTML = K.map(fr).join('');
+// 案1に決定：録る入口は個人練の一覧の最後の1行
+const prList = '<div class="h">このレッスン後の個人練</div><ul class="l">' + pr('11/20', 'テンポ60で通せた', '♪ ヴィヴァルディ') + pr('11/18', '（一言なし）', '♪ スケール') + '<li class="prrec">' + mic + '個人練を録音</li></ul>';
+const lessonP = (extra) => '<div class="scrl">' + top3 + hwBlock + '<div class="h">学んだこと</div><div class="tk">♪ ヴィヴァルディ 協奏曲</div><ul class="l">' + row('t', '3ポジへの移動は親指を先に', '12:40') + '</ul>' + prList + '</div>' + pbar + (extra || '');
+const pick = '<div class="shade"></div><div class="sheet"><div class="grab"></div><div class="st"><b>録音内容</b><span></span></div><div class="psel">♪ ヴィヴァルディ 協奏曲 イ短調<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5 5 5-5"/></svg></div><div class="go" style="margin:12px 18px 0">' + mic + '録音開始</div></div>';
+const K1 = [
+  ['案1：一覧の最後に「個人練を録音」', '個人練の一覧の最後の行が録る入口。ボタンは1つだけで、ほかの行と同じ形の薄い面に点線の枠。',
+    lessonP()],
+  ['押したとき', '今の試作と同じ「録音内容」のプルダウン（前回録った曲が最初から選ばれている）→ 録音開始。録った個人練はこのレッスンに付く。',
+    lessonP(pick)],
+];
+document.getElementById('pk').innerHTML = K1.map(fr).join('') + '<details style="width:100%"><summary style="cursor:pointer;color:var(--muted);font-size:13px;margin-top:6px">ほかの2案（不採用）</summary><div class="phones" style="margin-top:12px">' + K.slice(1).map(fr).join('') + '</div></details>';
 document.getElementById('pt').innerHTML = T.map(fr).join('');
 document.getElementById('pr').innerHTML = R.map(fr).join('');
 </script>
