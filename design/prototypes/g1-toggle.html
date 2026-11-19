@@ -468,7 +468,7 @@ const whoTag = (by, attr) => (attr ? '<button class="who ' + by + '" ' + attr + 
 function addTopicSheet(l, onAdd) {
   sheet(app, (el, close) => {
     const songs = l.songIds.filter((id) => !l.topics.some((t) => t.songId === id));
-    el.innerHTML = '<div class="tp"><div class="tp-title">題を追加</div>' + songs.map((id) => '<button class="tp-item" data-s="' + id + '"><b>♪ ' + esc(D.song(id).title) + '</b></button>').join('') +
+    el.innerHTML = '<div class="tp"><div class="tp-title">トピックを追加</div>' + songs.map((id) => '<button class="tp-item" data-s="' + id + '"><b>♪ ' + esc(D.song(id).title) + '</b></button>').join('') +
       '<input id="tk-new" class="ap-note" placeholder="例：手首が固まってしまう" autocomplete="off"><button class="ap-save" data-act="ok">追加</button></div>';
     el.querySelectorAll('[data-s]').forEach((b) => (b.onclick = () => { close(); onAdd(addTopic(l, b.dataset.s)); }));
     const inp = el.querySelector('#tk-new');
@@ -479,8 +479,8 @@ function addTopicSheet(l, onAdd) {
 // 題を直すシート：名前を変える・題を外す（行は題なしに戻る）
 function topicSheet(l, t, onDone) {
   sheet(app, (el, close) => {
-    el.innerHTML = '<div class="tp"><div class="tp-title">題</div>' + (t.songId ? '<div class="tp-item"><b>' + topicLabel(t) + '</b></div>' : '<input id="tk-ed" class="ap-note" autocomplete="off"><button class="ap-save" data-act="ok">保存</button>') +
-      '<button class="tp-add" data-act="rm" style="color:var(--rec)">題を外す</button></div>';
+    el.innerHTML = '<div class="tp"><div class="tp-title">トピック</div>' + (t.songId ? '<div class="tp-item"><b>' + topicLabel(t) + '</b></div>' : '<input id="tk-ed" class="ap-note" autocomplete="off"><button class="ap-save" data-act="ok">保存</button>') +
+      '<button class="tp-add" data-act="rm" style="color:var(--rec)">トピックを外す</button></div>';
     const inp = el.querySelector('#tk-ed');
     if (inp) { inp.value = t.title; el.querySelector('[data-act=ok]').onclick = () => { const v = inp.value.trim(); if (v) t.title = v; close(); onDone(); }; }
     el.querySelector('[data-act=rm]').onclick = () => { l.notes.forEach((n) => { if (n.tk === t.k) { n.tk = null; n.songId = null; } }); l.topics.splice(l.topics.indexOf(t), 1); close(); onDone(); };
@@ -517,7 +517,7 @@ function editList(l, key, o) {
         if (!g.k && !rows.length && l.topics.length) return ''; // 題があって題なしの行がないときは、題なしの欄を出さない
         return (g.k ? '<button class="tk-h" data-tk="' + g.k + '">' + topicLabel(g) + '</button>' : '') +
           '<ul>' + rows.map(([n, i]) => rowHtml(n, i)).join('') + '</ul>' + (sorting ? '' : addRow(g.k));
-      }).join('') + (sorting ? '' : '<button class="tk-add" data-act="addtopic">＋ 題を追加</button>');
+      }).join('') + (sorting ? '' : '<button class="tk-add" data-act="addtopic">＋ トピックを追加</button>');
     }
     bind();
     if (focusTk != null) { const a = box.querySelector('.add[data-tk="' + focusTk + '"] input'); if (a) a.focus(); }
@@ -653,7 +653,7 @@ function typeEdit(nav, t) {
 // ── 画面 ──
 const screens = {
   hello(el, a, nav) {
-    const v = h('<div class="hello"><h1>レッスン帳</h1><p>レッスンで学んだこと、宿題、個人練の録音をまとめる場所。<br>まずは習っているものをひとつ。</p>' +
+    const v = h('<div class="hello"><h1>レッスン帳</h1><p>レッスンで学んだこと、やること、個人練の録音をまとめる場所。<br>まずは習っているものをひとつ。</p>' +
       '<div class="f"><input id="hl-name" class="ap-note" placeholder="例：バイオリン"><div class="ex"><button>バイオリン</button><button>ボイトレ</button><button>ピアノ</button></div>' +
       '<input id="hl-teacher" class="ap-note" placeholder="先生・教室（なくてもいい）"><button class="go" data-act="ok">スタート</button></div></div>');
     v.querySelectorAll('.ex button').forEach((b) => (b.onclick = () => { v.querySelector('#hl-name').value = b.textContent; }));
@@ -670,7 +670,7 @@ const screens = {
     const l = cur && D.latest(cur);
     if (!l) {
       const t = D.type(cur);
-      const bl = h('<div class="blank"><b>' + esc(t ? t.name : '') + 'のレッスンはまだありません</b><p>レッスンの日に作ると、学んだことと宿題がここに出ます。</p><button class="go" data-act="new">' + I.plus + '最初のレッスン</button></div>');
+      const bl = h('<div class="blank"><b>' + esc(t ? t.name : '') + 'のレッスンはまだありません</b><p>レッスンの日に作ると、学んだこととやることがここに出ます。</p><button class="go" data-act="new">' + I.plus + '最初のレッスン</button></div>');
       bl.querySelector('[data-act=new]').onclick = () => { const nl = newLesson(cur); nav.push('lesson', { id: nl.id }); };
       sc.appendChild(bl); el.appendChild(tabbar(nav)); return;
     }
@@ -681,7 +681,7 @@ const screens = {
     };
     const open = () => nav.push('lesson', { id: l.id });
     { // 練習すること（宿題）＋学んだこと全部（先生と自分は線の色で分ける）
-      const hero = h('<div class="v3-hero"><div class="cap"><span>' + D.fmtDate(l.date) + '</span><button data-act="open">レッスンのページ' + I.chev + '</button></div><h2>練習すること</h2><ul>' + l.hw.map((x) => '<li>' + esc(x.text) + '</li>').join('') + '</ul></div>');
+      const hero = h('<div class="v3-hero"><div class="cap"><span>' + D.fmtDate(l.date) + '</span><button data-act="open">レッスンのページ' + I.chev + '</button></div><h2>やること</h2><ul>' + l.hw.map((x) => '<li>' + esc(x.text) + '</li>').join('') + '</ul></div>');
       hero.querySelector('[data-act=open]').onclick = open; sc.appendChild(hero);
       if (l.notes.length) {
         const vt = h('<div class="v3-t">' + [{ k: null }, ...l.topics].map((g) => { const ns = l.notes.filter((n) => (n.tk || null) === g.k); return ns.length ? '<div class="v3-g' + (g.k ? '' : ' nok') + '">' + (g.k ? '<div class="v3-tk"><span>' + topicLabel(g) + '</span><small>' + ns.length + '</small></div>' : '') + '<ul>' + ns.map((n) => '<li class="' + n.by + '">' + esc(n.text) + (n.by === 'm' ? '<i>自分</i>' : '') + '</li>').join('') + '</ul></div>' : ''; }).join('') + '</div>');
@@ -731,7 +731,7 @@ const screens = {
     songs.querySelector('[data-act=songs]').onclick = () => LM.songPicker(app, l, () => nav.refresh());
     sc.appendChild(songs);
     // 宿題はいちばん見返すので上に置く。レッスン録音は学んだこと（録音の位置が付く）のすぐ上に残す
-    const hw = editList(l, 'hw', { big: true }); sc.appendChild(sortableSection('宿題', hw)); sc.appendChild(hw);
+    const hw = editList(l, 'hw', { big: true }); sc.appendChild(sortableSection('やること', hw)); sc.appendChild(hw);
     sc.appendChild(h('<div class="sec">レッスン録音</div>'));
     const lr = D.lessonRec(l.id);
     if (lr) { const box = h('<div class="recbox"></div>'); box.appendChild(LM.playBtn(lr)); box.insertAdjacentHTML('beforeend', LM.wave(lr.id, 40)); sc.appendChild(box); }

@@ -67,7 +67,7 @@ ul.l { margin: 0; padding: 0; list-style: none; }
 .inbox .k { font-size: 11px; font-weight: 700; color: var(--muted); padding: 2px 12px 2px; display: flex; justify-content: space-between; }
 .inbox .li { padding: 5px 12px; }
 .inbox .mv { flex: none; font-size: 11px; color: var(--accent-d); font-weight: 700; border: 1px solid var(--line); border-radius: 10px; padding: 1px 8px; background: var(--paper); }
-/* C 題を開く */
+/* C トピックを開く */
 .tl { margin: 0 14px; }
 .trow { display: flex; align-items: center; gap: 10px; padding: 11px 6px; border-bottom: 1px solid var(--line); }
 .trow .n { flex: 1; min-width: 0; }
@@ -108,32 +108,32 @@ const kb = (bar) => '<div class="kb">' + (bar ? '<div class="bar">' + bar + '</d
 
 const V = [
   { n: 'A', name: '空いたところをタップして書く', from: '下敷き：iPhoneのリマインダー、Google Keep（一覧の最後に書く場所があり、Enterで次の行）',
-    desc: '＋ボタンは置かない。宿題や各題のいちばん下の余白をタップすると、そこに新しい行が出る。Enterで同じ場所に続けて書ける。新しい題だけは一番下の「新しい題」から作る。',
+    desc: '＋ボタンは置かない。やることや各トピックのいちばん下の余白をタップすると、そこに新しい行が出る。Enterで同じ場所に続けて書ける。新しいトピックだけは一番下の「新しいトピック」から作る。',
     pc: [['g', '書きたい場所を直接さわるだけ。選ぶ操作がない'], ['g', 'ボタンが増えないので画面がすっきりしたまま'], ['b', '余白をさわれると気づきにくい（最初だけ案内を出す）']],
-    f: [['普段', head + '<div class="h">宿題</div><ul class="l">' + hwRows + '</ul><div class="gap"></div><div class="h">学んだこと</div><div class="tk">♪ ヴィヴァルディ 協奏曲</div><ul class="l">' + vivRows + '</ul><div class="gap"></div><div class="tk">手首が固まってしまう</div><ul class="l">' + wriRows + '</ul><div class="gap"></div><div class="tk" style="color:var(--accent);font-weight:600">＋ 新しい題</div>'],
-      ['ヴィヴァルディの下の余白をタップ', head + '<div class="h">宿題</div><ul class="l">' + hwRows + '</ul><div class="h">学んだこと</div><div class="tk">♪ ヴィヴァルディ 協奏曲</div><ul class="l">' + vivRows + '</ul><div class="inl"><span class="dot"></span><span class="caret">冒頭の付点はもっと軽く</span></div><div class="tk">手首が固まってしまう</div><ul class="l">' + wriRows + '</ul>' + kb('<span></span><span>完了</span>')]] },
+    f: [['普段', head + '<div class="h">やること</div><ul class="l">' + hwRows + '</ul><div class="gap"></div><div class="h">学んだこと</div><div class="tk">♪ ヴィヴァルディ 協奏曲</div><ul class="l">' + vivRows + '</ul><div class="gap"></div><div class="tk">手首が固まってしまう</div><ul class="l">' + wriRows + '</ul><div class="gap"></div><div class="tk" style="color:var(--accent);font-weight:600">＋ 新しいトピック</div>'],
+      ['ヴィヴァルディの下の余白をタップ', head + '<div class="h">やること</div><ul class="l">' + hwRows + '</ul><div class="h">学んだこと</div><div class="tk">♪ ヴィヴァルディ 協奏曲</div><ul class="l">' + vivRows + '</ul><div class="inl"><span class="dot"></span><span class="caret">冒頭の付点はもっと軽く</span></div><div class="tk">手首が固まってしまう</div><ul class="l">' + wriRows + '</ul>' + kb('<span></span><span>完了</span>')]] },
 
   { n: 'B', name: '下の入力欄に書いて、あとで仕分ける', from: '下敷き：Microsoft To Do や LINE の、画面下にいつもある入力欄',
-    desc: '画面の下にいつも入力欄がある。書いたものはまず上の「未整理」にたまる。あとで各行の「移す」から宿題や題へ。書くときに何も考えなくていい。',
+    desc: '画面の下にいつも入力欄がある。書いたものはまず上の「未整理」にたまる。あとで各行の「移す」からやることやトピックへ。書くときに何も考えなくていい。',
     pc: [['g', '書くのはいちばん気楽。レッスン直後のメモ書きに向く'], ['g', '入力欄が見えているので迷わない'], ['b', '仕分けを忘れると「未整理」がたまる'], ['b', '入力欄のぶん、画面が少し狭くなる']],
     f: [['普段（未整理が2つある）', head + '<div class="inbox"><div class="k"><span>未整理</span><span>2</span></div><ul class="l">' + '<li class="li"><span class="tx">冒頭の付点はもっと軽く</span><span class="mv">移す</span></li><li class="li"><span class="tx">カイザー8番をテンポ72で</span><span class="mv">移す</span></li></ul></div>' +
-      '<div class="h">宿題</div><ul class="l">' + hwRows + '</ul><div class="h">学んだこと</div><div class="tk">♪ ヴィヴァルディ 協奏曲</div><ul class="l">' + vivRows + '</ul>' +
+      '<div class="h">やること</div><ul class="l">' + hwRows + '</ul><div class="h">学んだこと</div><div class="tk">♪ ヴィヴァルディ 協奏曲</div><ul class="l">' + vivRows + '</ul>' +
       '<div class="dock"><span class="f">メモ</span><span class="go">追加</span></div>']] },
 
-  { n: 'C', name: '題を開いて、その中で書く', from: '下敷き：iPhoneのリマインダー（リストを開いて、その中に足す）、メッセージアプリ',
-    desc: 'レッスン画面には宿題と題の一覧だけを置く。題をタップするとその題のページが開き、下の入力欄に書くだけで、その題に入る。1つの画面に書く場所が1つしかない。',
-    pc: [['g', '開いた題に書くので、行き先を選ぶ必要がない'], ['g', '1画面あたりの情報が少なくシンプル'], ['b', 'レッスン画面で学んだことの中身が一目で見えない（先頭の1行だけ）'], ['b', '画面の行き来が1回増える']],
-    f: [['レッスン画面', head + '<div class="h">宿題</div><ul class="l">' + hwRows + '</ul><div class="h">学んだこと</div><div class="tl">' +
+  { n: 'C', name: 'トピックを開いて、その中で書く', from: '下敷き：iPhoneのリマインダー（リストを開いて、その中に足す）、メッセージアプリ',
+    desc: 'レッスン画面にはやることとトピックの一覧だけを置く。トピックをタップするとそのトピックのページが開き、下の入力欄に書くだけで、そのトピックに入る。1つの画面に書く場所が1つしかない。',
+    pc: [['g', '開いたトピックに書くので、行き先を選ぶ必要がない'], ['g', '1画面あたりの情報が少なくシンプル'], ['b', 'レッスン画面で学んだことの中身が一目で見えない（先頭の1行だけ）'], ['b', '画面の行き来が1回増える']],
+    f: [['レッスン画面', head + '<div class="h">やること</div><ul class="l">' + hwRows + '</ul><div class="h">学んだこと</div><div class="tl">' +
       [['♪ ヴィヴァルディ 協奏曲', '3ポジへの移動は親指を先に', 3], ['手首が固まってしまう', '肩を意識して動かす', 2], ['♪ スケール', '移弦の前に左手を準備', 1]].map(([t, s, c]) => '<div class="trow"><span class="n"><b>' + t + '</b><small>' + s + '</small></span><span class="c">' + c + '</span>' + chev + '</div>').join('') +
-      '<div class="addt">＋ 新しい題</div></div>'],
+      '<div class="addt">＋ 新しいトピック</div></div>'],
       ['♪ ヴィヴァルディ を開いたところ', '<div class="nav"><span>‹ 11/17</span><span></span></div><div class="big">♪ ヴィヴァルディ 協奏曲</div><div class="sub">11/17（月）のレッスン</div><ul class="l" style="margin-top:12px">' + vivRows + row('t', '20小節目からは弓を多めに', '20:15') + '</ul>' +
       '<div class="dock"><span class="f on">冒頭の付点はもっと軽く｜</span><span class="go">追加</span></div>']] },
 
   { n: 'D', name: '行のあとに続けて書く', from: '下敷き：iPhoneのメモ、Notion（行の終わりでEnterを押すと次の行）',
-    desc: '書いてある行をタップして直している途中でEnterを押すと、すぐ下に新しい行ができる。同じ題に続けて書くのはこれだけでいい。右下の＋は「宿題」と「新しい題」を始めるときだけ使う。',
-    pc: [['g', 'メモ帳と同じ感覚で、続きを書くのが自然'], ['g', '＋を押す回数が少ない'], ['b', 'まだ何も書いていない題には、＋から始める必要がある'], ['b', '「Enterで次の行」を知らないと使いにくい']],
-    f: [['行の終わりでEnter', head + '<div class="h">宿題</div><ul class="l">' + hwRows + '</ul><div class="h">学んだこと</div><div class="tk">♪ ヴィヴァルディ 協奏曲</div><ul class="l">' + row('t', '3ポジへの移動は親指を先に', '12:40') + row('m', '親指を意識すると音程が安定') + row('t', '冒頭の付点はもっと軽く', '', 'edit') + '</ul><div class="tk">手首が固まってしまう</div><ul class="l">' + wriRows + '</ul>' + kb('<span></span><span>完了</span>')],
-      ['＋を押したとき', head + '<div class="h">宿題</div><ul class="l">' + hwRows + '</ul><div class="h">学んだこと</div><div class="tk">♪ ヴィヴァルディ 協奏曲</div><ul class="l">' + vivRows + '</ul><div class="shade"></div><div class="menu"><span>宿題を書く</span><span>新しい題</span></div><span class="fab">×</span>']] },
+    desc: '書いてある行をタップして直している途中でEnterを押すと、すぐ下に新しい行ができる。同じトピックに続けて書くのはこれだけでいい。右下の＋は「やること」と「新しいトピック」を始めるときだけ使う。',
+    pc: [['g', 'メモ帳と同じ感覚で、続きを書くのが自然'], ['g', '＋を押す回数が少ない'], ['b', 'まだ何も書いていないトピックには、＋から始める必要がある'], ['b', '「Enterで次の行」を知らないと使いにくい']],
+    f: [['行の終わりでEnter', head + '<div class="h">やること</div><ul class="l">' + hwRows + '</ul><div class="h">学んだこと</div><div class="tk">♪ ヴィヴァルディ 協奏曲</div><ul class="l">' + row('t', '3ポジへの移動は親指を先に', '12:40') + row('m', '親指を意識すると音程が安定') + row('t', '冒頭の付点はもっと軽く', '', 'edit') + '</ul><div class="tk">手首が固まってしまう</div><ul class="l">' + wriRows + '</ul>' + kb('<span></span><span>完了</span>')],
+      ['＋を押したとき', head + '<div class="h">やること</div><ul class="l">' + hwRows + '</ul><div class="h">学んだこと</div><div class="tk">♪ ヴィヴァルディ 協奏曲</div><ul class="l">' + vivRows + '</ul><div class="shade"></div><div class="menu"><span>やることを書く</span><span>新しいトピック</span></div><span class="fab">×</span>']] },
 ];
 document.getElementById('vs').innerHTML = V.map((v) =>
   '<section class="v"><div><h2><span>' + v.n + '</span>' + v.name + '</h2><div class="from">' + v.from + '</div><p>' + v.desc + '</p><ul class="pc">' + v.pc.map(([c, t]) => '<li class="' + c + '">' + t + '</li>').join('') + '</ul></div>' +
