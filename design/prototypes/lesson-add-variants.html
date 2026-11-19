@@ -62,14 +62,21 @@ ul { list-style: none; margin: 0; padding: 0; }
 .vc .row.m .tx { color: var(--fg); }
 /* ── 先生／自分を分けない：丸も凡例もなくす ── */
 .vx .dot, .vx .lgd { display: none; }
+/* 行の境目の出し方 */
+.r-dot .dot { display: grid; align-self: flex-start; height: 23px; }
+.r-dot .dot i, .r-dot .dot.m i { background: #aeaeb2; width: 6px; height: 6px; }
+.r-line .row + .row::before { content: ""; position: absolute; left: 20px; right: 20px; top: 0; border-top: 1px solid var(--line); }
+.r-line.r-dot .row + .row::before { left: 33px; }
+.r-bar .row .tx { border-left: 2.5px solid #d1d1d6; padding-left: 9px; }
+.r-bar .row { padding-top: 3px; padding-bottom: 3px; }
 .ni { display: inline-flex; vertical-align: -1px; margin-right: 4px; color: var(--muted); }
 .st { margin-left: 6px; font-size: 9px; font-weight: 600; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; vertical-align: 1px; }
 .ss { margin-left: 6px; font-size: 11px; font-weight: 400; color: var(--muted); }
 </style>
 
 <div class="wrap">
-<h1>レッスン画面：曲のトピックの見せ方</h1>
-<p class="lead">どれも「色を減らす」と「先生／自分を分けない」を入れた画面。左端のそろえと行の間は今のまま。曲のトピック（ヴィヴァルディ、スケール）と曲以外のトピック（手首が固まってしまう）を、どう見分けるかで5通り。</p>
+<h1>レッスン画面：行の境目の出し方</h1>
+<p class="lead">どれも「色を減らす」と「先生／自分を分けない」を入れた画面。左端のそろえと行の間は今のまま。曲のトピックは細い音符の絵に決定。先生／自分の青丸・黄丸をなくしたら行の境目が分かりにくくなったので、色を使わずに境目を見せる方法を4通り。</p>
 <div class="phones" id="ps"></div>
 </div>
 
@@ -95,11 +102,11 @@ function screen(cls, note) {
 }
 const nIcon = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>';
 const V = [
-  ['♪（今）', '曲の名前の頭に♪。', 'vc vx', 'sym'],
-  ['印なし', '曲も曲以外も同じ見た目。いちばん静か。', 'vc vx', 'none'],
-  ['細い音符の絵', '♪の文字をやめ、灰色の細い線の音符に。文字より主張が弱い。', 'vc vx', 'icon'],
-  ['後ろに小さく「曲」', '名前の後ろに灰色の小さな印。頭がそろうので読みはじめが引っかからない。', 'vc vx', 'tag'],
-  ['楽章を添える', '印の代わりに、曲に登録した楽章などを灰色で。曲だと自然に分かり、情報にもなる。', 'vc vx', 'sub'],
+  ['印なし（今）', '青丸をなくしただけ。行の境目が分かりにくい。', 'vc vx', 'icon'],
+  ['灰色の小さな丸', '前の青丸と同じ位置に、色のない丸。見た目は前とほぼ同じで、色だけ消える。', 'vc vx r-dot', 'icon'],
+  ['細い区切り線', '行と行の間に、ごく薄い線。iPhoneのメモやリマインダーの一覧と同じ。', 'vc vx r-line', 'icon'],
+  ['左に短い縦線', '1行ごとに左に灰色の縦線。折り返した行も、どこまでが1つか分かる。', 'vc vx r-bar', 'icon'],
+  ['丸＋細い線', '灰色の丸と、薄い区切り線を両方。', 'vc vx r-dot r-line', 'icon'],
 ];
 document.getElementById('ps').innerHTML = V.map(([b, p, cls, note]) => '<div class="fr"><b>' + b + '</b><p>' + p + '</p>' + screen(cls, note) + '</div>').join('');
 </script>
