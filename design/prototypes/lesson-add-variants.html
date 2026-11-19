@@ -70,6 +70,37 @@ ul.l { margin: 0; padding: 0; list-style: none; }
 .fp .bm .flagic { background: #fff; }
 .toast { position: absolute; left: 50%; bottom: 96px; transform: translateX(-50%); background: rgba(30,30,32,.9); color: #fff; font-size: 12px; padding: 7px 14px; border-radius: 16px; white-space: nowrap; }
 .bmk .tx { color: var(--fg); }
+/* 再生画面（ライブ配信のアーカイブ風：録音が主役、コメントが流れる） */
+.pv { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--paper); }
+.pv .top { background: #18181a; color: #fff; padding: 30px 16px 14px; }
+.pv .bar1 { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: rgba(255,255,255,.8); }
+.pv .bar1 b { color: #fff; font-size: 15px; }
+.pv .now { text-align: center; font-size: 38px; font-weight: 300; font-variant-numeric: tabular-nums; margin: 14px 0 2px; }
+.pv .now small { display: block; font-size: 11px; color: rgba(255,255,255,.55); }
+.pv .bigw { position: relative; height: 58px; margin: 10px 0 0; display: flex; align-items: center; gap: 2px; }
+.pv .bigw i { flex: 1; border-radius: 1px; background: rgba(255,255,255,.28); }
+.pv .bigw i.p { background: var(--accent); }
+.pv .bigw .phd { position: absolute; top: -4px; bottom: -4px; width: 2px; background: #fff; }
+.pv .bigw .fl { position: absolute; top: -8px; width: 2px; height: 10px; background: var(--accent); }
+.pv .bigw .fl::after { content: ""; position: absolute; left: 0; top: 0; width: 7px; height: 6px; background: var(--accent); clip-path: polygon(0 0,100% 50%,0 100%); }
+.pv .ctl { display: flex; justify-content: center; align-items: center; gap: 28px; margin-top: 12px; font-size: 12px; color: rgba(255,255,255,.8); }
+.pv .ctl .pp { width: 50px; height: 50px; border-radius: 50%; background: #fff; display: flex; gap: 4px; align-items: center; justify-content: center; }
+.pv .ctl .pp i { width: 4px; height: 16px; background: #18181a; border-radius: 1px; }
+.pv .ctl span.sk { width: 34px; text-align: center; font-weight: 600; }
+.pv .cm { flex: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; padding: 6px 0; }
+.pv .cmh { font-size: 11px; color: var(--muted); padding: 8px 16px 2px; }
+.pv .c { display: flex; gap: 8px; align-items: baseline; padding: 5px 16px; line-height: 1.5; font-size: 13px; }
+.pv .c .tm { flex: none; width: 36px; font-size: 11px; color: var(--accent-d); font-weight: 700; font-variant-numeric: tabular-nums; }
+.pv .c .tx { flex: 1; min-width: 0; }
+.pv .c.m .tx { color: var(--sub); }
+.pv .c.cur { background: var(--flash); }
+.pv .c.old { opacity: .55; }
+.pv .ipt { border-top: 1px solid var(--line); padding: 8px 10px 22px; display: flex; gap: 6px; align-items: center; }
+.pv .ipt .who { flex: none; font-size: 11px; font-weight: 700; padding: 7px 9px; border-radius: 15px; background: var(--soft); color: var(--teacher); display: flex; gap: 4px; align-items: center; }
+.pv .ipt .f { flex: 1; height: 34px; border-radius: 17px; background: var(--soft); display: flex; align-items: center; padding: 0 12px; color: var(--muted); font-size: 13px; }
+.pv .ipt .f.on { color: var(--fg); }
+.pv .ipt .go { flex: none; background: var(--accent); color: #fff; font-weight: 700; border-radius: 15px; padding: 8px 11px; font-size: 12px; display: flex; gap: 5px; align-items: center; }
+.pv .ipt .go .flagic { background: #fff; }
 /* 録音中の帯 */
 .live { margin: 10px 12px 0; background: var(--rec-bg); border-radius: 16px; padding: 8px 8px 8px 14px; display: flex; align-items: center; gap: 8px; }
 .live .tm { flex: 1; color: var(--rec); font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -103,7 +134,7 @@ ul.l { margin: 0; padding: 0; list-style: none; }
 
 <div class="wrap">
 <h1>レッスン画面：案2 ＋ しおり</h1>
-<p class="lead">案2（白一色、先生／自分は丸の色）をもとに、しおりを脇役として入れた。しおりはレッスンの録音を聞き返しているときに押すボタンで、いま聞いている位置の行が学んだことに入る。言葉を書かなければ「しおり 1」「しおり 2」と番号つきの名前になる。並びは 録音 → 宿題 → 学んだこと → 個人練。</p>
+<p class="lead">案2（白一色、先生／自分は丸の色）をもとに、しおりを脇役として入れた。録音を再生すると、録音が主役の画面に切り替わる。その時間までに書いた行がコメントのように流れ、下の欄から、いまの時間にコメント（＝学んだことの行）を足せる。何も書かずに押せば「しおり 1」のような番号つきの名前のしおりになる。並びは 録音 → 宿題 → 学んだこと → 個人練。</p>
 <div class="phones" id="ps"></div>
 <div class="notes">
   <h2>決めたこと・まだ決めていないこと</h2>
@@ -128,6 +159,16 @@ const row = (by, tx, t, cls) => '<li class="li ' + (by === 'm' ? 'm ' : '') + (c
 const bmk = (n, t, cls) => '<li class="li bmk ' + (cls || '') + '"><span class="flagic"></span><span class="tx">しおり ' + n + '</span>' + at(t) + '</li>';
 // 聞き返し中の下のプレーヤー（しおりボタンつき）
 const fp = (pos, pct) => '<div class="fp"><span class="pz"><i></i><i></i></span><div class="pt"><span>11/17のレッスン</span><b>' + pos + ' / 48:12</b><div class="bar"><i style="width:' + pct + '%"></i></div></div><span class="bm"><span class="flagic"></span>しおり</span></div>';
+const pvScreen = (now, pct, comments, input) => {
+  const bars = hs.concat(hs).slice(0, 44).map((h, i) => '<i class="' + (i / 44 * 100 < pct ? 'p' : '') + '" style="height:' + (h * 4) + 'px"></i>').join('');
+  const fl = [7, 26, 42, 69].map((x) => '<b class="fl" style="left:' + x + '%"></b>').join('');
+  return '<div class="pv"><div class="top"><div class="bar1"><span>⌄ 閉じる</span><b>11/17のレッスン</b><span>1.0x</span></div>' +
+    '<div class="now">' + now + '<small>/ 48:12</small></div><div class="bigw">' + bars + fl + '<b class="phd" style="left:' + pct + '%"></b></div>' +
+    '<div class="ctl"><span class="sk">−15</span><span class="pp"><i></i><i></i></span><span class="sk">+15</span></div></div>' +
+    '<div class="cmh">コメント（ここまで）</div><div class="cm">' + comments + '</div>' + input + '</div>';
+};
+const cmt = (t, by, tx, cls) => '<div class="c ' + (by === 'm' ? 'm ' : '') + (cls || '') + '"><span class="tm">' + t + '</span><span class="dot' + (by === 'm' ? ' m' : '') + '"></span><span class="tx">' + tx + '</span></div>';
+const cmts = cmt('3:10', 't', '肩を意識して動かすといい', 'old') + cmt('4:20', 't', '弓を返すときに手首を固めない', 'old') + cmt('12:40', 't', '3ポジへの移動は親指を先に動かす') + cmt('20:15', 't', '20小節目からは弓を多めに');
 const learned = (extra) => '<div class="h">学んだこと' + lgd + '</div>' +
   '<div class="tk">♪ ヴィヴァルディ 協奏曲</div><ul class="l">' + row('t', '3ポジへの移動は親指を先に動かす', '12:40') + row('t', '20小節目からは弓を多めに', '20:15') + row('m', '親指を意識すると音程が安定する気がする', '') + '</ul>' +
   '<div class="tk">手首が固まってしまう</div><ul class="l">' + row('t', '肩を意識して動かすといい', '3:10') + '</ul>' + (extra || '');
@@ -136,12 +177,10 @@ const F = [
   ['普段', '読むだけの画面。録音の波形にはしおりの旗が立ち、行の時間をタップするとそこから再生。書くときは右下の＋。',
     head() + '<div class="player"><span class="pb">' + play + '</span><div class="track">' + wave() + '<div class="flags"><b style="left:7%"></b><b style="left:26%"></b><b style="left:42%"></b><b style="left:69%"></b></div></div><span class="d">48:12</span></div>' +
     hw + learned('<div class="tk" style="color:var(--muted)">題なし</div><ul class="l">' + bmk(1, '33:30') + '</ul>') + '<span class="fab">＋</span>'],
-  ['録音を聞き返しているとき', 'レッスンの録音を再生すると、下にプレーヤーが出る。プレーヤーの「しおり」を押すと、いま聞いている位置に印が付く。再生中は＋を隠す。',
-    head() + '<div class="player"><span class="pb">' + play + '</span><div class="track">' + wave() + '<div class="flags"><b style="left:7%"></b><b style="left:26%"></b><b style="left:42%"></b><b style="left:69%"></b></div></div><span class="d">48:12</span></div>' +
-    hw + learned('<div class="tk" style="color:var(--muted)">題なし</div><ul class="l">' + bmk(1, '33:30') + '</ul>') + fp('24:31', 51)],
-  ['しおりを押した直後', '何も書かなくても「しおり 2」のように番号つきの名前で入る。あとで行をタップすれば名前を書き換えられる。入る先は学んだことの「題なし」。',
-    head() + '<div class="player"><span class="pb">' + play + '</span><div class="track">' + wave() + '<div class="flags"><b style="left:7%"></b><b style="left:26%"></b><b style="left:42%"></b><b style="left:51%"></b><b style="left:69%"></b></div></div><span class="d">48:12</span></div>' +
-    hw + learned('<div class="tk" style="color:var(--muted)">題なし</div><ul class="l">' + bmk(2, '24:31', 'flash') + bmk(1, '33:30') + '</ul>') + '<div class="toast">しおり 2 を追加</div>' + fp('24:33', 51)],
+  ['録音を再生したとき', '再生すると録音が画面の主役になる（ライブ配信のアーカイブのような画面）。下には、その時間までのコメント（学んだことの行）が流れてくる。いま聞いているところに近いものが色付き。',
+    pvScreen('24:31', 51, cmts, '<div class="ipt"><span class="who"><span class="dot"></span>先生</span><span class="f">24:31 にコメント</span><span class="go"><span class="flagic"></span>しおり</span></div>')],
+  ['コメントを書いているとき', '書いて送ると、いまの時間の行として学んだことに入る。何も書かずに押すと「しおり 2」のような番号つきの名前で入る（ボタンの文字が「しおり」と「送る」で切り替わる）。',
+    pvScreen('24:40', 51.5, cmts + cmt('24:31', 't', 'しおり 2', 'cur'), '<div class="ipt"><span class="who"><span class="dot"></span>先生</span><span class="f on">左手は指板に近づける｜</span><span class="go">送る</span></div>')],
   ['＋を押したとき', '何を足すかを上で選び、学んだことなら題と先生／自分も選ぶ。Enterで続けて書ける。前に選んだ題と先生／自分は残る。',
     head() + hw + '<div class="shade"></div><div class="sheet"><div class="seg"><span>宿題</span><span class="on">学んだこと</span></div>' +
     '<div class="k">題</div><div class="pills"><span class="pill on">♪ ヴィヴァルディ</span><span class="pill">手首が固まってしまう</span><span class="pill">題なし</span><span class="pill">＋ 新しい題</span></div>' +
