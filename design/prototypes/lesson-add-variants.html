@@ -62,11 +62,14 @@ ul { list-style: none; margin: 0; padding: 0; }
 .vc .row.m .tx { color: var(--fg); }
 /* ── 先生／自分を分けない：丸も凡例もなくす ── */
 .vx .dot, .vx .lgd { display: none; }
+.ni { display: inline-flex; vertical-align: -1px; margin-right: 4px; color: var(--muted); }
+.st { margin-left: 6px; font-size: 9px; font-weight: 600; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; vertical-align: 1px; }
+.ss { margin-left: 6px; font-size: 11px; font-weight: 400; color: var(--muted); }
 </style>
 
 <div class="wrap">
-<h1>レッスン画面：どこで読みやすくなるか</h1>
-<p class="lead">左端が今の画面。右へ1つずつ直しを足していく。最後は曲の「♪」をやめたもの（曲かどうかは、トピックを選ぶシートでは分かるので、画面では出さない）。トピックの見出しは強くしない。</p>
+<h1>レッスン画面：曲のトピックの見せ方</h1>
+<p class="lead">どれも「色を減らす」と「先生／自分を分けない」を入れた画面。左端のそろえと行の間は今のまま。曲のトピック（ヴィヴァルディ、スケール）と曲以外のトピック（手首が固まってしまう）を、どう見分けるかで5通り。</p>
 <div class="phones" id="ps"></div>
 </div>
 
@@ -80,7 +83,9 @@ const learned = [
   ['sca', [['t', 'スケールは移弦の前に左手を準備', '33:30']]],
 ];
 function screen(cls, note) {
-  const name = (k) => (k === 'wri' || !note ? '' : '♪ ') + T[k];
+  // 曲のトピックの印の出し方（note）：'sym'=♪ / 'none'=なし / 'icon'=細い音符 / 'tag'=「曲」の小さな印 / 'sub'=楽章を添える
+  const SUB = { viv: '第1楽章', sca: '3オクターブ' };
+  const name = (k) => { if (k === 'wri') return T[k]; if (note === 'sym') return '♪ ' + T[k]; if (note === 'icon') return '<span class="ni">' + nIcon + '</span>' + T[k]; if (note === 'tag') return T[k] + '<span class="st">曲</span>'; if (note === 'sub') return T[k] + '<span class="ss">' + SUB[k] + '</span>'; return T[k]; };
   return '<div class="scr ' + cls + '"><div class="nav">‹ 戻る</div><div class="ttl"><b>2026/11/16（月）</b><span>バイオリン · ブライアン先生</span></div>' +
     '<div class="tps">' + ['viv', 'wri', 'sca'].map((k) => '<span class="tp">' + name(k) + '</span>').join('') + '<span class="tp add">＋</span></div>' +
     '<div class="h">やること</div><ul><li class="row hw"><span class="tx">ヴィヴァルディ 20〜36小節をゆっくり</span></li><li class="row hw"><span class="tx">スケールは3オクターブをテンポ60で</span></li></ul><div class="gap"></div>' +
@@ -88,13 +93,13 @@ function screen(cls, note) {
     learned.map(([k, rows]) => '<div class="tk">' + name(k) + '</div><ul>' + rows.map(([by, tx, at]) => '<li class="row ' + (by === 'm' ? 'm' : '') + '"><span class="dot ' + by + '"><i></i></span><span class="tx">' + tx + '</span><span class="at">' + at + '</span></li>').join('') + '</ul><div class="gap"></div>').join('') +
     '<div class="pbar"><span class="pp">' + play + '</span><span class="wv">' + hs.map((h) => '<i style="height:' + h * 1.6 + 'px"></i>').join('') + '</span><span class="d">46:12</span></div></div>';
 }
+const nIcon = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>';
 const V = [
-  ['今', '試作と同じ。', '', true],
-  ['＋A 左端をそろえる', '文字の始まりを1本にそろえ、丸は左の余白へ。', 'va', true],
-  ['＋B 行の間をあける', '1つの指摘ずつ拾いやすく。', 'va vb', true],
-  ['＋C 色を減らす', '時間は灰色、自分の気づきも黒い文字に。', 'va vb vc', true],
-  ['＋♪をやめる', '曲の名前に♪を付けない。', 'va vb vc', false],
-  ['＋先生／自分を分けない', '丸と凡例をなくす。文字だけが並ぶ。', 'va vb vc vx', false],
+  ['♪（今）', '曲の名前の頭に♪。', 'vc vx', 'sym'],
+  ['印なし', '曲も曲以外も同じ見た目。いちばん静か。', 'vc vx', 'none'],
+  ['細い音符の絵', '♪の文字をやめ、灰色の細い線の音符に。文字より主張が弱い。', 'vc vx', 'icon'],
+  ['後ろに小さく「曲」', '名前の後ろに灰色の小さな印。頭がそろうので読みはじめが引っかからない。', 'vc vx', 'tag'],
+  ['楽章を添える', '印の代わりに、曲に登録した楽章などを灰色で。曲だと自然に分かり、情報にもなる。', 'vc vx', 'sub'],
 ];
 document.getElementById('ps').innerHTML = V.map(([b, p, cls, note]) => '<div class="fr"><b>' + b + '</b><p>' + p + '</p>' + screen(cls, note) + '</div>').join('');
 </script>
