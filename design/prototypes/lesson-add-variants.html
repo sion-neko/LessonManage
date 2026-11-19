@@ -108,6 +108,11 @@ ul.l { margin: 0; padding: 0; list-style: none; }
 .recnow .lv { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 6px; text-align: center; line-height: 1.6; }
 .stopb { margin: 0 auto 6px; width: 74px; height: 74px; border-radius: 50%; border: 3px solid rgba(255,255,255,.3); display: grid; place-items: center; }
 .stopb i { width: 26px; height: 26px; border-radius: 6px; background: #fff; }
+.recbar { position: absolute; left: 10px; right: 10px; bottom: 18px; display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; border-radius: 18px; background: #18181a; color: #fff; box-shadow: 0 6px 18px rgba(0,0,0,.2); }
+.recbar .r { width: 9px; height: 9px; border-radius: 50%; background: var(--rec); }
+.recbar .t { flex: 1; font-weight: 700; font-variant-numeric: tabular-nums; }
+.recbar .sq { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.15); display: grid; place-items: center; }
+.recbar .sq i { width: 12px; height: 12px; border-radius: 3px; background: #fff; }
 .stopl { text-align: center; font-size: 12px; color: rgba(255,255,255,.6); margin-bottom: 8px; }
 </style>
 
@@ -119,7 +124,7 @@ ul.l { margin: 0; padding: 0; list-style: none; }
 <div class="phones" id="pt"></div>
 
 <h2 class="sec">録音</h2>
-<p class="lead">録音ボタンは、ホームの「個人練を録音」と同じ金色のボタンにそろえた。録音中は操作しないので、画面全体を録音の画面にする（再生画面と同じ暗い色で、時間と波形と停止だけ）。録り終わると下にプレーヤーが残る。</p>
+<p class="lead">録音ボタンは、ホームの「個人練を録音」と同じ金色のボタンにそろえた。録音中は画面全体を録音の画面にする（再生画面と同じ暗い色で、時間と波形と停止）。左上の「閉じる」で、録音したままレッスン画面に戻れる。録り終わると下にプレーヤーが残る。</p>
 <div class="phones" id="pr"></div>
 </div>
 
@@ -152,15 +157,18 @@ const T = [
 
 const flagsAt = [7, 26, 42, 69];
 const chapters = [[0, 22, '手首'], [22, 64, '♪ ヴィヴァルディ'], [64, 100, '♪ スケール']];
-const recScreen = '<div class="pv full"><div class="top"><div class="bar1"><span></span><b>11/24のレッスン</b><span></span></div>' +
+const recScreen = '<div class="pv full"><div class="top"><div class="bar1"><span class="cl">' + down + '閉じる</span><b>11/24のレッスン</b><span></span></div>' +
   '<div class="recnow"><span class="st"><i></i>録音中</span><span class="tm">24:31</span><div class="lw">' + hs.concat(hs.slice(0, 10)).slice(0, 48).map((h, i) => '<i class="' + (i > 40 ? 'q' : '') + '" style="height:' + (h * 5) + 'px"></i>').join('') + '</div>' +
   '<div class="lv">画面を消しても録音は続きます</div></div>' +
   '<span class="stopb"><i></i></span><div class="stopl">停止</div></div></div>';
 const R = [
   ['録る前', '金色の大きなボタン（ホームの「個人練を録音」と同じ形）。',
     head('11/24（月）', chips(['♪ ヴィヴァルディ', '♪ スケール'])) + fresh(['♪ ヴィヴァルディ 協奏曲', '♪ スケール']) + recBtn],
-  ['録音中', '画面全体が録音の画面になる。時間・波形・停止だけ。',
+  ['録音中', '画面全体が録音の画面になる。時間・波形・停止と、左上の「閉じる」。',
     recScreen],
+  ['録音中に閉じたとき', '録音は続いたまま、レッスン画面に戻れる。下の赤い帯に経過時間が出て、帯をタップすると録音の画面に戻る。',
+    head('11/24（月）', chips(['♪ ヴィヴァルディ', '♪ スケール'])) + fresh(['♪ ヴィヴァルディ 協奏曲', '♪ スケール']) +
+    '<div class="recbar"><span class="r"></span><span class="t">録音中 24:31</span><span class="sq"><i></i></span></div>'],
   ['録り終わったあと', 'ボタンがあった場所に小さなプレーヤー。タップで再生画面（チャプターつき）。',
     head('11/17（月）', chips(['♪ ヴィヴァルディ', '手首が固まってしまう', '♪ スケール'])) + full +
     '<div class="pbar"><span class="pb">' + play + '</span><div class="wv">' + hs.slice(0, 26).map((h) => '<i style="height:' + (h * 2) + 'px"></i>').join('') + flagsAt.map((x) => '<b style="left:' + x + '%"></b>').join('') + '</div><span class="d">48:12</span></div>'],
