@@ -65,12 +65,24 @@ ul { list-style: none; margin: 0; padding: 0; }
 .c3 .fold .tp:not(.add) { background: transparent; font-weight: 400; color: var(--muted); padding: 4px 0; }
 .c3 .fold .tp:not(.add) + .tp:not(.add)::before { content: "・"; color: #c7c7cc; padding: 0 2px; }
 .c3 .fold .tp.add { margin-left: 8px; }
+/* タグっぽく：小さく、角を少しだけ丸めた札 */
+.g1 .fold .tps { gap: 4px; }
+.g1 .fold .tp:not(.add) { font-size: 11px; font-weight: 500; color: var(--sub); background: transparent; border: 1px solid #dcdce1; border-radius: 5px; padding: 2px 7px 2px 6px; }
+.g1 .fold .tp:not(.add)::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #c7c7cc; margin-right: 5px; vertical-align: 1px; }
+.g1 .fold .tp:not(.add) .ni { display: none; }
+.g2 .fold .tps { gap: 4px; }
+.g2 .fold .tp:not(.add) { font-size: 11px; font-weight: 500; color: var(--sub); background: var(--soft); border-radius: 4px; padding: 3px 7px; }
+.g3 .fold .tps { gap: 10px; }
+.g3 .fold .tp:not(.add) { font-size: 12px; font-weight: 400; color: var(--muted); background: transparent; padding: 4px 0; }
+.g3 .fold .tp:not(.add)::before { content: "#"; color: #c7c7cc; margin-right: 1px; }
+.g3 .fold .tp:not(.add) .ni { display: none; }
+.g1 .fold .tp.add, .g2 .fold .tp.add, .g3 .fold .tp.add { font-size: 11px; border-radius: 5px; padding: 1px 8px; }
 .hint { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 11px; color: var(--muted); }
 </style>
 
 <div class="wrap">
 <h1>レッスン画面：日付の下のトピックの折りたたみ</h1>
-<p class="lead">トピックが6個あるレッスン。今はトピックが3行になり、やることが下へ押し出される。右端の「+4 ‹」を押すと全部開き、もう一度押すと閉じる。＋は開いたときだけ。トピックの札が目立ちすぎるので、弱め方を3通り。</p>
+<p class="lead">トピックが6個あるレッスン。今はトピックが3行になり、やることが下へ押し出される。右端の「+4 ‹」を押すと全部開き、もう一度押すと閉じる。＋は開いたときだけ。トピックの札が目立ちすぎるので、文字だけ・タグっぽい見せ方を並べた。</p>
 <div class="phones" id="ps"></div>
 </div>
 
@@ -92,9 +104,10 @@ const left = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke
 const V = [
   ['今：全部並べる', 'トピックが3行になる。やることの位置がトピックの数で変わる。', null, false],
   ['前の案', '灰色の丸い札、太字。', 'open', true, ''],
-  ['札を薄く', '札の地をさらに薄く、文字を細い灰色に。', 'open', true, 'c1'],
-  ['細い枠だけ', '地の色をやめて、細い線の枠に。文字は細い灰色。', 'open', true, 'c2'],
-  ['文字だけ', '札をやめて、名前を「・」でつないだ灰色の文字に。押せる範囲は名前ごと。', 'open', true, 'c3'],
+  ['文字だけ', '札をやめて、名前を「・」でつないだ灰色の文字に。', 'open', true, 'c3'],
+  ['ロール風', '小さな角丸の枠に、灰色の小さな丸。Discordのロールのような見た目。', 'open', true, 'g1'],
+  ['ラベル風', '小さな角丸の札。GitHubのラベルのような見た目。', 'open', true, 'g2'],
+  ['ハッシュタグ風', '「#」を付けた灰色の文字。札も枠もなし。', 'open', true, 'g3'],
 ];
 function topics(v, open) {
   if (!v[2]) return '<div class="tps">' + TOP.map(chip).join('') + add + '</div>';
