@@ -139,6 +139,7 @@ const V = [
   ['B 行の終わりに', '「…もっと見る」を1行目の終わりに。Instagramの「続きを読む」と同じ。行が増えない。＋は「＋ 追加」の灰色の文字。', 'navy d pl-t', 'inline', '＋ 追加'],
   ['C 行の終わり＋丸い＋', 'Bと同じで、＋だけ細い線の小さな丸。', 'navy d pl-c', 'inline', '＋'],
   ['D 下に小さく＋丸い＋', 'Aと同じで、＋だけ細い線の小さな丸。', 'navy d sm pl-c', 'below', '＋'],
+  ['E 2行まで＋行の終わりに', 'Bを2行まで見せる。「…もっと見る」は2行目の終わり。＋は「＋ 追加」の灰色の文字。', 'navy d pl-t e', 'inline', '＋ 追加'],
 ];
 const tag = ([k, t]) => '<span class="tp' + (k === 's' ? ' song' : '') + '">' + (k === 's' ? '<span class="ni">' + nIcon + '</span>' : '') + '<span class="hm">#</span>' + t + '</span>';
 function topics(v, open) {
