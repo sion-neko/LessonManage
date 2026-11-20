@@ -83,34 +83,30 @@ ul { list-style: none; margin: 0; padding: 0; }
 .hs .tps.shut { flex-wrap: nowrap; overflow: hidden; }
 .hs .tp:not(.add) { background: transparent; padding: 0; border-radius: 0; font-weight: 400; font-size: 13px; line-height: 24px; }
 .hs .tp .ni { display: none; }
+.e .tps.shut + .mr { margin-top: 2px; }
 .hs .tp.add { font-size: 12px; border-radius: 12px; padding: 0 10px; line-height: 21px; }
 .mr { display: block; margin-top: 4px; font-size: 12px; color: var(--muted); line-height: 22px; }
-/* 1 本文のハッシュタグ（Instagramのキャプション） */
-.t1 .tp:not(.add) { color: #33558b; }
-/* 2 色の付いた小さめの文字（YouTubeの動画の上のタグ） */
-.t2 .tps { gap: 4px 8px; }
-.t2 .tp:not(.add) { color: var(--accent-d); font-size: 12px; font-weight: 600; }
-/* 3 細い枠のまる（Pinterest・Spotifyのタグ） */
-.t3 .tps { gap: 6px; }
-.t3 .tp:not(.add) { border: 1px solid #d8d8dd; border-radius: 999px; padding: 0 10px; line-height: 24px; font-size: 12px; color: var(--sub); }
-.t3 .tp:not(.add) .hm { color: #aeaeb2; }
-/* 4 淡い色の地（Dribbble・noteのタグ） */
-.t4 .tps { gap: 6px; }
-.t4 .tp:not(.add) { background: #faf3df; border-radius: 6px; padding: 0 8px; line-height: 24px; font-size: 12px; font-weight: 500; color: var(--accent-d); }
-/* 5 # を小さな四角に（Slack・Discordのチャンネル） */
-.t5 .tps { gap: 6px 12px; }
-.t5 .tp:not(.add) { color: var(--sub); font-weight: 500; }
-.t5 .tp:not(.add) .hm { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 4px; background: var(--soft); color: var(--muted); font-size: 11px; font-weight: 700; margin-right: 4px; vertical-align: 1px; }
-/* 6 下線（はてなブックマーク・Qiitaのタグ一覧） */
-.t6 .tps { gap: 4px 12px; }
-.t6 .tp:not(.add) { color: var(--sub); text-decoration: underline; text-decoration-color: #d1d1d6; text-decoration-thickness: 1px; text-underline-offset: 4px; }
-.t6 .tp:not(.add) .hm { color: var(--muted); }
+/* Instagramのキャプションのハッシュタグを元に詰める */
+.navy .tp:not(.add) { color: #33558b; }
+/* B 落ち着いた紺、「#」を薄く */
+.b .tp:not(.add) { color: #2f4a6e; }
+.b .tp:not(.add) .hm { opacity: .45; }
+/* C 青みのグレー、少し太く */
+.c .tp:not(.add) { color: #56677f; font-weight: 500; }
+/* D 小さめ、タグの間を広く */
+.d .tps { gap: 4px 14px; }
+.d .tp:not(.add) { font-size: 12px; letter-spacing: .02em; }
+/* E 2行まで見せる */
+.e .tps.shut { flex-wrap: wrap; max-height: 52px; overflow: hidden; }
+/* F 曲は音符の絵、それ以外は「#」 */
+.f .tp.song .hm { display: none; }
+.f .tp.song .ni { display: inline-flex; color: #33558b; margin-right: 3px; }
 .hint { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 11px; color: var(--muted); }
 </style>
 
 <div class="wrap">
 <h1>レッスン画面：日付の下のトピックの折りたたみ</h1>
-<p class="lead">トピックをハッシュタグで見せる。ふだんは1行だけ見せ、下の「もっと見る」で全部開く。＋は開いたときだけ。タグの見た目は、SNSやサービスのタグを参考に6通り。</p>
+<p class="lead">トピックをInstagramのキャプションのようなハッシュタグで見せる。ふだんは1行だけ見せ、下の「もっと見る」で全部開く。＋は開いたときだけ。見出しと同じ金色は使わない。Aを元に、色・大きさ・見せる行数・曲の見分け方を変えた。</p>
 <div class="phones" id="ps"></div>
 </div>
 
@@ -125,19 +121,19 @@ const add = '<span class="tp add">＋</span>';
 const body = '<div class="h">やること</div><ul><li class="row hw">ヴィヴァルディ 20〜36小節をゆっくり</li><li class="row hw">スケールは3オクターブをテンポ60で</li></ul><div class="gap"></div>' +
   '<div class="h">学んだこと</div><div class="tk"><span class="ni">' + nIcon + '</span>ヴィヴァルディ 協奏曲 イ短調</div><ul><li class="row">3ポジへの移動は親指を先に動かす</li><li class="row">20小節目からは弓を多めに使ってフレーズを大きく</li></ul>' +
   '<div class="tk">手首が固まってしまう</div><ul><li class="row">肩を意識して動かすといい</li></ul>';
-const head = '<div class="nav">‹ 戻る</div><div class="ttl"><b>2026/11/16（月）</b><span>バイオリン · ブライアン先生</span></div>';
+const head = '<div class="nav">‹ 戻る</div><div class="ttl"><b>2026/11/16（月）</b></div>';
 
 // 各案：[見出し, 説明, クラス]。クラスなしは今の画面
 const V = [
-  ['今：全部並べる', 'トピックが3行になる。やることの位置がトピックの数で変わる。', ''],
-  ['本文のハッシュタグ', '紺色の文字を並べるだけ。Instagramのキャプションの下のハッシュタグ。', 't1'],
-  ['色の付いた小さな文字', 'アプリの色で小さめ・太め。YouTubeの動画タイトルの上のタグ。', 't2'],
-  ['細い枠のまる', '白地に細い線のまる。「#」は薄く。Pinterest・Spotifyのタグ。', 't3'],
-  ['淡い色の地', '淡い金色の地にアプリの色の文字。Dribbble・noteのタグ。', 't4'],
-  ['「#」を小さな四角に', '「#」を灰色の小さな四角に入れる。Slack・Discordのチャンネル名。', 't5'],
-  ['薄い下線', '灰色の文字に薄い下線。はてなブックマーク・Qiitaのタグ一覧。', 't6'],
+  ['今', 'トピックが3行になる。やることの位置がトピックの数で変わる。', ''],
+  ['A 前回のInstagram風', '紺色の文字を並べるだけ。前回の案そのまま。', 'navy'],
+  ['B 落ち着いた紺', '紺を少し深くして、「#」を薄く。名前が先に目に入る。', 'navy b'],
+  ['C 青みのグレー', '紺より灰色に寄せて、少し太く。いちばん静か。', 'c'],
+  ['D 小さめで間を広く', '文字を少し小さく、タグの間を広く。数が多くても詰まって見えない。', 'navy d'],
+  ['E 2行まで見せる', 'Aと同じ色で、閉じていても2行まで見せる。', 'navy e'],
+  ['F 曲は音符の絵', 'Aと同じ色で、曲のトピックは「#」の代わりに細い音符の絵。曲かどうかが分かる。', 'navy f'],
 ];
-const tag = ([k, t]) => '<span class="tp"><span class="hm">#</span>' + t + '</span>';
+const tag = ([k, t]) => '<span class="tp' + (k === 's' ? ' song' : '') + '">' + (k === 's' ? '<span class="ni">' + nIcon + '</span>' : '') + '<span class="hm">#</span>' + t + '</span>';
 function topics(v, open) {
   if (!v[2]) return '<div class="tps">' + TOP.map(chip).join('') + add + '</div>';
   return '<div class="hs"><div class="tps' + (open ? '' : ' shut') + '">' + TOP.map(tag).join('') + (open ? add : '') + '</div>' +
@@ -147,7 +143,8 @@ function topics(v, open) {
 function fitMeasure(scr) {
   const row = scr.querySelector('.tps.shut'); if (!row) return;
   const tags = [...row.querySelectorAll('.tp')]; let hidden = 0;
-  for (let i = tags.length - 1; i > 0 && row.scrollWidth > row.clientWidth; i--) { tags[i].style.display = 'none'; hidden++; }
+  const over = () => row.scrollWidth > row.clientWidth || row.scrollHeight > row.clientHeight + 1;
+  for (let i = tags.length - 1; i > 0 && over(); i--) { tags[i].style.display = 'none'; hidden++; }
   if (!hidden) scr.querySelector('.mr').remove();
 }
 
