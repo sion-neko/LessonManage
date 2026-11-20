@@ -101,12 +101,20 @@ ul { list-style: none; margin: 0; padding: 0; }
 /* F 曲は音符の絵、それ以外は「#」 */
 .f .tp.song .hm { display: none; }
 .f .tp.song .ni { display: inline-flex; color: #33558b; margin-right: 3px; }
+/* 「もっと見る」と＋の見せ方 */
+.sm .mr { margin-top: 0; font-size: 11px; line-height: 18px; }
+.sm .hs .tps { gap: 2px 14px; }
+.hs .tps .mr { display: inline; flex: none; margin: 0; font-size: 12px; line-height: 24px; color: var(--muted); }
+.hs .tps .mr::before { content: "… "; }
+.hs .tps .mr.cl::before { content: ""; }
+.pl-t .hs .tp.add { border: 0; padding: 0; font-size: 12px; color: var(--muted); line-height: 24px; letter-spacing: .02em; }
+.pl-c .hs .tp.add { border: 1px solid #d1d1d6; width: 20px; height: 20px; padding: 0; border-radius: 50%; display: inline-grid; place-items: center; font-size: 13px; line-height: 1; color: var(--muted); align-self: center; }
 .hint { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 11px; color: var(--muted); }
 </style>
 
 <div class="wrap">
 <h1>レッスン画面：日付の下のトピックの折りたたみ</h1>
-<p class="lead">トピックをInstagramのキャプションのようなハッシュタグで見せる。ふだんは1行だけ見せ、下の「もっと見る」で全部開く。＋は開いたときだけ。見出しと同じ金色は使わない。Aを元に、色・大きさ・見せる行数・曲の見分け方を変えた。</p>
+<p class="lead">ハッシュタグはDの見た目（紺・小さめ・間を広く）に決定。「もっと見る」が場所を取りすぎるのと、＋がハッシュタグと合っていないので、その2つを変えた4案。どれも押すと開いて、開くと＋が出る。</p>
 <div class="phones" id="ps"></div>
 </div>
 
@@ -124,25 +132,26 @@ const body = '<div class="h">やること</div><ul><li class="row hw">ヴィヴ�
 const head = '<div class="nav">‹ 戻る</div><div class="ttl"><b>2026/11/16（月）</b></div>';
 
 // 各案：[見出し, 説明, クラス]。クラスなしは今の画面
+// [見出し, 説明, クラス, 「もっと見る」の置き場所（'below'=下 / 'inline'=行の終わり）, ＋の文字]
 const V = [
-  ['今', 'トピックが3行になる。やることの位置がトピックの数で変わる。', ''],
-  ['A 前回のInstagram風', '紺色の文字を並べるだけ。前回の案そのまま。', 'navy'],
-  ['B 落ち着いた紺', '紺を少し深くして、「#」を薄く。名前が先に目に入る。', 'navy b'],
-  ['C 青みのグレー', '紺より灰色に寄せて、少し太く。いちばん静か。', 'c'],
-  ['D 小さめで間を広く', '文字を少し小さく、タグの間を広く。数が多くても詰まって見えない。', 'navy d'],
-  ['E 2行まで見せる', 'Aと同じ色で、閉じていても2行まで見せる。', 'navy e'],
-  ['F 曲は音符の絵', 'Aと同じ色で、曲のトピックは「#」の代わりに細い音符の絵。曲かどうかが分かる。', 'navy f'],
+  ['前回のD', '「もっと見る」は下に1行。＋は点線の札。', 'navy d', 'below', '＋'],
+  ['A 下に小さく', '「もっと見る」を小さくして、タグのすぐ下に詰める。＋は「＋ 追加」の灰色の文字。', 'navy d sm pl-t', 'below', '＋ 追加'],
+  ['B 行の終わりに', '「…もっと見る」を1行目の終わりに。Instagramの「続きを読む」と同じ。行が増えない。＋は「＋ 追加」の灰色の文字。', 'navy d pl-t', 'inline', '＋ 追加'],
+  ['C 行の終わり＋丸い＋', 'Bと同じで、＋だけ細い線の小さな丸。', 'navy d pl-c', 'inline', '＋'],
+  ['D 下に小さく＋丸い＋', 'Aと同じで、＋だけ細い線の小さな丸。', 'navy d sm pl-c', 'below', '＋'],
 ];
 const tag = ([k, t]) => '<span class="tp' + (k === 's' ? ' song' : '') + '">' + (k === 's' ? '<span class="ni">' + nIcon + '</span>' : '') + '<span class="hm">#</span>' + t + '</span>';
 function topics(v, open) {
   if (!v[2]) return '<div class="tps">' + TOP.map(chip).join('') + add + '</div>';
-  return '<div class="hs"><div class="tps' + (open ? '' : ' shut') + '">' + TOP.map(tag).join('') + (open ? add : '') + '</div>' +
-    '<button class="mr" data-t>' + (open ? '閉じる' : 'もっと見る') + '</button></div>';
+  const plus = '<span class="tp add">' + v[4] + '</span>';
+  const btn = (cls) => '<button class="mr' + cls + '" data-t>' + (open ? '閉じる' : 'もっと見る') + '</button>';
+  if (v[3] === 'inline') return '<div class="hs"><div class="tps' + (open ? '' : ' shut') + '">' + TOP.map(tag).join('') + (open ? plus + btn(' cl') : btn('')) + '</div></div>';
+  return '<div class="hs"><div class="tps' + (open ? '' : ' shut') + '">' + TOP.map(tag).join('') + (open ? plus : '') + '</div>' + btn('') + '</div>';
 }
 // 閉じているとき：1行からはみ出したタグを後ろから隠す
 function fitMeasure(scr) {
   const row = scr.querySelector('.tps.shut'); if (!row) return;
-  const tags = [...row.querySelectorAll('.tp')]; tags.forEach((t) => (t.style.display = ''));
+  const tags = [...row.querySelectorAll('.tp:not(.add)')]; tags.forEach((t) => (t.style.display = ''));
   if (!row.clientWidth) return; // まだ描かれていないときは測らない
   const over = () => row.scrollWidth > row.clientWidth || row.scrollHeight > row.clientHeight + 1;
   for (let i = tags.length - 1; i > 0 && over(); i--) tags[i].style.display = 'none';
