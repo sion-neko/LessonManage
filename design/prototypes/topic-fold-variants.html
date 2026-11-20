@@ -77,26 +77,40 @@ ul { list-style: none; margin: 0; padding: 0; }
 .g3 .fold .tp:not(.add)::before { content: "#"; color: #c7c7cc; margin-right: 1px; }
 .g3 .fold .tp:not(.add) .ni { display: none; }
 .g1 .fold .tp.add, .g2 .fold .tp.add, .g3 .fold .tp.add { font-size: 11px; border-radius: 5px; padding: 1px 8px; }
-/* ハッシュタグの見やすさ違い */
-.h1 .fold .tps, .h2 .fold .tps, .h3 .fold .tps, .h4 .fold .tps { gap: 4px 12px; }
-.h1 .fold .tp:not(.add), .h2 .fold .tp:not(.add), .h3 .fold .tp:not(.add), .h4 .fold .tp:not(.add) { background: transparent; padding: 4px 0; font-size: 13px; }
-.h1 .fold .tp .ni, .h2 .fold .tp .ni, .h3 .fold .tp .ni, .h4 .fold .tp .ni { display: none; }
-.h1 .fold .tp:not(.add)::before, .h2 .fold .tp:not(.add)::before, .h3 .fold .tp:not(.add)::before, .h4 .fold .tp:not(.add)::before { content: "#"; margin-right: 1px; }
-.h1 .fold .tp:not(.add) { font-weight: 500; color: var(--sub); }
-.h1 .fold .tp:not(.add)::before { color: var(--muted); font-weight: 400; }
-.h2 .fold .tp:not(.add) { font-weight: 500; color: var(--accent-d); }
-.h3 .fold .tp:not(.add) { font-weight: 500; color: var(--sub); background: var(--soft); border-radius: 6px; padding: 3px 8px; }
-.h3 .fold .tps { gap: 6px; }
-.h3 .fold .tp:not(.add)::before { color: var(--muted); }
-.h4 .fold .tp:not(.add) { font-weight: 600; color: var(--fg); }
-.h4 .fold .tp:not(.add)::before { color: var(--accent); font-weight: 700; }
-.h1 .fold .tp.add, .h2 .fold .tp.add, .h3 .fold .tp.add, .h4 .fold .tp.add { font-size: 12px; border-radius: 6px; padding: 1px 8px; }
+/* ハッシュタグ＋下に「もっと見る」 */
+.hs { padding: 10px 20px 0; }
+.hs .tps { padding: 0; gap: 4px 10px; }
+.hs .tps.shut { flex-wrap: nowrap; overflow: hidden; }
+.hs .tp:not(.add) { background: transparent; padding: 0; border-radius: 0; font-weight: 400; font-size: 13px; line-height: 24px; }
+.hs .tp .ni { display: none; }
+.hs .tp.add { font-size: 12px; border-radius: 12px; padding: 0 10px; line-height: 21px; }
+.mr { display: block; margin-top: 4px; font-size: 12px; color: var(--muted); line-height: 22px; }
+/* 1 本文のハッシュタグ（Instagramのキャプション） */
+.t1 .tp:not(.add) { color: #33558b; }
+/* 2 色の付いた小さめの文字（YouTubeの動画の上のタグ） */
+.t2 .tps { gap: 4px 8px; }
+.t2 .tp:not(.add) { color: var(--accent-d); font-size: 12px; font-weight: 600; }
+/* 3 細い枠のまる（Pinterest・Spotifyのタグ） */
+.t3 .tps { gap: 6px; }
+.t3 .tp:not(.add) { border: 1px solid #d8d8dd; border-radius: 999px; padding: 0 10px; line-height: 24px; font-size: 12px; color: var(--sub); }
+.t3 .tp:not(.add) .hm { color: #aeaeb2; }
+/* 4 淡い色の地（Dribbble・noteのタグ） */
+.t4 .tps { gap: 6px; }
+.t4 .tp:not(.add) { background: #faf3df; border-radius: 6px; padding: 0 8px; line-height: 24px; font-size: 12px; font-weight: 500; color: var(--accent-d); }
+/* 5 # を小さな四角に（Slack・Discordのチャンネル） */
+.t5 .tps { gap: 6px 12px; }
+.t5 .tp:not(.add) { color: var(--sub); font-weight: 500; }
+.t5 .tp:not(.add) .hm { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 4px; background: var(--soft); color: var(--muted); font-size: 11px; font-weight: 700; margin-right: 4px; vertical-align: 1px; }
+/* 6 下線（はてなブックマーク・Qiitaのタグ一覧） */
+.t6 .tps { gap: 4px 12px; }
+.t6 .tp:not(.add) { color: var(--sub); text-decoration: underline; text-decoration-color: #d1d1d6; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.t6 .tp:not(.add) .hm { color: var(--muted); }
 .hint { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 11px; color: var(--muted); }
 </style>
 
 <div class="wrap">
 <h1>レッスン画面：日付の下のトピックの折りたたみ</h1>
-<p class="lead">トピックが6個あるレッスン。今はトピックが3行になり、やることが下へ押し出される。右端の「+4 ‹」を押すと全部開き、もう一度押すと閉じる。＋は開いたときだけ。トピックをハッシュタグで見せる。SNSのハッシュタグを参考に、見やすさを変えて4通り。</p>
+<p class="lead">トピックをハッシュタグで見せる。ふだんは1行だけ見せ、下の「もっと見る」で全部開く。＋は開いたときだけ。タグの見た目は、SNSやサービスのタグを参考に6通り。</p>
 <div class="phones" id="ps"></div>
 </div>
 
@@ -113,32 +127,31 @@ const body = '<div class="h">やること</div><ul><li class="row hw">ヴィヴ�
   '<div class="tk">手首が固まってしまう</div><ul><li class="row">肩を意識して動かすといい</li></ul>';
 const head = '<div class="nav">‹ 戻る</div><div class="ttl"><b>2026/11/16（月）</b><span>バイオリン · ブライアン先生</span></div>';
 
-const left = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>';
-// 各案：[見出し, 説明, ＋の置き方（'row'=いつも / 'open'=開いたときだけ）, 隠れている数を出すか]
+// 各案：[見出し, 説明, クラス]。クラスなしは今の画面
 const V = [
-  ['今：全部並べる', 'トピックが3行になる。やることの位置がトピックの数で変わる。', null, false],
-  ['前のハッシュタグ風', '灰色の細い文字。少し読みにくい。', 'open', true, 'g3'],
-  ['文字を濃く', '名前は濃い灰色で少し太く、「#」だけ薄く。Threadsのトピックに近い。', 'open', true, 'h1'],
-  ['色の付いた文字', '「#」も名前もアプリの色で。X・Instagramのハッシュタグと同じ考え方（向こうは青）。', 'open', true, 'h2'],
-  ['薄い地を敷く', '「#名前」に薄い灰色の地。noteのハッシュタグやQiitaのタグに近い。', 'open', true, 'h3'],
-  ['「#」だけ色', '名前は黒、「#」だけアプリの色。色は最小限で、タグだと分かる。', 'open', true, 'h4'],
+  ['今：全部並べる', 'トピックが3行になる。やることの位置がトピックの数で変わる。', ''],
+  ['本文のハッシュタグ', '紺色の文字を並べるだけ。Instagramのキャプションの下のハッシュタグ。', 't1'],
+  ['色の付いた小さな文字', 'アプリの色で小さめ・太め。YouTubeの動画タイトルの上のタグ。', 't2'],
+  ['細い枠のまる', '白地に細い線のまる。「#」は薄く。Pinterest・Spotifyのタグ。', 't3'],
+  ['淡い色の地', '淡い金色の地にアプリの色の文字。Dribbble・noteのタグ。', 't4'],
+  ['「#」を小さな四角に', '「#」を灰色の小さな四角に入れる。Slack・Discordのチャンネル名。', 't5'],
+  ['薄い下線', '灰色の文字に薄い下線。はてなブックマーク・Qiitaのタグ一覧。', 't6'],
 ];
+const tag = ([k, t]) => '<span class="tp"><span class="hm">#</span>' + t + '</span>';
 function topics(v, open) {
   if (!v[2]) return '<div class="tps">' + TOP.map(chip).join('') + add + '</div>';
-  const plus = v[2] === 'row' || open;
-  return '<div class="fold"><div class="tps' + (open ? '' : ' shut') + '">' + TOP.map(chip).join('') + (plus ? add : '') + '</div>' +
-    (v[3] && !open ? '<span class="cnt"></span>' : '') + '<button class="chv' + (open ? ' open' : '') + '" data-t>' + left + '</button></div>';
+  return '<div class="hs"><div class="tps' + (open ? '' : ' shut') + '">' + TOP.map(tag).join('') + (open ? add : '') + '</div>' +
+    '<button class="mr" data-t>' + (open ? '閉じる' : 'もっと見る') + '</button></div>';
 }
-// 閉じているとき：はみ出したチップを後ろから隠す（＋は残す）
+// 閉じているとき：1行からはみ出したタグを後ろから隠す
 function fitMeasure(scr) {
   const row = scr.querySelector('.tps.shut'); if (!row) return;
-  const chips = [...row.querySelectorAll('.tp:not(.add)')]; const cnt = scr.querySelector('.cnt');
-  let hidden = 0;
-  for (let i = chips.length - 1; i > 0 && row.scrollWidth > row.clientWidth; i--) { chips[i].style.display = 'none'; hidden++; if (cnt) cnt.textContent = '+' + hidden; }
-  if (cnt && !hidden) cnt.remove();
+  const tags = [...row.querySelectorAll('.tp')]; let hidden = 0;
+  for (let i = tags.length - 1; i > 0 && row.scrollWidth > row.clientWidth; i--) { tags[i].style.display = 'none'; hidden++; }
+  if (!hidden) scr.querySelector('.mr').remove();
 }
 
-document.getElementById('ps').innerHTML = V.map(([b, p], i) => '<div class="fr"><b>' + b + '</b><p>' + p + '</p><div class="scr ' + (V[i][4] || '') + '" data-i="' + i + '"></div></div>').join('');
+document.getElementById('ps').innerHTML = V.map(([b, p], i) => '<div class="fr"><b>' + b + '</b><p>' + p + '</p><div class="scr ' + (V[i][2] || '') + '" data-i="' + i + '"></div></div>').join('');
 document.querySelectorAll('.scr').forEach((scr) => {
   const i = +scr.dataset.i; let open = false;
   const draw = () => {
