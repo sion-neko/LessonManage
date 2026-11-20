@@ -51,12 +51,19 @@ ul { list-style: none; margin: 0; padding: 0; }
 .sum .ct { flex: none; color: var(--muted); }
 .sum svg { flex: none; color: var(--muted); transition: transform .2s; }
 .sum.open svg { transform: rotate(180deg); }
+.fold { display: flex; align-items: flex-start; gap: 4px; padding: 10px 12px 0 20px; }
+.fold .tps { flex: 1; min-width: 0; padding: 0; }
+.fold .tps.shut { flex-wrap: nowrap; overflow: hidden; }
+.chv { flex: none; width: 28px; height: 26px; display: grid; place-items: center; color: var(--muted); }
+.chv svg { transition: transform .2s; }
+.chv.open svg { transform: rotate(-90deg); }
+.cnt { flex: none; align-self: center; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .hint { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 11px; color: var(--muted); }
 </style>
 
 <div class="wrap">
 <h1>レッスン画面：日付の下のトピックの折りたたみ</h1>
-<p class="lead">トピックが6個あるレッスン。今はトピックが3行になり、やることが下へ押し出される。折りたたみ方を4通り並べた。「ほか○件」や「⌄」は押して開け閉めできる。</p>
+<p class="lead">トピックが6個あるレッスン。今はトピックが3行になり、やることが下へ押し出される。右端の「‹」を押すと全部開き、もう一度押すと閉じる。＋の置き場所と、隠れている数の出し方を変えて3通り。</p>
 <div class="phones" id="ps"></div>
 </div>
 
@@ -73,36 +80,35 @@ const body = '<div class="h">やること</div><ul><li class="row hw">ヴィヴ�
   '<div class="tk">手首が固まってしまう</div><ul><li class="row">肩を意識して動かすといい</li></ul>';
 const head = '<div class="nav">‹ 戻る</div><div class="ttl"><b>2026/11/16（月）</b><span>バイオリン · ブライアン先生</span></div>';
 
-// 各案：topics(el, open) で日付の下の部分を返す
+const left = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg>';
+// 各案：[見出し, 説明, ＋の置き方（'row'=いつも / 'open'=開いたときだけ）, 隠れている数を出すか]
 const V = [
-  ['今：全部並べる', 'トピックが3行になる。やることの位置がトピックの数で変わる。', '', () => '<div class="tps">' + TOP.map(chip).join('') + add + '</div>'],
-  ['1行に収まる分だけ', '1行に入るだけ見せ、残りは「ほか○件」。押すと全部開いて、最後に「閉じる」。＋は閉じていても行の右端に出す。', 'fit', null],
-  ['決まった数（2個）', '最初の2個だけ見せ、残りは「ほか○件」。名前の長さで見える数が変わらない。2行になることもある。', '', (open) => '<div class="tps">' + (open ? TOP.map(chip).join('') + add + '<button class="tp more" data-t>閉じる</button>' : TOP.slice(0, 2).map(chip).join('') + '<button class="tp more" data-t>ほか' + (TOP.length - 2) + '件</button>' + add) + '</div>'],
-  ['横にすべらせる', '畳まずに1行に並べ、指で横にすべらせて残りを見る。＋は右端に止めておく。開け閉めがない。', 'swipe', () => '<div class="tps">' + TOP.map(chip).join('') + add + '</div>'],
-  ['1行の文にまとめる', '名前を「・」でつないだ1行に。⌄で開くと今と同じ並びになり、＋もそこに出す。閉じているときはいちばん静か。', '', (open) => '<button class="sum' + (open ? ' open' : '') + '" data-t><span class="nm">' + TOP.map((x) => x[1]).join('・') + '</span><span class="ct">' + TOP.length + '件</span>' + chev + '</button>' + (open ? '<div class="tps">' + TOP.map(chip).join('') + add + '</div>' : '')],
+  ['今：全部並べる', 'トピックが3行になる。やることの位置がトピックの数で変わる。', null, false],
+  ['＋はいつも出す', '1行に入るだけ見せ、右端に「‹」。＋は閉じていても「‹」の左に出す。', 'row', false],
+  ['＋は開いたときだけ', '閉じているときはトピックと「‹」だけ。トピックを足すときは開いてから＋。', 'open', false],
+  ['隠れている数も出す', '「‹」の左に「+4」のように隠れている数を出す。＋は開いたときだけ。', 'open', true],
 ];
-
-// 1行に収まる分だけ：並べてから、はみ出したチップを隠す
-function fitRow(open) {
-  if (open) return '<div class="tps">' + TOP.map(chip).join('') + add + '<button class="tp more" data-t>閉じる</button></div>';
-  return '<div class="tps shut">' + TOP.map(chip).join('') + '<button class="tp more" data-t></button>' + add + '</div>';
+function topics(v, open) {
+  if (!v[2]) return '<div class="tps">' + TOP.map(chip).join('') + add + '</div>';
+  const plus = v[2] === 'row' || open;
+  return '<div class="fold"><div class="tps' + (open ? '' : ' shut') + '">' + TOP.map(chip).join('') + (plus ? add : '') + '</div>' +
+    (v[3] && !open ? '<span class="cnt"></span>' : '') + '<button class="chv' + (open ? ' open' : '') + '" data-t>' + left + '</button></div>';
 }
-function fitMeasure(box) {
-  const row = box.querySelector('.tps.shut'); if (!row) return;
-  const chips = [...row.querySelectorAll('.tp:not(.add):not(.more)')]; const more = row.querySelector('.more');
-  chips.forEach((c) => (c.style.display = ''));
-  let hidden = 0; more.textContent = 'ほか' + chips.length + '件';
-  const over = () => row.scrollWidth > row.clientWidth;
-  for (let i = chips.length - 1; i >= 0 && over(); i--) { chips[i].style.display = 'none'; hidden++; more.textContent = 'ほか' + hidden + '件'; }
-  more.style.display = hidden ? '' : 'none';
+// 閉じているとき：はみ出したチップを後ろから隠す（＋は残す）
+function fitMeasure(scr) {
+  const row = scr.querySelector('.tps.shut'); if (!row) return;
+  const chips = [...row.querySelectorAll('.tp:not(.add)')]; const cnt = scr.querySelector('.cnt');
+  let hidden = 0;
+  for (let i = chips.length - 1; i > 0 && row.scrollWidth > row.clientWidth; i--) { chips[i].style.display = 'none'; hidden++; if (cnt) cnt.textContent = '+' + hidden; }
+  if (cnt && !hidden) cnt.remove();
 }
 
-document.getElementById('ps').innerHTML = V.map(([b, p], i) => '<div class="fr"><b>' + b + '</b><p>' + p + '</p><div class="scr ' + V[i][2] + '" data-i="' + i + '"></div></div>').join('');
+document.getElementById('ps').innerHTML = V.map(([b, p], i) => '<div class="fr"><b>' + b + '</b><p>' + p + '</p><div class="scr" data-i="' + i + '"></div></div>').join('');
 document.querySelectorAll('.scr').forEach((scr) => {
   const i = +scr.dataset.i; let open = false;
   const draw = () => {
-    scr.innerHTML = head + (i === 1 ? fitRow(open) : V[i][3](open)) + body + (i === 3 ? '<div class="hint">← トピックの行は横にすべらせられる</div>' : '');
-    if (i === 1) fitMeasure(scr);
+    scr.innerHTML = head + topics(V[i], open) + body;
+    fitMeasure(scr);
     scr.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => { open = !open; draw(); }));
   };
   draw();
