@@ -1,0 +1,110 @@
+<title>トピックの折りたたみ案</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* #6 レッスン画面：日付の下のトピックを折りたたみ、最初の数個だけ見せる。見せ方を並べて比べる */
+:root {
+  --page: #e9e9ee; --paper: #ffffff; --soft: #f2f2f7; --fg: #1c1c1e; --sub: #48484a; --muted: #8a8a8e; --line: #e5e5ea;
+  --accent: #d29b00; --accent-d: #a87a00;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page: #121214; color-scheme: dark } }
+:root[data-theme="dark"] { --page: #121214; color-scheme: dark }
+body { background: var(--page); color: var(--fg); font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; margin: 0; }
+.wrap { max-width: 2000px; margin: 0 auto; padding-block: 28px 60px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 24px; margin: 0 0 6px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) h1, :root:not([data-theme="light"]) .lead, :root:not([data-theme="light"]) .fr > b, :root:not([data-theme="light"]) .fr > p { color: #f2f2f7; } }
+:root[data-theme="dark"] h1, :root[data-theme="dark"] .lead, :root[data-theme="dark"] .fr > b, :root[data-theme="dark"] .fr > p { color: #f2f2f7; }
+.lead { color: var(--sub); font-size: 14px; line-height: 1.75; margin: 0 0 20px; max-width: 76ch; }
+.phones { display: flex; flex-wrap: wrap; gap: 18px; }
+.fr { width: 300px; max-width: 100%; }
+.fr > b { display: block; font-size: 14px; margin: 0 0 2px 4px; }
+.fr > p { font-size: 12px; color: var(--sub); line-height: 1.6; margin: 0 0 8px 4px; min-height: 58px; }
+.scr { position: relative; height: 640px; border-radius: 30px; border: 7px solid #1c1c1e; overflow: hidden; font-size: 14px; background: var(--paper); color: var(--fg); }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+
+/* 今の画面（試作と同じ値） */
+.nav { padding: 28px 16px 0; color: var(--accent); font-size: 15px; }
+.ttl { padding: 4px 20px 0; }
+.ttl b { display: block; font-size: 22px; line-height: 1.3; }
+.ttl span { color: var(--muted); font-size: 12px; }
+.tps { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 20px 0; }
+.tp { flex: none; padding: 5px 11px; border-radius: 14px; background: var(--soft); font-size: 12px; font-weight: 600; color: var(--sub); white-space: nowrap; }
+.tp.add { background: transparent; border: 1.5px dashed var(--line); color: var(--accent-d); padding: 3px 11px; }
+.tp.more { background: transparent; color: var(--accent-d); padding: 5px 4px; }
+.ni { display: inline-flex; vertical-align: -1px; margin-right: 4px; color: var(--muted); }
+.h { margin: 20px 20px 2px; padding-bottom: 5px; border-bottom: 1px solid var(--line); color: var(--accent-d); font-size: 15px; font-weight: 700; }
+.tk { padding: 10px 20px 0; font-size: 12px; font-weight: 700; color: var(--sub); }
+ul { list-style: none; margin: 0; padding: 0; }
+.row { position: relative; padding: 4px 20px; line-height: 1.55; font-size: 15px; }
+.row.hw { font-size: 16px; font-weight: 700; }
+.row:not(.hw)::before { content: ""; position: absolute; left: 8px; top: 13px; width: 6px; height: 6px; border-radius: 50%; background: #aeaeb2; }
+.gap { height: 26px; }
+
+/* 1行に収める（はみ出した分は隠して「ほか○件」） */
+.fit .tps.shut { flex-wrap: nowrap; overflow: hidden; }
+/* 横にすべらせる */
+.swipe .tps { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-right: 20px; }
+.swipe .tps::-webkit-scrollbar { display: none; }
+.swipe .tps .add { position: sticky; right: 0; background: var(--paper); box-shadow: -10px 0 8px var(--paper); }
+/* 1行の文にまとめる */
+.sum { display: flex; align-items: center; gap: 6px; margin: 10px 20px 0; padding: 7px 10px 7px 12px; border-radius: 10px; background: var(--soft); font-size: 12px; color: var(--sub); width: calc(100% - 40px); text-align: left; }
+.sum .nm { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+.sum .ct { flex: none; color: var(--muted); }
+.sum svg { flex: none; color: var(--muted); transition: transform .2s; }
+.sum.open svg { transform: rotate(180deg); }
+.hint { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 11px; color: var(--muted); }
+</style>
+
+<div class="wrap">
+<h1>レッスン画面：日付の下のトピックの折りたたみ</h1>
+<p class="lead">トピックが6個あるレッスン。今はトピックが3行になり、やることが下へ押し出される。折りたたみ方を4通り並べた。「ほか○件」や「⌄」は押して開け閉めできる。</p>
+<div class="phones" id="ps"></div>
+</div>
+
+<script>
+const nIcon = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>';
+const chev = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+const TOP = [['s', 'ヴィヴァルディ 協奏曲 イ短調'], ['f', '手首が固まってしまう'], ['s', 'スケール'], ['s', 'ユーモレスク'], ['f', '弓の配分'], ['f', 'ビブラートの幅']];
+const label = ([k, t]) => (k === 's' ? '<span class="ni">' + nIcon + '</span>' : '') + t;
+const chip = (x) => '<span class="tp">' + label(x) + '</span>';
+const add = '<span class="tp add">＋</span>';
+
+const body = '<div class="h">やること</div><ul><li class="row hw">ヴィヴァルディ 20〜36小節をゆっくり</li><li class="row hw">スケールは3オクターブをテンポ60で</li></ul><div class="gap"></div>' +
+  '<div class="h">学んだこと</div><div class="tk"><span class="ni">' + nIcon + '</span>ヴィヴァルディ 協奏曲 イ短調</div><ul><li class="row">3ポジへの移動は親指を先に動かす</li><li class="row">20小節目からは弓を多めに使ってフレーズを大きく</li></ul>' +
+  '<div class="tk">手首が固まってしまう</div><ul><li class="row">肩を意識して動かすといい</li></ul>';
+const head = '<div class="nav">‹ 戻る</div><div class="ttl"><b>2026/11/16（月）</b><span>バイオリン · ブライアン先生</span></div>';
+
+// 各案：topics(el, open) で日付の下の部分を返す
+const V = [
+  ['今：全部並べる', 'トピックが3行になる。やることの位置がトピックの数で変わる。', '', () => '<div class="tps">' + TOP.map(chip).join('') + add + '</div>'],
+  ['1行に収まる分だけ', '1行に入るだけ見せ、残りは「ほか○件」。押すと全部開いて、最後に「閉じる」。＋は閉じていても行の右端に出す。', 'fit', null],
+  ['決まった数（2個）', '最初の2個だけ見せ、残りは「ほか○件」。名前の長さで見える数が変わらない。2行になることもある。', '', (open) => '<div class="tps">' + (open ? TOP.map(chip).join('') + add + '<button class="tp more" data-t>閉じる</button>' : TOP.slice(0, 2).map(chip).join('') + '<button class="tp more" data-t>ほか' + (TOP.length - 2) + '件</button>' + add) + '</div>'],
+  ['横にすべらせる', '畳まずに1行に並べ、指で横にすべらせて残りを見る。＋は右端に止めておく。開け閉めがない。', 'swipe', () => '<div class="tps">' + TOP.map(chip).join('') + add + '</div>'],
+  ['1行の文にまとめる', '名前を「・」でつないだ1行に。⌄で開くと今と同じ並びになり、＋もそこに出す。閉じているときはいちばん静か。', '', (open) => '<button class="sum' + (open ? ' open' : '') + '" data-t><span class="nm">' + TOP.map((x) => x[1]).join('・') + '</span><span class="ct">' + TOP.length + '件</span>' + chev + '</button>' + (open ? '<div class="tps">' + TOP.map(chip).join('') + add + '</div>' : '')],
+];
+
+// 1行に収まる分だけ：並べてから、はみ出したチップを隠す
+function fitRow(open) {
+  if (open) return '<div class="tps">' + TOP.map(chip).join('') + add + '<button class="tp more" data-t>閉じる</button></div>';
+  return '<div class="tps shut">' + TOP.map(chip).join('') + '<button class="tp more" data-t></button>' + add + '</div>';
+}
+function fitMeasure(box) {
+  const row = box.querySelector('.tps.shut'); if (!row) return;
+  const chips = [...row.querySelectorAll('.tp:not(.add):not(.more)')]; const more = row.querySelector('.more');
+  chips.forEach((c) => (c.style.display = ''));
+  let hidden = 0; more.textContent = 'ほか' + chips.length + '件';
+  const over = () => row.scrollWidth > row.clientWidth;
+  for (let i = chips.length - 1; i >= 0 && over(); i--) { chips[i].style.display = 'none'; hidden++; more.textContent = 'ほか' + hidden + '件'; }
+  more.style.display = hidden ? '' : 'none';
+}
+
+document.getElementById('ps').innerHTML = V.map(([b, p], i) => '<div class="fr"><b>' + b + '</b><p>' + p + '</p><div class="scr ' + V[i][2] + '" data-i="' + i + '"></div></div>').join('');
+document.querySelectorAll('.scr').forEach((scr) => {
+  const i = +scr.dataset.i; let open = false;
+  const draw = () => {
+    scr.innerHTML = head + (i === 1 ? fitRow(open) : V[i][3](open)) + body + (i === 3 ? '<div class="hint">← トピックの行は横にすべらせられる</div>' : '');
+    if (i === 1) fitMeasure(scr);
+    scr.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => { open = !open; draw(); }));
+  };
+  draw();
+});
+</script>
