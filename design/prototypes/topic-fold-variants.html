@@ -77,12 +77,26 @@ ul { list-style: none; margin: 0; padding: 0; }
 .g3 .fold .tp:not(.add)::before { content: "#"; color: #c7c7cc; margin-right: 1px; }
 .g3 .fold .tp:not(.add) .ni { display: none; }
 .g1 .fold .tp.add, .g2 .fold .tp.add, .g3 .fold .tp.add { font-size: 11px; border-radius: 5px; padding: 1px 8px; }
+/* ハッシュタグの見やすさ違い */
+.h1 .fold .tps, .h2 .fold .tps, .h3 .fold .tps, .h4 .fold .tps { gap: 4px 12px; }
+.h1 .fold .tp:not(.add), .h2 .fold .tp:not(.add), .h3 .fold .tp:not(.add), .h4 .fold .tp:not(.add) { background: transparent; padding: 4px 0; font-size: 13px; }
+.h1 .fold .tp .ni, .h2 .fold .tp .ni, .h3 .fold .tp .ni, .h4 .fold .tp .ni { display: none; }
+.h1 .fold .tp:not(.add)::before, .h2 .fold .tp:not(.add)::before, .h3 .fold .tp:not(.add)::before, .h4 .fold .tp:not(.add)::before { content: "#"; margin-right: 1px; }
+.h1 .fold .tp:not(.add) { font-weight: 500; color: var(--sub); }
+.h1 .fold .tp:not(.add)::before { color: var(--muted); font-weight: 400; }
+.h2 .fold .tp:not(.add) { font-weight: 500; color: var(--accent-d); }
+.h3 .fold .tp:not(.add) { font-weight: 500; color: var(--sub); background: var(--soft); border-radius: 6px; padding: 3px 8px; }
+.h3 .fold .tps { gap: 6px; }
+.h3 .fold .tp:not(.add)::before { color: var(--muted); }
+.h4 .fold .tp:not(.add) { font-weight: 600; color: var(--fg); }
+.h4 .fold .tp:not(.add)::before { color: var(--accent); font-weight: 700; }
+.h1 .fold .tp.add, .h2 .fold .tp.add, .h3 .fold .tp.add, .h4 .fold .tp.add { font-size: 12px; border-radius: 6px; padding: 1px 8px; }
 .hint { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 11px; color: var(--muted); }
 </style>
 
 <div class="wrap">
 <h1>レッスン画面：日付の下のトピックの折りたたみ</h1>
-<p class="lead">トピックが6個あるレッスン。今はトピックが3行になり、やることが下へ押し出される。右端の「+4 ‹」を押すと全部開き、もう一度押すと閉じる。＋は開いたときだけ。トピックの札が目立ちすぎるので、文字だけ・タグっぽい見せ方を並べた。</p>
+<p class="lead">トピックが6個あるレッスン。今はトピックが3行になり、やることが下へ押し出される。右端の「+4 ‹」を押すと全部開き、もう一度押すと閉じる。＋は開いたときだけ。トピックをハッシュタグで見せる。SNSのハッシュタグを参考に、見やすさを変えて4通り。</p>
 <div class="phones" id="ps"></div>
 </div>
 
@@ -103,11 +117,11 @@ const left = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke
 // 各案：[見出し, 説明, ＋の置き方（'row'=いつも / 'open'=開いたときだけ）, 隠れている数を出すか]
 const V = [
   ['今：全部並べる', 'トピックが3行になる。やることの位置がトピックの数で変わる。', null, false],
-  ['前の案', '灰色の丸い札、太字。', 'open', true, ''],
-  ['文字だけ', '札をやめて、名前を「・」でつないだ灰色の文字に。', 'open', true, 'c3'],
-  ['ロール風', '小さな角丸の枠に、灰色の小さな丸。Discordのロールのような見た目。', 'open', true, 'g1'],
-  ['ラベル風', '小さな角丸の札。GitHubのラベルのような見た目。', 'open', true, 'g2'],
-  ['ハッシュタグ風', '「#」を付けた灰色の文字。札も枠もなし。', 'open', true, 'g3'],
+  ['前のハッシュタグ風', '灰色の細い文字。少し読みにくい。', 'open', true, 'g3'],
+  ['文字を濃く', '名前は濃い灰色で少し太く、「#」だけ薄く。Threadsのトピックに近い。', 'open', true, 'h1'],
+  ['色の付いた文字', '「#」も名前もアプリの色で。X・Instagramのハッシュタグと同じ考え方（向こうは青）。', 'open', true, 'h2'],
+  ['薄い地を敷く', '「#名前」に薄い灰色の地。noteのハッシュタグやQiitaのタグに近い。', 'open', true, 'h3'],
+  ['「#」だけ色', '名前は黒、「#」だけアプリの色。色は最小限で、タグだと分かる。', 'open', true, 'h4'],
 ];
 function topics(v, open) {
   if (!v[2]) return '<div class="tps">' + TOP.map(chip).join('') + add + '</div>';
