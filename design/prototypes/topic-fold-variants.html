@@ -142,10 +142,10 @@ function topics(v, open) {
 // 閉じているとき：1行からはみ出したタグを後ろから隠す
 function fitMeasure(scr) {
   const row = scr.querySelector('.tps.shut'); if (!row) return;
-  const tags = [...row.querySelectorAll('.tp')]; let hidden = 0;
+  const tags = [...row.querySelectorAll('.tp')]; tags.forEach((t) => (t.style.display = ''));
+  if (!row.clientWidth) return; // まだ描かれていないときは測らない
   const over = () => row.scrollWidth > row.clientWidth || row.scrollHeight > row.clientHeight + 1;
-  for (let i = tags.length - 1; i > 0 && over(); i--) { tags[i].style.display = 'none'; hidden++; }
-  if (!hidden) scr.querySelector('.mr').remove();
+  for (let i = tags.length - 1; i > 0 && over(); i--) tags[i].style.display = 'none';
 }
 
 document.getElementById('ps').innerHTML = V.map(([b, p], i) => '<div class="fr"><b>' + b + '</b><p>' + p + '</p><div class="scr ' + (V[i][2] || '') + '" data-i="' + i + '"></div></div>').join('');
@@ -153,9 +153,10 @@ document.querySelectorAll('.scr').forEach((scr) => {
   const i = +scr.dataset.i; let open = false;
   const draw = () => {
     scr.innerHTML = head + topics(V[i], open) + body;
-    fitMeasure(scr);
+    requestAnimationFrame(() => fitMeasure(scr));
     scr.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => { open = !open; draw(); }));
   };
   draw();
+  new ResizeObserver(() => fitMeasure(scr)).observe(scr);
 });
 </script>
