@@ -58,21 +58,19 @@ ul { list-style: none; margin: 0; padding: 0; }
 .chv svg { transition: transform .2s; }
 .chv.open svg { transform: rotate(-90deg); }
 .cnt { flex: none; align-self: center; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
-/* 弱め：数も「‹」も薄く小さく */
-.w1 .cnt { font-size: 10px; color: #aeaeb2; }
-.w1 .chv { width: 22px; color: #c7c7cc; }
-.w1 .chv svg { width: 13px; height: 13px; }
-/* もっと弱く：数と「‹」をくっつけて1つの小さな印に */
-.w2 .fold { gap: 0; }
-.w2 .cnt { font-size: 10px; color: #c7c7cc; margin-left: 2px; }
-.w2 .chv { width: 16px; color: #d1d1d6; }
-.w2 .chv svg { width: 11px; height: 11px; stroke-width: 2; }
+/* トピックの主張を弱める */
+.c1 .fold .tp:not(.add) { font-weight: 400; color: var(--muted); background: #f7f7f9; }
+.c2 .fold .tp:not(.add) { background: transparent; border: 1px solid var(--line); font-weight: 400; color: var(--muted); padding: 3px 10px; }
+.c3 .fold .tps { gap: 0; }
+.c3 .fold .tp:not(.add) { background: transparent; font-weight: 400; color: var(--muted); padding: 4px 0; }
+.c3 .fold .tp:not(.add) + .tp:not(.add)::before { content: "・"; color: #c7c7cc; padding: 0 2px; }
+.c3 .fold .tp.add { margin-left: 8px; }
 .hint { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 11px; color: var(--muted); }
 </style>
 
 <div class="wrap">
 <h1>レッスン画面：日付の下のトピックの折りたたみ</h1>
-<p class="lead">トピックが6個あるレッスン。今はトピックが3行になり、やることが下へ押し出される。右端の「+4 ‹」を押すと全部開き、もう一度押すと閉じる。＋は開いたときだけ。「+4 ‹」の主張の強さを3段階。</p>
+<p class="lead">トピックが6個あるレッスン。今はトピックが3行になり、やることが下へ押し出される。右端の「+4 ‹」を押すと全部開き、もう一度押すと閉じる。＋は開いたときだけ。トピックの札が目立ちすぎるので、弱め方を3通り。</p>
 <div class="phones" id="ps"></div>
 </div>
 
@@ -93,9 +91,10 @@ const left = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke
 // 各案：[見出し, 説明, ＋の置き方（'row'=いつも / 'open'=開いたときだけ）, 隠れている数を出すか]
 const V = [
   ['今：全部並べる', 'トピックが3行になる。やることの位置がトピックの数で変わる。', null, false],
-  ['前の案', '「+4」と「‹」をふつうの灰色で。', 'open', true, ''],
-  ['弱め', '「+4」と「‹」を薄く、少し小さく。', 'open', true, 'w1'],
-  ['もっと弱く', '「+4‹」をくっつけて、ごく薄い1つの印に。', 'open', true, 'w2'],
+  ['前の案', '灰色の丸い札、太字。', 'open', true, ''],
+  ['札を薄く', '札の地をさらに薄く、文字を細い灰色に。', 'open', true, 'c1'],
+  ['細い枠だけ', '地の色をやめて、細い線の枠に。文字は細い灰色。', 'open', true, 'c2'],
+  ['文字だけ', '札をやめて、名前を「・」でつないだ灰色の文字に。押せる範囲は名前ごと。', 'open', true, 'c3'],
 ];
 function topics(v, open) {
   if (!v[2]) return '<div class="tps">' + TOP.map(chip).join('') + add + '</div>';
