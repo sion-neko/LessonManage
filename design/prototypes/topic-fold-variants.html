@@ -109,6 +109,12 @@ ul { list-style: none; margin: 0; padding: 0; }
 .hs .tps .mr.cl::before { content: ""; }
 .pl-t .hs .tp.add { border: 0; padding: 0; font-size: 12px; color: var(--muted); line-height: 24px; letter-spacing: .02em; }
 .pl-c .hs .tp.add { border: 1px solid #d1d1d6; width: 20px; height: 20px; padding: 0; border-radius: 50%; display: inline-grid; place-items: center; font-size: 13px; line-height: 1; color: var(--muted); align-self: center; }
+/* 開いたときの「閉じる」は下に */
+.hs > .mr.below { margin-top: 2px; font-size: 11px; line-height: 18px; }
+/* 縦を詰める */
+.tight .hs .tps { row-gap: 0; }
+.tight .hs .tp:not(.add), .tight .hs .tps .mr, .tight.pl-t .hs .tp.add { line-height: 20px; }
+.tight.e .tps.shut { max-height: 40px; }
 .hint { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 11px; color: var(--muted); }
 </style>
 
@@ -139,14 +145,14 @@ const V = [
   ['B 行の終わりに', '「…もっと見る」を1行目の終わりに。Instagramの「続きを読む」と同じ。行が増えない。＋は「＋ 追加」の灰色の文字。', 'navy d pl-t', 'inline', '＋ 追加'],
   ['C 行の終わり＋丸い＋', 'Bと同じで、＋だけ細い線の小さな丸。', 'navy d pl-c', 'inline', '＋'],
   ['D 下に小さく＋丸い＋', 'Aと同じで、＋だけ細い線の小さな丸。', 'navy d sm pl-c', 'below', '＋'],
-  ['E 2行まで＋行の終わりに', 'Bを2行まで見せる。「…もっと見る」は2行目の終わり。＋は「＋ 追加」の灰色の文字。', 'navy d pl-t e', 'inline', '＋ 追加'],
+  ['E 2行まで＋行の終わりに', 'Bを2行まで見せ、行の間を詰める。「…もっと見る」は2行目の終わり、「閉じる」は下。＋は「＋ 追加」の灰色の文字。', 'navy d pl-t e tight', 'inline', '＋ 追加'],
 ];
 const tag = ([k, t]) => '<span class="tp' + (k === 's' ? ' song' : '') + '">' + (k === 's' ? '<span class="ni">' + nIcon + '</span>' : '') + '<span class="hm">#</span>' + t + '</span>';
 function topics(v, open) {
   if (!v[2]) return '<div class="tps">' + TOP.map(chip).join('') + add + '</div>';
   const plus = '<span class="tp add">' + v[4] + '</span>';
   const btn = (cls) => '<button class="mr' + cls + '" data-t>' + (open ? '閉じる' : 'もっと見る') + '</button>';
-  if (v[3] === 'inline') return '<div class="hs"><div class="tps' + (open ? '' : ' shut') + '">' + TOP.map(tag).join('') + (open ? plus + btn(' cl') : btn('')) + '</div></div>';
+  if (v[3] === 'inline') return '<div class="hs"><div class="tps' + (open ? '' : ' shut') + '">' + TOP.map(tag).join('') + (open ? plus : btn('')) + '</div>' + (open ? btn(' below') : '') + '</div>';
   return '<div class="hs"><div class="tps' + (open ? '' : ' shut') + '">' + TOP.map(tag).join('') + (open ? plus : '') + '</div>' + btn('') + '</div>';
 }
 // 閉じているとき：1行からはみ出したタグを後ろから隠す
