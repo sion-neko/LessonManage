@@ -1,0 +1,113 @@
+<meta charset="utf-8">
+<title>個人練の再生ボタン案</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* 個人練の行（レッスン画面の個人練タブ・曲ページの録音）の再生ボタン。今の「金色の丸＋時間の白い札」に代わる見せ方を並べて比べる */
+:root {
+  --page: #e9e9ee; --paper: #ffffff; --soft: #f2f2f7; --fg: #1c1c1e; --sub: #48484a; --muted: #8a8a8e; --line: #e5e5ea;
+  --accent: #d29b00; --accent-d: #a87a00;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page: #121214; color-scheme: dark } }
+:root[data-theme="dark"] { --page: #121214; color-scheme: dark }
+body { background: var(--page); color: var(--fg); font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; margin: 0; }
+.wrap { max-width: 2000px; margin: 0 auto; padding-block: 28px 60px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font-size: 24px; margin: 0 0 6px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) h1, :root:not([data-theme="light"]) .lead, :root:not([data-theme="light"]) .fr > b, :root:not([data-theme="light"]) .fr > p { color: #f2f2f7; } }
+:root[data-theme="dark"] h1, :root[data-theme="dark"] .lead, :root[data-theme="dark"] .fr > b, :root[data-theme="dark"] .fr > p { color: #f2f2f7; }
+.lead { color: var(--sub); font-size: 14px; line-height: 1.75; margin: 0 0 20px; max-width: 76ch; }
+.phones { display: flex; flex-wrap: wrap; gap: 18px; }
+.fr { width: 300px; max-width: 100%; }
+.fr > b { display: block; font-size: 14px; margin: 0 0 2px 4px; }
+.fr > p { font-size: 12px; color: var(--sub); line-height: 1.6; margin: 0 0 8px 4px; min-height: 78px; }
+.scr { position: relative; height: 560px; border-radius: 30px; border: 7px solid #1c1c1e; overflow: hidden; font-size: 14px; background: var(--paper); color: var(--fg); }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+svg { display: block; }
+
+/* 今の画面（試作と同じ値） */
+.nav { padding: 28px 16px 0; color: var(--accent); font-size: 15px; }
+.ttl { padding: 4px 20px 0; font-size: 22px; font-weight: 700; }
+.tps { padding: 8px 20px 0; font-size: 11px; color: #33558b; }
+.seg { display: flex; margin: 12px 20px 0; background: #e3e3e8; border-radius: 9px; padding: 2px; font-size: 12px; font-weight: 600; }
+.seg span { flex: 1; text-align: center; padding: 5px 0; border-radius: 7px; }
+.seg span.on { background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.prs { padding: 14px 14px 0; display: flex; flex-direction: column; gap: 6px; }
+.pr { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 12px; border-radius: 12px; background: var(--soft); text-align: left; width: 100%; }
+.pr .d { flex: none; width: 34px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.pr .n { flex: 1; min-width: 0; font-size: 13px; line-height: 1.45; }
+.pr .n small { display: block; font-size: 11px; color: var(--muted); }
+.dock { position: absolute; left: 14px; right: 14px; bottom: 22px; height: 44px; border-radius: 12px; background: var(--accent); color: #fff; font-weight: 700; display: grid; place-items: center; box-shadow: 0 3px 0 var(--accent-d); }
+.mini { position: absolute; left: 10px; right: 10px; bottom: 78px; display: flex; align-items: center; gap: 6px; padding: 7px 8px 8px 12px; border-radius: 14px; background: #f7f6f3; border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(0,0,0,.1); font-size: 11px; }
+.mini b { display: block; font-size: 12px; }
+.mini .t { flex: 1; min-width: 0; color: var(--muted); }
+.mini .t b { color: var(--fg); }
+
+/* 今：金色の丸＋時間の白い札 */
+.now .pb { flex: none; display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px 5px 5px; border-radius: 18px; background: #fff; font-size: 12px; font-variant-numeric: tabular-nums; }
+.now .pb i { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; }
+
+/* A：ボタンを置かず、行を押すと流れる。右は灰色の時間だけ。流れている行は時間の代わりに金色の音の印 */
+.va .tm { flex: none; padding-right: 6px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.va .pr.on .tm { color: var(--accent-d); font-weight: 700; display: flex; align-items: center; gap: 4px; }
+.eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 11px; }
+.eq i { width: 2px; background: var(--accent); border-radius: 1px; animation: eq 0.9s ease-in-out infinite; }
+.eq i:nth-child(2) { animation-delay: -.3s; } .eq i:nth-child(3) { animation-delay: -.6s; }
+@keyframes eq { 0%, 100% { height: 3px } 50% { height: 11px } }
+
+/* B：枠のない金色の▶だけ。時間はその下に小さく */
+.vb .pb { flex: none; width: 44px; display: flex; flex-direction: column; align-items: center; gap: 1px; color: var(--accent); }
+.vb .pb svg { width: 22px; height: 22px; }
+.vb .pb span { font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* C：左に白い丸の▶（ボイスメモ風）。日付は名前の下へ、時間は右に灰色で */
+.vc .pr { padding-left: 8px; }
+.vc .pb { flex: none; width: 32px; height: 32px; border-radius: 50%; background: #fff; color: var(--accent); display: grid; place-items: center; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.vc .pb svg { width: 14px; height: 14px; margin-left: 2px; }
+.vc .pr.on .pb svg { margin-left: 0; }
+.vc .pr.on .pb { background: var(--accent); color: #fff; }
+.vc .tm { flex: none; padding-right: 6px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+</style>
+<div class="wrap">
+  <h1>個人練の再生ボタン</h1>
+  <p class="lead">個人練タブ（と曲ページの録音）の行の右にある「金色の丸＋時間の白い札」の代わり。どの案も、流すと画面の下に再生バーが出るのは同じ。行を押すと、流れている状態を切り替えて見られる。</p>
+  <div class="phones" id="phones"></div>
+</div>
+<script>
+const play = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>';
+const pause = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6.5" y="5" width="3.6" height="14" rx="1"/><rect x="13.9" y="5" width="3.6" height="14" rx="1"/></svg>';
+const playS = '<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>';
+const recs = [
+  { d: '11/16', n: '移動は親指から。まだ音程が上ずる', s: '♫ ヴィヴァルディ 協奏曲 イ短調', t: '3:20' },
+  { d: '11/18', n: '20小節目からを通して', s: '♫ ヴィヴァルディ 協奏曲 イ短調', t: '5:02' },
+  { d: '11/19', n: '（一言なし）', s: '♫ スケール', t: '2:45' },
+];
+const variants = [
+  ['now', '今', '金色の丸と時間を白い札に入れている。'],
+  ['va', 'A：ボタンなし', '行のどこを押しても流れる。右は灰色の時間だけで、流れている行は金色の音の印に変わる。いちばん静か。'],
+  ['vb', 'B：▶だけ', '枠のない金色の▶を右に。時間はその下に小さく。押せる場所は分かりやすいまま、札をなくした形。'],
+  ['vc', 'C：左に丸い▶', 'ボイスメモのように、左に白い丸の▶。日付は名前の下へ回し、時間は右に灰色で。'],
+];
+const row = (k, r, on) => {
+  const name = '<span class="n">' + r.n + '<small>' + (k === 'vc' ? r.d + ' · ' : '') + r.s + '</small></span>';
+  const d = k === 'vc' ? '' : '<span class="d">' + r.d + '</span>';
+  if (k === 'now') return d + name + '<span class="pb"><i>' + (on ? pause.replace('<svg', '<svg width="11" height="11"') : playS) + '</i>' + r.t + '</span>';
+  if (k === 'va') return d + name + '<span class="tm">' + (on ? '<span class="eq"><i></i><i></i><i></i></span>再生中' : r.t) + '</span>';
+  if (k === 'vb') return d + name + '<span class="pb">' + (on ? pause : play) + '<span>' + r.t + '</span></span>';
+  return '<span class="pb">' + (on ? pause : play) + '</span>' + name + '<span class="tm">' + r.t + '</span>';
+};
+const phones = document.getElementById('phones');
+variants.forEach(([k, title, desc]) => {
+  let cur = 0;
+  const fr = document.createElement('div'); fr.className = 'fr';
+  fr.innerHTML = '<b>' + title + '</b><p>' + desc + '</p><div class="scr ' + k + '"></div>';
+  const scr = fr.querySelector('.scr');
+  const draw = () => {
+    scr.innerHTML = '<div class="nav">‹ 戻る</div><div class="ttl">2026/11/16（月）</div><div class="tps">#ヴィヴァルディ 協奏曲 イ短調　#スケール</div>' +
+      '<div class="seg"><span>まとめ</span><span class="on">個人練 3</span></div><div class="prs">' +
+      recs.map((r, i) => '<button class="pr' + (i === cur ? ' on' : '') + '" data-i="' + i + '">' + row(k, r, i === cur) + '</button>').join('') + '</div>' +
+      (cur >= 0 ? '<div class="mini"><span class="t"><b>11/16のレッスン後の個人練</b>' + recs[cur].s + ' · 0:42 / ' + recs[cur].t + '</span>' + pause.replace('<svg', '<svg width="20" height="20"') + '</div>' : '') +
+      '<div class="dock">個人練を録音</div>';
+    scr.querySelectorAll('[data-i]').forEach((b) => (b.onclick = () => { const i = +b.dataset.i; cur = cur === i ? -1 : i; draw(); }));
+  };
+  draw(); phones.appendChild(fr);
+});
+</script>
