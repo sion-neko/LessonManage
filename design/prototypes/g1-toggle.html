@@ -377,7 +377,6 @@ button:active { opacity: .55; }
 .pv-c.cg { font-size: 12px; color: var(--muted); font-weight: 700; padding-bottom: 0; }
 .pv-sub { font-size: 14px; color: rgba(255,255,255,.7); }
 .pv-sub .nt { color: inherit; }
-.pv-note { padding: 16px; font-size: 15px; line-height: 1.6; }
 .pv-empty { color: var(--muted); font-size: 13px; padding: 8px 16px; }
 .pv-ipt { border-top: 1px solid var(--line); padding: 8px 10px 30px; display: flex; gap: 8px; align-items: center; }
 .pv-ipt input { flex: 1; min-width: 0; height: 38px; border-radius: 19px; border: 0; background: var(--bg); padding: 0 14px; font-size: 15px; outline: none; }
@@ -926,9 +925,12 @@ function recScreen(l, nav) {
 
 // レッスン録音を、書いた位置から再生（再生バーで流す）
 const playAt = (l, at) => { const lr = D.lessonRec(l.id); if (lr) Play.load(lr, at, true); };
-// 詳しい再生画面：再生バーと同じ再生を操作する。レッスンの録音なら、しおりとトピックの区切りも出す
+// 詳しい再生画面：再生バーと同じ再生を操作する。どの録音でもしおりを付けられる
+// 違うのはチャプター（トピックの区切り）だけで、レッスンの録音にだけある
+// しおりの置き場所：レッスンの録音＝学んだことの行（時間付き）、個人練・曲の録音＝録音そのもの（rec.marks）
 function openDetail(rec) {
   const l = rec.kind === 'lesson' ? D.lesson(rec.lessonId) : null;
+  const marks = l ? l.notes : (rec.marks = rec.marks || []);
   if (Play.id !== rec.id) Play.load(rec, 0, false);
   const dur = rec.dur;
   const hs = barsOf(rec.id, 56);
@@ -937,11 +939,10 @@ function openDetail(rec) {
     '<div class="pv-wv">' + hs.map((v) => '<i style="height:' + v + '%"></i>').join('') + '<span class="pv-flags"></span><b class="pv-head"></b></div>' +
     (l ? '<div class="pv-cuts"></div>' : '<div style="height:12px"></div>') + '<div class="pv-ends"><span>0:00</span><span>' + D.dur(dur) + '</span></div>' +
     '<div class="pv-ctl"><button data-sk="-15" aria-label="15秒戻る">' + icSkip(false) + '</button><button class="pv-pp" aria-label="再生と一時停止"></button><button data-sk="15" aria-label="15秒進む">' + icSkip(true) + '</button></div></div>' +
-    (l ? '<div class="pv-cmh">ここまでのしおり</div><div class="pv-cm"></div><div class="pv-ipt"><input id="pv-in" autocomplete="off" enterkeyhint="done"><button class="pv-add">追加</button></div>'
-      : '<div class="pv-cm"></div>') + '</div>');
+    '<div class="pv-cmh">ここまでのしおり</div><div class="pv-cm"></div><div class="pv-ipt"><input id="pv-in" autocomplete="off" enterkeyhint="done"><button class="pv-add">追加</button></div></div>');
   const $ = (s) => o.querySelector(s);
   const bars = [...o.querySelectorAll('.pv-wv i')];
-  if (!l) { $('.pv-sub').innerHTML = recSub(rec, 0); $('.pv-cm').innerHTML = rec.note ? '<div class="pv-note">' + esc(rec.note) + '</div>' : ''; }
+  if (!l) $('.pv-sub').innerHTML = recSub(rec, 0);
   let lastList = '';
   let closed = false;
   const draw = () => {
@@ -951,13 +952,12 @@ function openDetail(rec) {
     $('.pv-head').style.left = pct + '%';
     bars.forEach((b, i) => b.classList.toggle('p', (i + .5) / bars.length * 100 < pct));
     $('.pv-pp').innerHTML = Play.playing ? '<i></i><i></i>' : I.play;
-    if (!l) return;
-    $('.pv-chip span').innerHTML = tkLabel(l, chapterAt(l, p));
-    $('.pv-flags').innerHTML = l.notes.filter((n) => n.at != null).map((n) => '<b style="left:' + (n.at / dur * 100) + '%"></b>').join('');
-    $('.pv-cuts').innerHTML = chapSegments(l, dur).map((s) => '<span class="' + (p >= s.a && p < s.b ? 'on' : '') + '" style="left:calc(' + (s.a / dur * 100) + '% + 1px);width:calc(' + ((s.b - s.a) / dur * 100) + '% - 2px)"></span>' + ((s.b - s.a) / dur >= .14 ? '<small style="left:' + (s.a / dur * 100) + '%;max-width:calc(' + ((s.b - s.a) / dur * 100) + '% - 6px)">' + tkLabel(l, s.tk) + '</small>' : '')).join('');
-    const ns = l.notes.filter((n) => n.at != null && n.at <= p).sort((a, b) => a.at - b.at);
+    $('.pv-flags').innerHTML = marks.filter((n) => n.at != null).map((n) => '<b style="left:' + (n.at / dur * 100) + '%"></b>').join('');
+    if (l) $('.pv-chip span').innerHTML = tkLabel(l, chapterAt(l, p));
+    if (l) $('.pv-cuts').innerHTML = chapSegments(l, dur).map((s) => '<span class="' + (p >= s.a && p < s.b ? 'on' : '') + '" style="left:calc(' + (s.a / dur * 100) + '% + 1px);width:calc(' + ((s.b - s.a) / dur * 100) + '% - 2px)"></span>' + ((s.b - s.a) / dur >= .14 ? '<small style="left:' + (s.a / dur * 100) + '%;max-width:calc(' + ((s.b - s.a) / dur * 100) + '% - 6px)">' + tkLabel(l, s.tk) + '</small>' : '')).join('');
+    const ns = marks.filter((n) => n.at != null && n.at <= p).sort((a, b) => a.at - b.at);
     let last;
-    const html = ns.map((n, i) => { const k = n.tk || null; const hd = k !== last ? '<div class="pv-c cg">' + tkLabel(l, k) + '</div>' : ''; last = k; return hd + '<div class="pv-c' + (i === ns.length - 1 ? ' cur' : n.at < p - 600 ? ' old' : '') + '"><span class="tm">' + D.dur(n.at) + '</span><span class="tx">' + esc(n.text) + '</span></div>'; }).join('') || '<div class="pv-empty">ここまでのしおりはまだありません</div>';
+    const html = ns.map((n, i) => { const k = n.tk || null; const hd = l && k !== last ? '<div class="pv-c cg">' + tkLabel(l, k) + '</div>' : ''; last = k; return hd + '<div class="pv-c' + (i === ns.length - 1 ? ' cur' : n.at < p - 600 ? ' old' : '') + '"><span class="tm">' + D.dur(n.at) + '</span><span class="tx">' + esc(n.text) + '</span></div>'; }).join('') || '<div class="pv-empty">ここまでのしおりはまだありません</div>';
     if (html !== lastList) { lastList = html; const cm = $('.pv-cm'); cm.innerHTML = html; cm.scrollTop = cm.scrollHeight; }
     $('#pv-in').placeholder = D.dur(p) + ' にしおり（名前はなくてもいい）';
   };
@@ -971,16 +971,16 @@ function openDetail(rec) {
   const seek = (e) => { const r = wv.getBoundingClientRect(); Play.seek((e.clientX - r.left) / r.width * dur); };
   wv.onpointerdown = (e) => { wv.setPointerCapture(e.pointerId); seek(e); wv.onpointermove = seek; };
   wv.onpointerup = wv.onpointercancel = () => { wv.onpointermove = null; };
-  // しおりを足す（名前を書かなければ「しおり 1」…）。トピックは今の区間のもの
-  if (l) {
-    const add = () => {
-      const inp = $('#pv-in'); const v = inp.value.trim(); const p = Math.floor(Play.pos); const tk = chapterAt(l, p); const tp = topicOf(l, tk);
-      l.bmSeq = (l.bmSeq || 0) + 1;
-      l.notes.push({ text: v || 'しおり ' + l.bmSeq, by: 't', tk, songId: tp ? tp.songId : null, at: p, bm: !v });
-      sync(l); inp.value = ''; inp.blur(); draw();
-    };
-    $('.pv-add').onclick = add; $('#pv-in').onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) add(); };
-  }
+  // しおりを足す（名前を書かなければ「しおり 1」…）。レッスンの録音なら、トピックは今の区間のもの
+  const add = () => {
+    const inp = $('#pv-in'); const v = inp.value.trim(); const p = Math.floor(Play.pos);
+    const owner = l || rec; owner.bmSeq = (owner.bmSeq || 0) + 1;
+    const mk = { text: v || 'しおり ' + owner.bmSeq, at: p, bm: !v };
+    if (l) { const tk = chapterAt(l, p); const tp = topicOf(l, tk); Object.assign(mk, { by: 't', tk, songId: tp ? tp.songId : null }); }
+    marks.push(mk); if (l) sync(l);
+    inp.value = ''; inp.blur(); lastList = ''; draw();
+  };
+  $('.pv-add').onclick = add; $('#pv-in').onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) add(); };
   // 暗いメニュー（チャプターと「•••」で共通）
   const menu = (anchor, alignRight, build) => {
     const dim = h('<div class="pv-dim"><div class="pv-menu"></div></div>'); const m = dim.querySelector('.pv-menu');
@@ -1017,7 +1017,7 @@ function openDetail(rec) {
   // 録音の削除：元に戻せないので確かめる。レッスンの録音なら、書いた行は残し、名前のないしおりは消す
   const confirmDel = () => {
     const bmN = l ? l.notes.filter((n) => n.bm).length : 0;
-    const dim = h('<div class="pv-dim" style="background:rgba(0,0,0,.45)"><div class="pv-dlg"><b>この録音を削除</b><p>' + D.dur(dur) + ' の録音が消えます。元に戻せません。' + (l ? '<br>書いた行は残ります（録音の時間は外れます）。' + (bmN ? '名前のないしおり' + bmN + '件は消えます。' : '') : '') + '</p><button class="del" data-act="yes">削除</button><button data-act="no">やめる</button></div></div>');
+    const dim = h('<div class="pv-dim" style="background:rgba(0,0,0,.45)"><div class="pv-dlg"><b>この録音を削除</b><p>' + D.dur(dur) + ' の録音が消えます。元に戻せません。' + (l ? '<br>書いた行は残ります（録音の時間は外れます）。' + (bmN ? '名前のないしおり' + bmN + '件は消えます。' : '') : (marks.length ? '<br>しおり' + marks.length + '件も消えます。' : '')) + '</p><button class="del" data-act="yes">削除</button><button data-act="no">やめる</button></div></div>');
     o.appendChild(dim);
     dim.querySelector('[data-act=no]').onclick = () => dim.remove();
     dim.querySelector('[data-act=yes]').onclick = () => {
