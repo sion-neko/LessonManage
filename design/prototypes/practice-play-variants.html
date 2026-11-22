@@ -65,6 +65,14 @@ svg { display: block; }
 .vc .pr.on .pb svg { margin-left: 0; }
 .vc .pr.on .pb { background: var(--accent); color: #fff; }
 .vc .tm { flex: none; padding-right: 6px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* D：音楽アプリの曲一覧の型（Apple Music・Spotify）。ボタンなしで行を押すと流れ、流れている行は左の日付が音の印に、名前が金色に */
+.vd .pr { background: none; border-radius: 0; padding: 9px 6px; border-bottom: .5px solid var(--line); }
+.vd .prs { gap: 0; }
+.vd .d { display: flex; align-items: center; }
+.vd .pr.on .n { color: var(--accent-d); font-weight: 600; }
+.vd .tm { flex: none; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.vd .eq { height: 13px; } .vd .eq i { width: 3px; }
 </style>
 <div class="wrap">
   <h1>個人練の再生ボタン</h1>
@@ -84,13 +92,15 @@ const variants = [
   ['now', '今', '金色の丸と時間を白い札に入れている。'],
   ['va', 'A：ボタンなし', '行のどこを押しても流れる。右は灰色の時間だけで、流れている行は金色の音の印に変わる。いちばん静か。'],
   ['vb', 'B：▶だけ', '枠のない金色の▶を右に。時間はその下に小さく。押せる場所は分かりやすいまま、札をなくした形。'],
-  ['vc', 'C：左に丸い▶', 'ボイスメモのように、左に白い丸の▶。日付は名前の下へ回し、時間は右に灰色で。'],
+  ['vc', 'C：左に丸い▶', '左に白い丸の▶。日付は名前の下へ回し、時間は右に灰色で。'],
+  ['vd', 'D：音楽アプリの型', 'Apple Music・Spotifyの曲一覧と同じ。ボタンなしで行を押すと流れ、流れている行は左の日付が音の印に、名前が金色に変わる。灰色の札もやめて線で区切る。'],
 ];
 const row = (k, r, on) => {
   const name = '<span class="n">' + r.n + '<small>' + (k === 'vc' ? r.d + ' · ' : '') + r.s + '</small></span>';
   const d = k === 'vc' ? '' : '<span class="d">' + r.d + '</span>';
   if (k === 'now') return d + name + '<span class="pb"><i>' + (on ? pause.replace('<svg', '<svg width="11" height="11"') : playS) + '</i>' + r.t + '</span>';
   if (k === 'va') return d + name + '<span class="tm">' + (on ? '<span class="eq"><i></i><i></i><i></i></span>再生中' : r.t) + '</span>';
+  if (k === 'vd') return '<span class="d">' + (on ? '<span class="eq"><i></i><i></i><i></i></span>' : r.d) + '</span>' + name + '<span class="tm">' + r.t + '</span>';
   if (k === 'vb') return d + name + '<span class="pb">' + (on ? pause : play) + '<span>' + r.t + '</span></span>';
   return '<span class="pb">' + (on ? pause : play) + '</span>' + name + '<span class="tm">' + r.t + '</span>';
 };
