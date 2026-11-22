@@ -282,14 +282,6 @@ button:active { opacity: .55; }
 .ls-gap { display: block; width: 100%; min-height: 30px; text-align: left; padding: 4px 20px; }
 .ls-gap span { color: #c4c4c7; font-size: 14px; }
 .ls-gap:active { opacity: 1; background: #fffbea; }
-.ls-prs { padding: 6px 14px 0; display: flex; flex-direction: column; gap: 6px; }
-.ls-pr { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 12px; border-radius: 12px; background: var(--bg); }
-.ls-pr .d { flex: none; width: 38px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.ls-pr .n { flex: 1; min-width: 0; font-size: 14px; line-height: 1.45; }
-.ls-pr .n small { display: block; font-size: 12px; color: var(--muted); }
-.ls-pr .pb { background: var(--card); }
-.ls-prrec { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 11px; border-radius: 12px; border: 1.5px dashed var(--line); color: var(--accent-d); font-weight: 700; font-size: 15px; }
-.ls-prrec svg { width: 18px; height: 18px; }
 .ls-dock { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 16px 30px; background: linear-gradient(to top, var(--card) 72%, rgba(255,255,255,0)); z-index: 10; }
 .ls-pl { margin: 14px 20px 0; display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 8px; border-radius: 18px; background: #f7f6f3; border: 1px solid var(--line); cursor: pointer; }
 .ls-pl .ppl { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; flex: none; }
@@ -470,7 +462,7 @@ const notesOfSong = (sid) => D.S.lessons.flatMap((l) => l.notes.filter((n) => n.
 const HV = new URLSearchParams(location.search).get('v'); if (HV) document.body.classList.add('hv-' + HV);
 if (location.hash === '#empty') ['types', 'songs', 'lessons', 'recs', 'memos'].forEach((k) => D.S[k].splice(0));
 
-let cur = D.S.types[0] ? D.S.types[0].id : null; let tab = 'home'; let recTarget = null; let songView = 'sum';
+let cur = D.S.types[0] ? D.S.types[0].id : null; let tab = 'home'; let recTarget = null;
 
 // ── 共通部品 ──
 let homeRec = true; // 設定：ホームに録音ボタンを出す（人によって要る・要らないが分かれるので切り替えられるようにする）
@@ -1213,7 +1205,7 @@ const screens = {
     // ハッシュタグの下で「まとめ」と「個人練」を切り替える
     const prs = D.practiceOf(l.id);
     const sw = h('<div class="seg-wrap"></div>');
-    sw.appendChild(segment([['sum', 'まとめ'], ['pr', '個人練' + (prs.length ? ' ' + prs.length : '')]], tabK, (k) => { a.tab = k; nav.refresh(); fadeIn(); }, 'sm'));
+    sw.appendChild(segment([['sum', 'まとめ'], ['pr', '個人練']], tabK, (k) => { a.tab = k; nav.refresh(); fadeIn(); }, 'sm'));
     sc.appendChild(sw);
     if (tabK === 'pr') {
       // 個人練：録音の一覧だけ。録るのは画面の下のボタン
@@ -1247,24 +1239,37 @@ const screens = {
   },
   song(el, a, nav) {
     const s = D.song(a.id); const tname = teacherOf(s.typeId);
-    el.classList.toggle('ls', songView === 'sum'); app.dataset.pb = songView === 'sum' ? '' : 'chat';
+    const songView = a.view || 'sum';
+    el.classList.toggle('ls', songView !== 'chat'); app.dataset.pb = songView === 'sum' ? '' : songView === 'rec' ? 'dock' : 'chat';
     const nb = h('<div class="nav"><button class="bk">' + I.back + '戻る</button><span></span></div>'); nb.querySelector('.bk').onclick = () => nav.back(); el.appendChild(nb);
     const top = h('<div><div class="ttl"><b>' + esc(s.title) + '</b><span>' + esc(s.sub) + '</span></div><div class="seg-wrap"></div></div>');
-    top.lastChild.appendChild(segment([['sum', 'まとめ'], ['chat', 'チャット']], songView, (k) => { songView = k; nav.refresh(); fadeIn(); }, 'sm'));
+    top.lastChild.appendChild(segment([['sum', 'まとめ'], ['rec', '録音'], ['chat', 'チャット']], songView, (k) => { a.view = k; nav.refresh(); fadeIn(); }, 'sm'));
     el.appendChild(top);
     const sc = h('<div class="scroll"></div>'); el.appendChild(sc);
     // 時間を押すと、そのレッスンの録音を画面の下の再生バーで流す
     const atBtn = (n, chat) => (n.at != null && D.lessonRec(n.lesson.id) ? '<button class="' + (chat ? 'at' : 'ls-at') + '" data-l="' + n.lesson.id + '" data-at="' + n.at + '">' + (chat ? playSm : '') + D.dur(n.at) + '</button>' : '');
     const bindAt = (root) => root.querySelectorAll('[data-at]').forEach((b) => (b.onclick = (e) => { e.stopPropagation(); playAt(D.lesson(b.dataset.l), +b.dataset.at); }));
+    if (songView === 'rec') {
+      // 録音：全部を新しい順に。録るのは画面の下のボタン（レッスン画面の個人練タブと同じ形）
+      const recs = D.recsOfSong(s.id);
+      const rl = h('<div class="recl ls-prtab"></div>');
+      recs.forEach((r) => rl.appendChild(recRow(r, r.kind === 'practice' ? D.md(D.lesson(r.lessonId).date) + 'のレッスン後の個人練' : '曲の録音')));
+      if (!recs.length) rl.appendChild(h('<div class="ls-none">まだありません</div>'));
+      sc.appendChild(rl); sc.appendChild(h('<div style="height:120px"></div>'));
+      const d = h('<div class="ls-dock"><button class="go">' + I.mic + 'この曲を録音</button></div>');
+      d.querySelector('.go').onclick = () => { if (Rec.on) { toast(app, 'ほかの録音を止めてから'); return; } recordSong(s, nav); };
+      el.appendChild(d);
+      return;
+    }
     if (songView === 'sum') {
-      // 並び：レッスンで学んだこと → 自分のメモ → 録音 → 扱ったレッスン（見た目はレッスン画面に合わせる）
+      // 並び：レッスンで学んだこと → 自分のメモ → 扱ったレッスン（見た目はレッスン画面に合わせる）
       const LIM = 3;
       const fold = (key, items, render, cls) => { // 3つまで見せて、残りは「…もっと見る」
         const k = s.id + ':' + key; const open = songOpen.has(k);
         const box = h('<div class="' + (cls || '') + '"></div>');
         (open ? items : items.slice(0, LIM)).forEach((x) => box.appendChild(render(x)));
         if (items.length > LIM) {
-          const b = h('<button class="ls-fold">' + (open ? '閉じる' : '…もっと見る（ほか' + (items.length - LIM) + (key === 'r' ? '件' : '日') + '）') + '</button>');
+          const b = h('<button class="ls-fold">' + (open ? '閉じる' : '…もっと見る（ほか' + (items.length - LIM) + '日' + '）') + '</button>');
           b.onclick = () => { if (open) songOpen.delete(k); else songOpen.add(k); nav.refresh(); };
           box.appendChild(b);
         }
@@ -1313,11 +1318,6 @@ const screens = {
         return box;
       };
       sc.appendChild(fold('m', mg, memoGroup));
-      // 録音：レッスン画面の個人練と同じ形
-      sc.appendChild(h('<div class="ls-h">録音</div>'));
-      const recs = D.recsOfSong(s.id);
-      sc.appendChild(fold('r', recs, (r) => recRow(r, r.kind === 'practice' ? D.md(D.lesson(r.lessonId).date) + 'のレッスン後の個人練' : '曲の録音'), 'recl'));
-      const ar = h('<div class="ls-prs"><button class="ls-prrec">' + I.mic + 'この曲を録音</button></div>'); ar.firstChild.onclick = () => recordSong(s, nav); sc.appendChild(ar);
       // 扱ったレッスン：この曲をトピックにしたレッスン（何も書いていない日も出る）
       sc.appendChild(h('<div class="ls-h">扱ったレッスン</div>'));
       const lks = h('<div class="ls-lks"></div>');
