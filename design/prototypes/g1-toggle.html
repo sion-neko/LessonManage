@@ -140,7 +140,7 @@ button:active { opacity: .55; }
 .lb .bb .at svg { width: 10px; height: 10px; }
 .rb { align-self: flex-end; max-width: 80%; background: var(--me-bg); padding: 9px 13px; border-radius: 18px 18px 6px 18px; font-size: 15px; line-height: 1.45; }
 .rb small { display: block; font-size: 11px; color: #8a6500; margin-bottom: 1px; }
-.rrec { align-self: flex-end; max-width: 82%; background: var(--card); padding: 8px 12px 8px 8px; border-radius: 18px 18px 6px 18px; display: flex; flex-direction: column; gap: 4px; }
+.rrec { cursor: pointer; align-self: flex-end; max-width: 82%; background: var(--card); padding: 8px 12px 8px 8px; border-radius: 18px 18px 6px 18px; display: flex; flex-direction: column; gap: 4px; }
 .rrec .rl { font-size: 11px; color: var(--muted); padding-left: 4px; }
 .rrec .rt { font-size: 14px; padding-left: 4px; }
 .rrec .rr { display: flex; align-items: center; gap: 8px; }
@@ -295,14 +295,18 @@ button:active { opacity: .55; }
 .ls-recbar .sq i { width: 12px; height: 12px; border-radius: 3px; background: #fff; }
 /* 曲ページ（レッスン画面に合わせる）：日付の見出し・たたみ・扱ったレッスン */
 .seg-wrap { padding: 14px 20px 0; }
-.ls-prtab { padding-top: 8px; }
-.memr { display: flex; align-items: center; gap: 10px; padding: 9px 8px 9px 20px; border-bottom: .5px solid var(--line); }
-.memr .d { flex: none; width: 38px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.memr .n { flex: 1; min-width: 0; font-size: 15px; line-height: 1.45; padding-right: 40px; }
-.memr .n small { display: block; font-size: 12px; color: var(--muted); }
-.ls-tl { display: flex; align-items: center; gap: 8px; width: calc(100% - 40px); margin: 26px 20px 0; padding: 12px 14px; border-radius: 12px; background: #f7f6f3; border: 1px solid var(--line); color: var(--accent-d); font-size: 15px; font-weight: 600; text-align: left; }
-.ls-tl svg:first-child { width: 18px; height: 18px; }
-.ls-tl svg:last-child { margin-left: auto; color: #c4c4c7; }
+/* 録音の行：タイムラインの吹き出しと同じ形を、幅いっぱいのカードで */
+.rcl { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px 0; }
+.rcard { background: var(--bg); padding: 9px 12px 9px 9px; border-radius: 16px; display: flex; flex-direction: column; gap: 4px; cursor: pointer; }
+.rcard.memo { cursor: default; padding: 10px 12px; }
+.rcard .rl { font-size: 11px; color: var(--muted); padding-left: 4px; }
+.rcard.memo .rl { padding-left: 0; }
+.rcard .rl .nt { color: inherit; margin-right: 2px; }
+.rcard .rt { font-size: 15px; line-height: 1.45; padding-left: 4px; }
+.rcard.memo .rt { padding-left: 0; }
+.rcard .rr { display: flex; align-items: center; gap: 10px; }
+.rcard .pb { background: var(--card); flex: none; }
+.rcard .wave { flex: 1; min-width: 0; overflow: hidden; color: var(--accent); }
 /* タイムライン：上に曲と期間の絞り込み */
 .tl-f { display: flex; gap: 8px; padding: 6px 16px 8px; }
 .tl-c { display: inline-flex; align-items: center; gap: 4px; max-width: 60%; padding: 6px 10px 6px 12px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -317,22 +321,6 @@ button:active { opacity: .55; }
 .lb .nm .nt { margin: 0 2px 0 0; }
 .rb small .nt, .rrec .rl .nt { color: inherit; margin-right: 2px; }
 #app[data-pb=tlchat] .mini { bottom: 160px; }
-/* 録音の行：線で区切る。流れている行は左の日付が音の印に、名前が金色に。流すのは右の▶だけ */
-.recl { display: flex; flex-direction: column; }
-.recr { display: flex; align-items: center; gap: 10px; padding: 9px 8px 9px 20px; border-bottom: .5px solid var(--line); cursor: pointer; }
-.recr:last-of-type { border-bottom: 0; }
-.recr .d { flex: none; width: 38px; display: flex; align-items: center; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.recr .n { flex: 1; min-width: 0; font-size: 15px; line-height: 1.45; }
-.recr .n small { display: block; font-size: 12px; color: var(--muted); font-weight: 400; }
-.recr.on .n { color: var(--accent-d); font-weight: 600; }
-.recr .tm { flex: none; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.recr .pb { flex: none; width: 40px; height: 40px; margin-left: -4px; display: grid; place-items: center; color: var(--accent); }
-.recr .pb svg { width: 24px; height: 24px; }
-.eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 13px; }
-.eq i { width: 3px; background: var(--accent); border-radius: 1px; animation: eq .9s ease-in-out infinite; }
-.eq i:nth-child(2) { animation-delay: -.3s; } .eq i:nth-child(3) { animation-delay: -.6s; }
-.pz .eq i { animation-play-state: paused; }
-@keyframes eq { 0%, 100% { height: 3px } 50% { height: 13px } }
 .ls-list.ro .tx { cursor: default; }
 .ls-row button.ls-at { padding: 0; }
 .ls-fold { display: block; padding: 6px 20px 0; font-size: 12px; line-height: 20px; color: var(--muted); }
@@ -1080,20 +1068,13 @@ const recSub = (r, p) => {
 const icSkipF = '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(32,0) scale(-1,1)"><path d="M9 9.5A10 10 0 1 1 6 16"/><path d="M9 4v5.5h-5.5"/></g><text x="16" y="20" font-size="9" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">15</text></svg>';
 const icPlayL = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>';
 const icPauseL = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6.5" y="5" width="3.6" height="14" rx="1"/><rect x="13.9" y="5" width="3.6" height="14" rx="1"/></svg>';
-const eqIc = '<span class="eq"><i></i><i></i><i></i></span>';
-function recRow(r, sub) {
-  const row = h('<div class="recr"><span class="d"></span><span class="n">' + (esc(r.note) || '（一言なし）') + '<small>' + sub + '</small></span><span class="tm">' + D.dur(r.dur) + '</span><button class="pb" aria-label="再生と一時停止"></button></div>');
-  const draw = () => {
-    const on = Play.id === r.id && Play.started;
-    row.classList.toggle('on', on); row.classList.toggle('pz', on && !Play.playing);
-    row.querySelector('.d').innerHTML = on ? eqIc : D.md(r.date);
-    row.querySelector('.pb').innerHTML = on && Play.playing ? icPauseL : icPlayL;
-  };
-  row.querySelector('.pb').onclick = (e) => { e.stopPropagation(); Play.toggle(r); };
-  row.onclick = () => openDetail(r);
-  const un = Play.sub(() => { if (!row.isConnected) { un(); return; } draw(); });
-  draw(); return row;
+function recCard(r, label) {
+  const c = h('<div class="rcard"><span class="rl">' + label + '</span>' + (r.note ? '<span class="rt">' + esc(r.note) + '</span>' : '') + '<div class="rr"></div></div>');
+  c.querySelector('.rr').appendChild(LM.playBtn(r)); c.querySelector('.rr').insertAdjacentHTML('beforeend', LM.wave(r.id, 30));
+  c.onclick = () => openDetail(r);
+  return c;
 }
+const memoCard = (m, label) => h('<div class="rcard memo"><span class="rl">' + label + '</span><span class="rt">' + esc(m.text) + '</span></div>');
 // 再生バー：アプリに1本だけ。画面を移っても流れ続ける（ポッドキャストのミニプレーヤーと同じ）
 function miniBar() {
   const el = h('<div class="mini" hidden><div class="mt"><b></b><span></span></div><button class="mb" data-act="pp" aria-label="再生と一時停止"></button><button class="mb" data-act="sk" aria-label="15秒進む">' + icSkipF + '</button><div class="mp"><i></i></div></div>');
@@ -1231,9 +1212,9 @@ const screens = {
     sc.appendChild(sw);
     if (tabK === 'pr') {
       // 個人練：録音の一覧だけ。録るのは画面の下のボタン
-      const pg = h('<div class="recl ls-prtab"></div>');
+      const pg = h('<div class="rcl"></div>');
       const after = [...prs.map((r) => ({ date: r.date, o: 0, r })), ...D.S.memos.filter((m) => m.lessonId === l.id).map((m) => ({ date: m.date, o: 1, m }))].sort((x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : x.o - y.o));
-      after.forEach((x) => pg.appendChild(x.r ? recRow(x.r, x.r.songId ? noteIc + esc(D.song(x.r.songId).title) : '曲なし') : h('<div class="memr"><span class="d">' + D.md(x.m.date) + '</span><span class="n">' + esc(x.m.text) + '<small>メモ</small></span></div>')));
+      after.forEach((x) => pg.appendChild(x.r ? recCard(x.r, D.md(x.r.date) + ' · ' + (x.r.songId ? noteIc + esc(D.song(x.r.songId).title) : '曲なし')) : memoCard(x.m, D.md(x.m.date) + ' · メモ')));
       if (!after.length) pg.appendChild(h('<div class="ls-none" style="padding:8px 6px">まだありません</div>'));
       sc.appendChild(pg); sc.appendChild(h('<div style="height:120px"></div>'));
       const d = h('<div class="ls-dock"><button class="go">' + I.mic + '個人練を録音</button></div>');
@@ -1275,8 +1256,8 @@ const screens = {
     if (songView === 'rec') {
       // 録音：全部を新しい順に。録るのは画面の下のボタン（レッスン画面の個人練タブと同じ形）
       const recs = D.recsOfSong(s.id);
-      const rl = h('<div class="recl ls-prtab"></div>');
-      recs.forEach((r) => rl.appendChild(recRow(r, r.kind === 'practice' ? D.md(D.lesson(r.lessonId).date) + 'のレッスン後の個人練' : '曲の録音')));
+      const rl = h('<div class="rcl"></div>');
+      recs.forEach((r) => rl.appendChild(recCard(r, D.md(r.date) + ' · ' + (r.kind === 'practice' ? D.md(D.lesson(r.lessonId).date) + 'のレッスン後の個人練' : '曲の録音'))));
       if (!recs.length) rl.appendChild(h('<div class="ls-none">まだありません</div>'));
       sc.appendChild(rl); sc.appendChild(h('<div style="height:120px"></div>'));
       const d = h('<div class="ls-dock"><button class="go">' + I.mic + 'この曲を録音</button></div>');
@@ -1346,11 +1327,7 @@ const screens = {
       const lks = h('<div class="ls-lks"></div>');
       D.lessonsOfSong(s.id).forEach((l) => { const b = h('<button class="ls-lk"><span>' + D.fmtDate(l.date, true) + '</span>' + I.chev + '</button>'); b.onclick = () => nav.push('lesson', { id: l.id }); lks.appendChild(b); });
       if (!lks.children.length) lks.appendChild(h('<div class="ls-none">まだありません</div>'));
-      sc.appendChild(lks);
-      // この曲だけに絞ったタイムラインへ
-      const go = h('<button class="ls-tl">' + icTl + 'この曲のタイムライン' + I.chev + '</button>');
-      go.onclick = () => { tlSong = s.id; tlPeriod = 'all'; tab = 'tl'; nav.root('tl'); };
-      sc.appendChild(go); sc.appendChild(h('<div style="height:120px"></div>'));
+      sc.appendChild(lks); sc.appendChild(h('<div style="height:120px"></div>'));
       return;
     }
   },
@@ -1406,7 +1383,7 @@ const screens = {
       if (it.t === 'rec') {
         const r = it.r; const w = where(r);
         const b = h('<div class="rrec"><span class="rl">' + (r.kind === 'practice' ? D.md(D.lesson(r.lessonId).date) + 'のレッスン後の個人練' : '曲の録音') + (w && r.kind !== 'practice' ? ' · ' + w : r.songId && !song ? ' · ' + noteIc + esc(D.song(r.songId).title) : '') + '</span>' + (r.note ? '<span class="rt">' + esc(r.note) + '</span>' : '') + '<div class="rr"></div></div>');
-        b.querySelector('.rr').appendChild(LM.playBtn(r)); b.querySelector('.rr').insertAdjacentHTML('beforeend', LM.wave(r.id, 16)); log.appendChild(b);
+        b.querySelector('.rr').appendChild(LM.playBtn(r)); b.querySelector('.rr').insertAdjacentHTML('beforeend', LM.wave(r.id, 16)); b.onclick = () => openDetail(r); log.appendChild(b);
       }
     });
     log.querySelectorAll('[data-at]').forEach((b) => (b.onclick = (e) => { e.stopPropagation(); playAt(D.lesson(b.dataset.l), +b.dataset.at); }));
