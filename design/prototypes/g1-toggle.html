@@ -303,6 +303,7 @@ button:active { opacity: .55; }
 .ls-recbar .sq i { width: 12px; height: 12px; border-radius: 3px; background: #fff; }
 /* 曲ページ（レッスン画面に合わせる）：日付の見出し・たたみ・扱ったレッスン */
 .seg-wrap { padding: 14px 20px 0; }
+.ls-prtab { padding-top: 14px; }
 .ls-list.ro .tx { cursor: default; }
 .ls-row button.ls-at { padding: 0; }
 .ls-fold { display: block; padding: 6px 20px 0; font-size: 12px; line-height: 20px; color: var(--muted); }
@@ -775,7 +776,7 @@ function typeEdit(nav, t) {
 }
 
 // ── レッスン画面（2026-11-20 作り直し） ──
-// 並び：日付 → このレッスンのトピック → やること → 学んだこと（トピックごと）→ 個人練。録音は画面の下
+// 並び：日付 → このレッスンのトピック → 「まとめ／個人練」の切り替え。まとめ＝やること → 学んだこと（トピックごと）。録音は画面の下
 // 書くのは、やること・各トピックのいちばん下の余白をタップ。Enterで同じ場所に続けて書ける
 const icDown = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
 const icChev = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5 5 5-5"/></svg>';
@@ -1145,7 +1146,8 @@ const screens = {
   },
   lesson(el, a, nav) {
     const l = D.lesson(a.id); const t = D.type(l.typeId); cur = l.typeId;
-    el.classList.add('ls'); app.dataset.pb = D.lessonRec(l.id) || (Rec.on && recTarget === l.id) ? '' : 'dock';
+    const tabK = a.tab || 'sum';
+    el.classList.add('ls'); app.dataset.pb = tabK === 'sum' && (D.lessonRec(l.id) || (Rec.on && recTarget === l.id)) ? '' : 'dock';
     const nb = h('<div class="nav"><button class="bk">' + I.back + '戻る</button><span></span></div>'); nb.querySelector('.bk').onclick = () => nav.back(); el.appendChild(nb);
     const sc = h('<div class="scroll"></div>'); el.appendChild(sc);
     sc.appendChild(h('<div class="ttl"><b>' + D.fmtDate(l.date, true) + '</b></div>'));
@@ -1153,7 +1155,8 @@ const screens = {
     const tpOpen = tpOpenIds.has(l.id);
     const tps = h('<div class="ls-tps' + (tpOpen ? '' : ' shut') + '">' + l.topics.map((x) => '<button class="ls-tp" data-k="' + x.k + '">#' + esc(x.songId ? D.song(x.songId).title : x.title) + '</button>').join('') +
       '<button class="ls-tp add" data-act="tp">＋ ' + (l.topics.length ? '追加' : 'トピック') + '</button>' + (tpOpen ? '' : '<button class="ls-more" data-act="more" hidden>…もっと見る</button>') + '</div>');
-    tps.querySelectorAll('[data-k]').forEach((b) => (b.onclick = () => { const s = sc.querySelector('.ls-tk[data-k="' + b.dataset.k + '"]'); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'center' }); }));
+    const goTk = (k) => { const s = sc.querySelector('.ls-tk[data-k="' + k + '"]'); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+    tps.querySelectorAll('[data-k]').forEach((b) => (b.onclick = () => { if (tabK === 'sum') { goTk(b.dataset.k); return; } a.tab = 'sum'; nav.refresh(); requestAnimationFrame(() => { const s2 = el.querySelector('.ls-tk[data-k="' + b.dataset.k + '"]'); if (s2) s2.scrollIntoView({ behavior: 'smooth', block: 'center' }); }); }));
     tps.querySelector('[data-act=tp]').onclick = () => topicPicker(l, () => nav.refresh());
     sc.appendChild(tps);
     if (tpOpen) { const cl = h('<button class="ls-close">閉じる</button>'); cl.onclick = () => { tpOpenIds.delete(l.id); nav.refresh(); }; sc.appendChild(cl); }
@@ -1167,6 +1170,22 @@ const screens = {
         const tags = [...tps.querySelectorAll('[data-k]')];
         for (let i = tags.length - 1; i > 0 && over(); i--) tags[i].hidden = true;
       });
+    }
+    // ハッシュタグの下で「まとめ」と「個人練」を切り替える
+    const prs = D.practiceOf(l.id);
+    const sw = h('<div class="seg-wrap"></div>');
+    sw.appendChild(segment([['sum', 'まとめ'], ['pr', '個人練' + (prs.length ? ' ' + prs.length : '')]], tabK, (k) => { a.tab = k; nav.refresh(); fadeIn(); }, 'sm'));
+    sc.appendChild(sw);
+    if (tabK === 'pr') {
+      // 個人練：録音の一覧だけ。録るのは画面の下のボタン
+      const pg = h('<div class="ls-prs ls-prtab"></div>');
+      prs.forEach((r) => { const row = h('<div class="ls-pr"><span class="d">' + D.md(r.date) + '</span><span class="n">' + (esc(r.note) || '（一言なし）') + (r.songId ? '<small>' + noteIc + esc(D.song(r.songId).title) + '</small>' : '') + '</span></div>'); row.appendChild(LM.playBtn(r)); pg.appendChild(row); });
+      if (!prs.length) pg.appendChild(h('<div class="ls-none" style="padding:8px 6px">まだありません</div>'));
+      sc.appendChild(pg); sc.appendChild(h('<div style="height:120px"></div>'));
+      const d = h('<div class="ls-dock"><button class="go">' + I.mic + '個人練を録音</button></div>');
+      d.querySelector('.go').onclick = () => { if (Rec.on) { toast(app, 'ほかの録音を止めてから'); return; } recordPractice(l, nav); };
+      el.appendChild(d);
+      return;
     }
     sc.appendChild(h('<div class="ls-h">やること</div>'));
     sc.appendChild(lsList(l, 'hw', null, nav));
@@ -1183,12 +1202,7 @@ const screens = {
       }
       sc.appendChild(lsList(l, 'note', k, nav));
     });
-    // このレッスン後の個人練。録る入口は一覧の最後の1行
-    sc.appendChild(h('<div class="ls-h">このレッスン後の個人練</div>'));
-    const pg = h('<div class="ls-prs"></div>');
-    D.practiceOf(l.id).forEach((r) => { const row = h('<div class="ls-pr"><span class="d">' + D.md(r.date) + '</span><span class="n">' + (esc(r.note) || '（一言なし）') + (r.songId ? '<small>' + noteIc + esc(D.song(r.songId).title) + '</small>' : '') + '</span></div>'); row.appendChild(LM.playBtn(r)); pg.appendChild(row); });
-    const ap = h('<button class="ls-prrec">' + I.mic + '個人練を録音</button>'); ap.onclick = () => recordPractice(l, nav); pg.appendChild(ap);
-    sc.appendChild(pg); sc.appendChild(h('<div style="height:120px"></div>'));
+    sc.appendChild(h('<div style="height:120px"></div>'));
     el.appendChild(lessonDock(l, nav));
   },
   song(el, a, nav) {
