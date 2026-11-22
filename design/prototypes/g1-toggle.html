@@ -89,6 +89,8 @@ button:active { opacity: .55; }
 .mini .mt .nt { margin-right: 2px; }
 .mini .mb { flex: none; width: 40px; height: 40px; display: grid; place-items: center; color: var(--fg); }
 .mini .mb svg { width: 26px; height: 26px; }
+.mini .mb.x { width: 34px; color: var(--muted); }
+.mini .mb.x svg { width: 18px; height: 18px; }
 .mini .mp { position: absolute; left: 16px; right: 16px; bottom: 3px; height: 2px; border-radius: 1px; background: rgba(0,0,0,.08); overflow: hidden; }
 .mini .mp i { display: block; height: 100%; background: var(--accent); }
 /* 編集できる箇条書き */
@@ -1096,7 +1098,7 @@ function recRow(r, sub) {
 }
 // 再生バー：アプリに1本だけ。画面を移っても流れ続ける（ポッドキャストのミニプレーヤーと同じ）
 function miniBar() {
-  const el = h('<div class="mini" hidden><div class="mt"><b></b><span></span></div><button class="mb" data-act="pp" aria-label="再生と一時停止"></button><button class="mb" data-act="sk" aria-label="15秒進む">' + icSkipF + '</button><div class="mp"><i></i></div></div>');
+  const el = h('<div class="mini" hidden><div class="mt"><b></b><span></span></div><button class="mb" data-act="pp" aria-label="再生と一時停止"></button><button class="mb" data-act="sk" aria-label="15秒進む">' + icSkipF + '</button><button class="mb x" data-act="x" aria-label="閉じる">' + I.x + '</button><div class="mp"><i></i></div></div>');
   app.appendChild(el);
   let shownId = null;
   const draw = () => {
@@ -1112,7 +1114,9 @@ function miniBar() {
   };
   el.querySelector('[data-act=pp]').onclick = (e) => { e.stopPropagation(); if (Play.playing) Play.pause(); else Play.resume(); };
   el.querySelector('[data-act=sk]').onclick = (e) => { e.stopPropagation(); Play.seek(Play.pos + 15); };
-  // 押す＝詳しい再生画面、下にスワイプ＝閉じる（再生も止める）
+  // ×：下スワイプと同じく、閉じて再生も止める
+  el.querySelector('[data-act=x]').onclick = (e) => { e.stopPropagation(); el.classList.add('gone'); setTimeout(() => Play.stop(), 260); };
+  // 押す＝詳しい再生画面、下にスワイプか×＝閉じる（再生も止める）
   let y0 = null, dy = 0;
   el.onpointerdown = (e) => { if (e.target.closest('.mb')) return; y0 = e.clientY; dy = 0; el.setPointerCapture(e.pointerId); el.classList.add('drag'); };
   el.onpointermove = (e) => { if (y0 == null) return; dy = Math.max(0, e.clientY - y0); el.style.transform = 'translateY(' + dy + 'px)'; };
