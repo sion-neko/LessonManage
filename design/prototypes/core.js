@@ -117,14 +117,14 @@
       if (n === 0) return '今日'; if (n === 1) return '昨日'; if (n < 7) return n + '日前';
       if (n < 31) return Math.floor(n / 7) + '週間前'; return D.md(d);
     },
-    dur(sec) { const m = Math.floor(sec / 60), s = sec % 60; return m + ':' + String(s).padStart(2, '0'); },
+    dur(sec) { sec = Math.floor(sec); const m = Math.floor(sec / 60), s = sec % 60; return m + ':' + String(s).padStart(2, '0'); },
   };
 
   // 録音の疑似動作（実際には録音しない）。経過時間だけ進める
   const Rec = {
     on: false, sec: 0, timer: null, ctx: null, listeners: new Set(),
     start(ctx) {
-      if (Rec.on) return; Rec.on = true; Rec.sec = 0; Rec.ctx = ctx || {};
+      if (Rec.on) return; if (Play.playing) Play.pause(); Rec.on = true; Rec.sec = 0; Rec.ctx = ctx || {};
       Rec.timer = setInterval(() => { Rec.sec += 1; Rec.emit(); }, 1000 / (window.__recSpeed || 1));
       Rec.emit();
     },
@@ -136,16 +136,28 @@
     emit() { Rec.listeners.forEach((f) => f(Rec)); },
   };
 
-  // 疑似再生
+  // 疑似再生。id＝読み込んでいる録音（一時停止中も残る）、playing＝流れているか
   const Play = {
-    id: null, pos: 0, timer: null, listeners: new Set(),
+    id: null, rec: null, pos: 0, len: 0, playing: false, speed: 1, timer: null, listeners: new Set(),
+    // 録音を読み込む。at から、play=false なら一時停止のまま
+    load(rec, at, play) {
+      if (Play.id !== rec.id) { Play.stop(true); Play.id = rec.id; Play.rec = rec; Play.len = rec.dur; }
+      Play.pos = Math.max(0, Math.min(at || 0, rec.dur - 1));
+      if (play === false) Play.pause(); else Play.resume();
+    },
     toggle(rec) {
-      if (Play.id === rec.id) { Play.stop(); return; }
-      Play.stop(); Play.id = rec.id; Play.pos = 0; Play.len = rec.dur;
-      Play.timer = setInterval(() => { Play.pos += 1; if (Play.pos >= Play.len) Play.stop(); Play.emit(); }, 1000);
+      if (Play.id === rec.id) { if (Play.playing) Play.pause(); else Play.resume(); return; }
+      Play.load(rec, 0, true);
+    },
+    resume() {
+      if (!Play.id) return; if (Play.pos >= Play.len) Play.pos = 0;
+      clearInterval(Play.timer); Play.playing = true;
+      Play.timer = setInterval(() => { Play.pos = Math.min(Play.len, Play.pos + Play.speed); if (Play.pos >= Play.len) { clearInterval(Play.timer); Play.playing = false; } Play.emit(); }, 1000);
       Play.emit();
     },
-    stop() { clearInterval(Play.timer); Play.id = null; Play.pos = 0; Play.emit(); },
+    pause() { clearInterval(Play.timer); Play.playing = false; Play.emit(); },
+    seek(p) { if (!Play.id) return; Play.pos = Math.max(0, Math.min(Play.len - 1, p)); Play.emit(); },
+    stop(quiet) { clearInterval(Play.timer); Play.id = null; Play.rec = null; Play.pos = 0; Play.playing = false; if (!quiet) Play.emit(); },
     sub(fn) { Play.listeners.add(fn); return () => Play.listeners.delete(fn); },
     emit() { Play.listeners.forEach((f) => f(Play)); },
   };

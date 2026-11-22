@@ -139,7 +139,7 @@
     const b = document.createElement('button');
     b.className = 'pb press ' + (cls || '');
     const draw = () => {
-      const on = LM.Play.id === rec.id;
+      const on = LM.Play.id === rec.id && LM.Play.playing;
       b.innerHTML = '<span class="pb-i">' + (on ? I.pause : I.play) + '</span><span class="pb-t">' + (on ? D.dur(LM.Play.pos) + ' / ' : '') + D.dur(rec.dur) + '</span>';
       b.classList.toggle('on', on);
     };
