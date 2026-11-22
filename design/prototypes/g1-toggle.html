@@ -306,11 +306,6 @@ button.ls-at svg { width: 10px; height: 10px; }
 .ls-recbar .sq i { width: 12px; height: 12px; border-radius: 3px; background: #fff; }
 /* 曲ページ（レッスン画面に合わせる）：日付の見出し・たたみ・扱ったレッスン */
 .seg-wrap { padding: 14px 20px 0; }
-.ls-prtab { padding-top: 8px; }
-.memr { display: flex; align-items: center; gap: 10px; padding: 9px 8px 9px 20px; border-bottom: .5px solid var(--line); }
-.memr .d { flex: none; width: 38px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.memr .n { flex: 1; min-width: 0; font-size: 15px; line-height: 1.45; padding-right: 40px; }
-.memr .n small { display: block; font-size: 12px; color: var(--muted); }
 /* タイムライン：上に曲と期間の絞り込み */
 .tl-f { display: flex; gap: 8px; padding: 6px 16px 8px; }
 .tl-c { display: inline-flex; align-items: center; gap: 4px; max-width: 60%; padding: 6px 10px 6px 12px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -326,6 +321,7 @@ button.ls-at svg { width: 10px; height: 10px; }
 .rb small .nt, .rrec .rl .nt { color: inherit; margin-right: 2px; }
 /* 録音の行：線で区切る。流れている行は左の日付が音の印に、名前が金色に。流すのは右の▶だけ */
 .recl { display: flex; flex-direction: column; }
+.ls-prtab { padding-top: 8px; }
 .recr { display: flex; align-items: center; gap: 10px; padding: 9px 8px 9px 20px; border-bottom: .5px solid var(--line); cursor: pointer; }
 .recr:last-of-type { border-bottom: 0; }
 .recr .d { flex: none; width: 38px; display: flex; align-items: center; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -1143,6 +1139,44 @@ function miniBar() {
   Play.sub(draw); Rec.sub(draw); draw();
 }
 
+// メモ欄（曲のメモ・レッスン後のメモ）：日付ごとにまとめ、新しい日が上。今日の見出しはいつも出し、その下の余白をタップして書く
+const memoDays = (memos) => {
+  const gs = [];
+  memos.slice().sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : 0)).forEach((m) => { const g = gs[gs.length - 1]; if (g && g.date === m.date) g.items.push(m); else gs.push({ date: m.date, items: [m] }); });
+  if (!gs.length || gs[0].date !== D.TODAY) gs.unshift({ date: D.TODAY, items: [] });
+  return gs;
+};
+function memoDay(g, add, key, nav) {
+  const today = g.date === D.TODAY;
+  const box = h('<div class="ls-list"><div class="ls-tk' + (today ? ' today' : '') + '">' + D.fmtDate(g.date) + (today ? ' 今日' : '') + '</div><ul></ul></div>');
+  const ul = box.querySelector('ul');
+  g.items.forEach((m) => {
+    const li = h('<li class="ls-row"><span class="ls-dot"><i></i></span><span class="tx">' + esc(m.text) + '</span></li>');
+    const tx = li.querySelector('.tx');
+    tx.onclick = () => { // タップで直す。空にすると消える
+      const inp = h('<input autocomplete="off" enterkeyhint="done">'); inp.value = m.text; tx.replaceWith(inp); inp.focus();
+      let done = false;
+      const fin = () => { if (done) return; done = true; const v = inp.value.trim(); if (!v) D.S.memos.splice(D.S.memos.indexOf(m), 1); else m.text = v; nav.refresh(); };
+      inp.onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); inp.blur(); } if (e.key === 'Escape') { inp.value = m.text; inp.blur(); } };
+      inp.onblur = fin;
+    };
+    ul.appendChild(li);
+  });
+  if (today) {
+    const gap = h('<button class="ls-gap" aria-label="ここに書く">' + (g.items.length ? '' : '<span>タップして書く</span>') + '</button>');
+    const openM = () => {
+      gap.hidden = true;
+      const row = h('<div class="ls-inl"><span class="ls-dot"><i></i></span><input autocomplete="off" enterkeyhint="next"></div>'); box.insertBefore(row, gap);
+      const inp = row.querySelector('input'); let done = false;
+      const commit = (again) => { if (done) return; done = true; const m = add(inp.value); if (m) { m.by = 'm'; if (again) pendingMemo = key; } nav.refresh(); };
+      inp.onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); commit(true); } if (e.key === 'Escape') { inp.value = ''; inp.blur(); } };
+      inp.onblur = () => commit(false); inp.focus();
+    };
+    gap.onclick = openM; box.appendChild(gap);
+    if (pendingMemo === key) { pendingMemo = null; setTimeout(openM, 0); }
+  }
+  return box;
+}
 // ── 画面 ──
 const screens = {
   hello(el, a, nav) {
@@ -1250,11 +1284,13 @@ const screens = {
     sw.appendChild(segment([['sum', 'まとめ'], ['pr', '個人練']], tabK, (k) => { a.tab = k; nav.refresh(); fadeIn(); }, 'sm'));
     sc.appendChild(sw);
     if (tabK === 'pr') {
-      // 個人練：録音の一覧だけ。録るのは画面の下のボタン
-      const pg = h('<div class="recl ls-prtab"></div>');
-      const after = [...prs.map((r) => ({ date: r.date, o: 0, r })), ...D.S.memos.filter((m) => m.lessonId === l.id).map((m) => ({ date: m.date, o: 1, m }))].sort((x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : x.o - y.o));
-      after.forEach((x) => pg.appendChild(x.r ? recRow(x.r, x.r.songId ? noteIc + esc(D.song(x.r.songId).title) : '曲なし') : h('<div class="memr"><span class="d">' + D.md(x.m.date) + '</span><span class="n">' + esc(x.m.text) + '<small>メモ</small></span></div>')));
-      if (!after.length) pg.appendChild(h('<div class="ls-none" style="padding:8px 6px">まだありません</div>'));
+      // 個人練：「メモ」（レッスン後に気づいたこと。曲にひも付かない）と「録音」の2つの章。録るのは画面の下のボタン
+      sc.appendChild(h('<div class="ls-h">メモ</div>'));
+      memoDays(D.S.memos.filter((m) => m.lessonId === l.id)).forEach((g) => sc.appendChild(memoDay(g, (v) => { const m = D.addMemo(null, v); if (m) m.lessonId = l.id; return m; }, 'l:' + l.id, nav)));
+      sc.appendChild(h('<div class="ls-h">録音</div>'));
+      const pg = h('<div class="recl"></div>');
+      prs.forEach((r) => pg.appendChild(recRow(r, r.songId ? noteIc + esc(D.song(r.songId).title) : '曲なし')));
+      if (!prs.length) pg.appendChild(h('<div class="ls-none">まだありません</div>'));
       sc.appendChild(pg); sc.appendChild(h('<div style="height:120px"></div>'));
       const d = h('<div class="ls-dock"><button class="go">' + I.mic + '個人練を録音</button></div>');
       d.querySelector('.go').onclick = () => { if (Rec.on) { toast(app, 'ほかの録音を止めてから'); return; } recordPractice(l, nav); };
@@ -1327,40 +1363,7 @@ const screens = {
       sc.appendChild(fold('n', ng, (g) => { const w = h('<div class="ls-list ro"><div class="ls-tk">' + D.fmtDate(g.date) + '</div><ul>' + g.items.map((n) => '<li class="ls-row"><span class="ls-dot"><i></i></span><span class="tx">' + esc(n.text) + '</span>' + atBtn(n) + '</li>').join('') + '</ul></div>'); bindAt(w); return w; }));
       // 自分のメモ：日付ごと。今日の見出しの下の余白をタップして書く（Enterで続けて書ける）
       sc.appendChild(h('<div class="ls-h">自分のメモ</div>'));
-      const mg = byDate(D.memosOf(s.id).slice().sort(desc));
-      if (!mg.length || mg[0].date !== D.TODAY) mg.unshift({ date: D.TODAY, items: [] });
-      const memoGroup = (g) => {
-        const today = g.date === D.TODAY;
-        const box = h('<div class="ls-list"><div class="ls-tk' + (today ? ' today' : '') + '">' + D.fmtDate(g.date) + (today ? ' 今日' : '') + '</div><ul></ul></div>');
-        const ul = box.querySelector('ul');
-        g.items.forEach((m) => {
-          const li = h('<li class="ls-row"><span class="ls-dot"><i></i></span><span class="tx">' + esc(m.text) + '</span></li>');
-          const tx = li.querySelector('.tx');
-          tx.onclick = () => { // タップで直す。空にすると消える
-            const inp = h('<input autocomplete="off" enterkeyhint="done">'); inp.value = m.text; tx.replaceWith(inp); inp.focus();
-            let done = false;
-            const fin = () => { if (done) return; done = true; const v = inp.value.trim(); if (!v) D.S.memos.splice(D.S.memos.indexOf(m), 1); else m.text = v; nav.refresh(); };
-            inp.onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); inp.blur(); } if (e.key === 'Escape') { inp.value = m.text; inp.blur(); } };
-            inp.onblur = fin;
-          };
-          ul.appendChild(li);
-        });
-        if (today) {
-          const gap = h('<button class="ls-gap" aria-label="ここに書く">' + (g.items.length ? '' : '<span>タップして書く</span>') + '</button>');
-          const openM = () => {
-            gap.hidden = true;
-            const row = h('<div class="ls-inl"><span class="ls-dot"><i></i></span><input autocomplete="off" enterkeyhint="next"></div>'); box.insertBefore(row, gap);
-            const inp = row.querySelector('input'); let done = false;
-            const commit = (again) => { if (done) return; done = true; const m = D.addMemo(s.id, inp.value); if (m) { m.by = 'm'; if (again) pendingMemo = s.id; } nav.refresh(); };
-            inp.onkeydown = (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); commit(true); } if (e.key === 'Escape') { inp.value = ''; inp.blur(); } };
-            inp.onblur = () => commit(false); inp.focus();
-          };
-          gap.onclick = openM; box.appendChild(gap);
-          if (pendingMemo === s.id) { pendingMemo = null; setTimeout(openM, 0); }
-        }
-        return box;
-      };
-      sc.appendChild(fold('m', mg, memoGroup));
+      sc.appendChild(fold('m', memoDays(D.memosOf(s.id)), (g) => memoDay(g, (v) => D.addMemo(s.id, v), 's:' + s.id, nav)));
       // 扱ったレッスン：この曲をトピックにしたレッスン（何も書いていない日も出る）
       sc.appendChild(h('<div class="ls-h">扱ったレッスン</div>'));
       const lks = h('<div class="ls-lks"></div>');
