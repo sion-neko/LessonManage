@@ -274,7 +274,9 @@ button:active { opacity: .55; }
 .ls-dot { flex: none; align-self: flex-start; width: 20px; height: 25px; display: grid; place-items: center; margin-left: -7px; }
 .ls-dot i { width: 6px; height: 6px; border-radius: 50%; background: #aeaeb2; }
 .nt { display: inline-flex; vertical-align: -1px; margin-right: 4px; color: var(--muted); }
-.ls-at { flex: none; margin-left: 6px; font-size: 12px; color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+button.ls-at { flex: none; margin-left: 6px; display: inline-flex; align-items: center; gap: 3px; font-size: 12px; color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
+button.ls-at svg { width: 10px; height: 10px; }
+.ls-at { flex: none; margin-left: 6px; font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .ls-at.live { color: var(--rec); }
 .ls-row input, .ls-inl input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font-size: 16px; line-height: 1.55; padding: 0; }
 .ls-inl { display: flex; gap: 4px; align-items: center; padding: 5px 20px; background: #fff7d6; }
@@ -300,9 +302,6 @@ button:active { opacity: .55; }
 .memr .d { flex: none; width: 38px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .memr .n { flex: 1; min-width: 0; font-size: 15px; line-height: 1.45; padding-right: 40px; }
 .memr .n small { display: block; font-size: 12px; color: var(--muted); }
-.ls-tl { display: flex; align-items: center; gap: 8px; width: calc(100% - 40px); margin: 26px 20px 0; padding: 12px 14px; border-radius: 12px; background: #f7f6f3; border: 1px solid var(--line); color: var(--accent-d); font-size: 15px; font-weight: 600; text-align: left; }
-.ls-tl svg:first-child { width: 18px; height: 18px; }
-.ls-tl svg:last-child { margin-left: auto; color: #c4c4c7; }
 /* タイムライン：上に曲と期間の絞り込み */
 .tl-f { display: flex; gap: 8px; padding: 6px 16px 8px; }
 .tl-c { display: inline-flex; align-items: center; gap: 4px; max-width: 60%; padding: 6px 10px 6px 12px; border-radius: 16px; background: var(--card); border: 1px solid var(--line); font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -839,7 +838,7 @@ function lsList(l, kind, tk, nav) {
   const items = kind === 'hw' ? l.hw : l.notes.filter((n) => (n.tk || null) === tk);
   const ul = document.createElement('ul');
   items.forEach((n) => {
-    const at = kind === 'note' && n.at != null ? (D.lessonRec(l.id) ? '<button class="ls-at">' + D.dur(n.at) + '</button>' : '<span class="ls-at live">' + D.dur(n.at) + '</span>') : '';
+    const at = kind === 'note' && n.at != null ? (D.lessonRec(l.id) ? '<button class="ls-at">' + playSm + D.dur(n.at) + '</button>' : '<span class="ls-at live">' + D.dur(n.at) + '</span>') : '';
     const li = h('<li class="ls-row' + (kind === 'hw' ? ' hw' : '') + '">' + (kind === 'note' ? '<span class="ls-dot"><i></i></span>' : '') + '<span class="tx">' + esc(n.text) + '</span>' + at + '</li>');
     const ab = li.querySelector('button.ls-at'); if (ab) ab.onclick = (e) => { e.stopPropagation(); playAt(l, n.at); };
     const tx = li.querySelector('.tx');
@@ -1270,7 +1269,7 @@ const screens = {
     el.appendChild(top);
     const sc = h('<div class="scroll"></div>'); el.appendChild(sc);
     // 時間を押すと、そのレッスンの録音を画面の下の再生バーで流す
-    const atBtn = (n) => (n.at != null && D.lessonRec(n.lesson.id) ? '<button class="ls-at" data-l="' + n.lesson.id + '" data-at="' + n.at + '">' + D.dur(n.at) + '</button>' : '');
+    const atBtn = (n) => (n.at != null && D.lessonRec(n.lesson.id) ? '<button class="ls-at" data-l="' + n.lesson.id + '" data-at="' + n.at + '">' + playSm + D.dur(n.at) + '</button>' : '');
     const bindAt = (root) => root.querySelectorAll('[data-at]').forEach((b) => (b.onclick = (e) => { e.stopPropagation(); playAt(D.lesson(b.dataset.l), +b.dataset.at); }));
     if (songView === 'rec') {
       // 録音：全部を新しい順に。録るのは画面の下のボタン（レッスン画面の個人練タブと同じ形）
@@ -1346,11 +1345,7 @@ const screens = {
       const lks = h('<div class="ls-lks"></div>');
       D.lessonsOfSong(s.id).forEach((l) => { const b = h('<button class="ls-lk"><span>' + D.fmtDate(l.date, true) + '</span>' + I.chev + '</button>'); b.onclick = () => nav.push('lesson', { id: l.id }); lks.appendChild(b); });
       if (!lks.children.length) lks.appendChild(h('<div class="ls-none">まだありません</div>'));
-      sc.appendChild(lks);
-      // この曲だけに絞ったタイムラインへ
-      const go = h('<button class="ls-tl">' + icTl + 'この曲のタイムライン' + I.chev + '</button>');
-      go.onclick = () => { tlSong = s.id; tlPeriod = 'all'; tab = 'tl'; nav.root('tl'); };
-      sc.appendChild(go); sc.appendChild(h('<div style="height:120px"></div>'));
+      sc.appendChild(lks); sc.appendChild(h('<div style="height:120px"></div>'));
       return;
     }
   },
