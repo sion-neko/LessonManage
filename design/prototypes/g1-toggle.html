@@ -304,7 +304,23 @@ button:active { opacity: .55; }
 .ls-recbar .sq i { width: 12px; height: 12px; border-radius: 3px; background: #fff; }
 /* 曲ページ（レッスン画面に合わせる）：日付の見出し・たたみ・扱ったレッスン */
 .seg-wrap { padding: 14px 20px 0; }
-.ls-prtab { padding-top: 14px; }
+.ls-prtab { padding-top: 8px; }
+/* 録音の行：線で区切る。流れている行は左の日付が音の印に、名前が金色に。流すのは右の▶だけ */
+.recl { display: flex; flex-direction: column; }
+.recr { display: flex; align-items: center; gap: 10px; padding: 9px 8px 9px 20px; border-bottom: .5px solid var(--line); cursor: pointer; }
+.recr:last-of-type { border-bottom: 0; }
+.recr .d { flex: none; width: 38px; display: flex; align-items: center; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.recr .n { flex: 1; min-width: 0; font-size: 15px; line-height: 1.45; }
+.recr .n small { display: block; font-size: 12px; color: var(--muted); font-weight: 400; }
+.recr.on .n { color: var(--accent-d); font-weight: 600; }
+.recr .tm { flex: none; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.recr .pb { flex: none; width: 40px; height: 40px; margin-left: -4px; display: grid; place-items: center; color: var(--accent); }
+.recr .pb svg { width: 24px; height: 24px; }
+.eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 13px; }
+.eq i { width: 3px; background: var(--accent); border-radius: 1px; animation: eq .9s ease-in-out infinite; }
+.eq i:nth-child(2) { animation-delay: -.3s; } .eq i:nth-child(3) { animation-delay: -.6s; }
+.pz .eq i { animation-play-state: paused; }
+@keyframes eq { 0%, 100% { height: 3px } 50% { height: 13px } }
 .ls-list.ro .tx { cursor: default; }
 .ls-row button.ls-at { padding: 0; }
 .ls-fold { display: block; padding: 6px 20px 0; font-size: 12px; line-height: 20px; color: var(--muted); }
@@ -1050,6 +1066,20 @@ const recSub = (r, p) => {
 const icSkipF = '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(32,0) scale(-1,1)"><path d="M9 9.5A10 10 0 1 1 6 16"/><path d="M9 4v5.5h-5.5"/></g><text x="16" y="20" font-size="9" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">15</text></svg>';
 const icPlayL = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>';
 const icPauseL = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6.5" y="5" width="3.6" height="14" rx="1"/><rect x="13.9" y="5" width="3.6" height="14" rx="1"/></svg>';
+const eqIc = '<span class="eq"><i></i><i></i><i></i></span>';
+function recRow(r, sub) {
+  const row = h('<div class="recr"><span class="d"></span><span class="n">' + (esc(r.note) || '（一言なし）') + '<small>' + sub + '</small></span><span class="tm">' + D.dur(r.dur) + '</span><button class="pb" aria-label="再生と一時停止"></button></div>');
+  const draw = () => {
+    const on = Play.id === r.id && Play.started;
+    row.classList.toggle('on', on); row.classList.toggle('pz', on && !Play.playing);
+    row.querySelector('.d').innerHTML = on ? eqIc : D.md(r.date);
+    row.querySelector('.pb').innerHTML = on && Play.playing ? icPauseL : icPlayL;
+  };
+  row.querySelector('.pb').onclick = (e) => { e.stopPropagation(); Play.toggle(r); };
+  row.onclick = () => openDetail(r);
+  const un = Play.sub(() => { if (!row.isConnected) { un(); return; } draw(); });
+  draw(); return row;
+}
 // 再生バー：アプリに1本だけ。画面を移っても流れ続ける（ポッドキャストのミニプレーヤーと同じ）
 function miniBar() {
   const el = h('<div class="mini" hidden><div class="mt"><b></b><span></span></div><button class="mb" data-act="pp" aria-label="再生と一時停止"></button><button class="mb" data-act="sk" aria-label="15秒進む">' + icSkipF + '</button><div class="mp"><i></i></div></div>');
@@ -1187,8 +1217,8 @@ const screens = {
     sc.appendChild(sw);
     if (tabK === 'pr') {
       // 個人練：録音の一覧だけ。録るのは画面の下のボタン
-      const pg = h('<div class="ls-prs ls-prtab"></div>');
-      prs.forEach((r) => { const row = h('<div class="ls-pr"><span class="d">' + D.md(r.date) + '</span><span class="n">' + (esc(r.note) || '（一言なし）') + (r.songId ? '<small>' + noteIc + esc(D.song(r.songId).title) + '</small>' : '') + '</span></div>'); row.appendChild(LM.playBtn(r)); pg.appendChild(row); });
+      const pg = h('<div class="recl ls-prtab"></div>');
+      prs.forEach((r) => pg.appendChild(recRow(r, r.songId ? noteIc + esc(D.song(r.songId).title) : '曲なし')));
       if (!prs.length) pg.appendChild(h('<div class="ls-none" style="padding:8px 6px">まだありません</div>'));
       sc.appendChild(pg); sc.appendChild(h('<div style="height:120px"></div>'));
       const d = h('<div class="ls-dock"><button class="go">' + I.mic + '個人練を録音</button></div>');
@@ -1286,7 +1316,7 @@ const screens = {
       // 録音：レッスン画面の個人練と同じ形
       sc.appendChild(h('<div class="ls-h">録音</div>'));
       const recs = D.recsOfSong(s.id);
-      sc.appendChild(fold('r', recs, (r) => { const row = h('<div class="ls-pr"><span class="d">' + D.md(r.date) + '</span><span class="n">' + (esc(r.note) || '（一言なし）') + '<small>' + (r.kind === 'practice' ? D.md(D.lesson(r.lessonId).date) + 'のレッスン後の個人練' : '曲の録音') + '</small></span></div>'); row.appendChild(LM.playBtn(r)); return row; }, 'ls-prs'));
+      sc.appendChild(fold('r', recs, (r) => recRow(r, r.kind === 'practice' ? D.md(D.lesson(r.lessonId).date) + 'のレッスン後の個人練' : '曲の録音'), 'recl'));
       const ar = h('<div class="ls-prs"><button class="ls-prrec">' + I.mic + 'この曲を録音</button></div>'); ar.firstChild.onclick = () => recordSong(s, nav); sc.appendChild(ar);
       // 扱ったレッスン：この曲をトピックにしたレッスン（何も書いていない日も出る）
       sc.appendChild(h('<div class="ls-h">扱ったレッスン</div>'));
