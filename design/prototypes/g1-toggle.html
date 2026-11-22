@@ -24,7 +24,6 @@ button:active { opacity: .55; }
 .fold-t { flex: 1; min-width: 0; display: flex; align-items: center; gap: 4px; padding: 2px 4px; font-size: 26px; font-weight: 800; color: var(--fg); text-align: left; }
 .fold-t span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fold-t svg { flex: none; color: var(--muted); margin-top: 3px; }
-.fold-t:disabled { opacity: 1; cursor: default; }
 .fmenu-dim { position: absolute; inset: 0; z-index: 60; }
 .fmenu { position: absolute; min-width: 230px; background: rgba(255,255,255,.98); border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.18), 0 0 0 .5px rgba(0,0,0,.06); overflow: hidden; transform-origin: top left; animation: fmenu .18s ease both; }
 .fmenu button { display: flex; width: 100%; align-items: center; gap: 8px; padding: 12px 16px 12px 12px; font-size: 16px; text-align: left; border-top: .5px solid var(--line); }
@@ -32,6 +31,8 @@ button:active { opacity: .55; }
 .fmenu .ck { width: 20px; flex: none; display: grid; place-items: center; color: var(--accent); }
 .fmenu .ck svg { width: 16px; height: 16px; }
 .fmenu .add { color: var(--accent-d); }
+.st-soon { margin: 0 0 4px; font-size: 13px; color: var(--muted); }
+.st-plan { padding: 13px 16px; border-radius: 14px; background: var(--field, var(--card)); font-size: 15px; color: #aeaeb2; }
 @keyframes fmenu { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: none; } }
 .seg { position: relative; flex: 1; display: flex; background: var(--seg); border-radius: 10px; padding: 2px; }
 .seg .knob { position: absolute; top: 2px; bottom: 2px; left: 2px; border-radius: 8px; background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,.12); transition: transform .38s cubic-bezier(.3,.8,.3,1), width .38s; }
@@ -57,11 +58,6 @@ button:active { opacity: .55; }
 .go { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 54px; border-radius: 14px; background: var(--accent); color: #fff; font-size: 17px; font-weight: 700; box-shadow: 0 4px 0 var(--accent-d); transition: transform .14s ease, box-shadow .14s ease; }
 .go:active { opacity: 1; transform: translateY(4px); box-shadow: 0 0 0 var(--accent-d); }
 .tabbar { display: grid; grid-template-columns: repeat(4, 1fr); border-top: .5px solid var(--line); background: rgba(249,249,249,.94); padding: 6px 0 28px; }
-.sw-row { display: flex; justify-content: space-between; align-items: center; padding: 13px 16px; border-radius: 14px; background: var(--field, var(--card)); font-size: 16px; text-align: left; }
-.sw { position: relative; width: 51px; height: 31px; border-radius: 16px; background: #e3e3e8; transition: background .2s; flex: none; }
-.sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.2); transition: transform .2s; }
-.sw.on { background: #34c759; }
-.sw.on::after { transform: translateX(20px); }
 .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10px; color: var(--muted); }
 .tab.on { color: var(--accent); }
 .nav { padding: 54px 16px 4px; display: flex; align-items: center; justify-content: space-between; min-height: 92px; }
@@ -183,9 +179,6 @@ button:active { opacity: .55; }
 .blank { margin: 28px 16px 0; padding: 28px 20px; border-radius: 14px; background: var(--card); text-align: center; }
 .blank b { display: block; font-size: 17px; margin-bottom: 6px; }
 .blank p { margin: 0 0 18px; color: var(--muted); font-size: 14px; line-height: 1.6; }
-.tl-item { display: flex; align-items: center; gap: 10px; padding: 13px 14px; border-radius: 12px; background: var(--card); width: 100%; text-align: left; }
-.tl-item .nm { flex: 1; min-width: 0; }
-.tl-item .nm small { display: block; color: var(--muted); font-size: 13px; }
 /* ホームの見せ方の比較用（#v1〜#v3） */
 .v-cap { padding: 18px 20px 0; font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
 .v-cap button { color: var(--accent); font-size: 14px; display: flex; align-items: center; }
@@ -500,7 +493,6 @@ let cur = D.S.types[0] ? D.S.types[0].id : null; let tab = 'home'; let recTarget
 let tlSong = null; let tlPeriod = 'all'; // タイムラインの絞り込み（曲・期間）
 
 // ── 共通部品 ──
-let homeRec = true; // 設定：ホームに録音ボタンを出す（人によって要る・要らないが分かれるので切り替えられるようにする）
 const icTl = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 3v18"/><circle cx="7" cy="8" r="2.2" fill="currentColor"/><circle cx="7" cy="16" r="2.2" fill="currentColor"/><path d="M12 8h8M12 16h8"/></svg>';
 function tabbar(nav) {
   const el = h('<div class="tabbar">' + [['home', 'いま', I.home], ['lessons', 'レッスン', I.list], ['songs', '曲', I.note], ['tl', 'タイムライン', icTl]].map(([k, n, ic]) => '<button class="tab' + (tab === k ? ' on' : '') + '" data-k="' + k + '">' + ic + n + '</button>').join('') + '</div>');
@@ -518,25 +510,27 @@ function segment(items, value, onPick, cls) {
 }
 function head(nav) {
   const hd = h('<div class="head"></div>');
-  // 左上の見出し＝今のフォルダ。2つ以上あるときは▾付きで、押すとメニューで切り替える（1つのときは見出しだけ）
-  const t = D.type(cur); const many = D.S.types.length > 1;
-  const ft = h('<button class="fold-t"' + (many ? '' : ' disabled') + '><span>' + esc(t ? t.name : '') + '</span>' + (many ? icDownS : '') + '</button>');
-  if (many) ft.onclick = () => foldMenu(ft, nav);
+  // 左上の見出し＝今のフォルダ。押すとメニューで切り替え・追加・編集（設定から外したので、1つのときも押せる）
+  const t = D.type(cur);
+  const ft = h('<button class="fold-t"><span>' + esc(t ? t.name : '') + '</span>' + icDownS + '</button>');
+  ft.onclick = () => foldMenu(ft, nav);
   hd.appendChild(ft);
-  const g = h('<button class="ic" aria-label="フォルダの編集">' + I.gear + '</button>'); g.onclick = () => typesSheet(nav); hd.appendChild(g);
+  const g = h('<button class="ic" aria-label="設定">' + I.gear + '</button>'); g.onclick = () => settingsSheet(); hd.appendChild(g);
   return hd;
 }
 const icDownS = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
-// フォルダを切り替えるメニュー：見出しの真下に開く。今のフォルダにチェック、いちばん下に「フォルダを追加」
+const icPen = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>';
+// フォルダを切り替えるメニュー：見出しの真下に開く。今のフォルダにチェック、いちばん下に「フォルダを追加」「このフォルダを編集」
 function foldMenu(anchor, nav) {
   const dim = h('<div class="fmenu-dim"><div class="fmenu">' + D.S.types.map((x) => '<button data-t="' + x.id + '"><span class="ck">' + (x.id === cur ? check : '') + '</span>' + esc(x.name) + '</button>').join('') +
-    '<button class="add" data-act="add"><span class="ck">' + I.plus + '</span>フォルダを追加</button></div></div>');
+    '<button class="add" data-act="add"><span class="ck">' + I.plus + '</span>フォルダを追加</button><button class="add" data-act="edit"><span class="ck">' + icPen + '</span>このフォルダを編集</button></div></div>');
   const m = dim.querySelector('.fmenu'); const ar = anchor.getBoundingClientRect(), or = app.getBoundingClientRect();
   m.style.top = (ar.bottom - or.top + 6) + 'px'; m.style.left = (ar.left - or.left) + 'px';
   const shut = () => dim.remove();
   dim.onclick = (e) => { if (e.target === dim) shut(); };
   dim.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => { shut(); if (b.dataset.t !== cur) { cur = b.dataset.t; nav.refresh(); fadeIn(); } }));
   dim.querySelector('[data-act=add]').onclick = () => { shut(); typeEdit(nav, null); };
+  dim.querySelector('[data-act=edit]').onclick = () => { shut(); typeEdit(nav, D.type(cur)); };
   app.appendChild(dim);
 }
 const fadeIn = () => requestAnimationFrame(() => { const s = document.querySelector('.screen.in .scroll'); if (s) { s.classList.remove('fade'); void s.offsetWidth; s.classList.add('fade'); } });
@@ -787,18 +781,11 @@ function sortableSection(title, list) {
   return sec;
 }
 
-// 種類の編集
-function typesSheet(nav) {
-  sheet(app, (el, close) => {
-    const draw = () => {
-      el.innerHTML = '<div class="tp"><div class="tp-title">フォルダ</div>' + D.S.types.map((t) => '<button class="tl-item" data-t="' + t.id + '"><span class="nm">' + esc(t.name) + '<small>' + esc(t.teacher || '先生・教室なし') + '</small></span>' + I.chev + '</button>').join('') +
-        '<button class="tp-add" data-act="add">＋ フォルダを追加</button>' +
-        '<div class="tp-title" style="margin-top:12px">表示</div><button class="sw-row" data-act="homerec"><span>ホームに録音ボタン</span><span class="sw' + (homeRec ? ' on' : '') + '"></span></button></div>';
-      el.querySelector('[data-act=homerec]').onclick = () => { homeRec = !homeRec; draw(); nav.refresh(); };
-      el.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => { close(); setTimeout(() => typeEdit(nav, D.type(b.dataset.t)), 400); }));
-      el.querySelector('[data-act=add]').onclick = () => { close(); setTimeout(() => typeEdit(nav, null), 400); };
-    };
-    draw();
+// 設定：今は中身なし。入れる予定のものを薄く並べておく
+function settingsSheet() {
+  sheet(app, (el) => {
+    el.innerHTML = '<div class="tp"><div class="tp-title">設定</div><p class="st-soon">準備中。今後ここに入る予定のもの</p>' +
+      ['このアプリについて（バージョン・問い合わせ）', 'ほかの録音の取り込み', '再生の速さ（いつもの速さ）'].map((x) => '<div class="st-plan">' + x + '</div>').join('') + '</div>';
   });
 }
 function typeEdit(nav, t) {
@@ -1171,7 +1158,7 @@ const screens = {
     el.appendChild(v);
   },
   home(el, a, nav) {
-    app.dataset.pb = cur && D.latest(cur) && homeRec ? 'tabdock' : 'tab';
+    app.dataset.pb = cur && D.latest(cur) ? 'tabdock' : 'tab';
     el.appendChild(head(nav));
     const sc = h('<div class="scroll"></div>'); el.appendChild(sc);
     const rb = recBar(nav); if (rb) { rb.style.marginTop = '10px'; sc.appendChild(rb); }
@@ -1184,7 +1171,7 @@ const screens = {
     }
     const dockGo = () => {
       sc.appendChild(h('<div style="height:24px"></div>'));
-      if (homeRec) { const dock = h('<div class="dock"><button class="go">' + I.mic + '個人練を録音</button></div>'); dock.querySelector('.go').onclick = () => recordPractice(l, nav); el.appendChild(dock); }
+      const dock = h('<div class="dock"><button class="go">' + I.mic + '個人練を録音</button></div>'); dock.querySelector('.go').onclick = () => recordPractice(l, nav); el.appendChild(dock);
       el.appendChild(tabbar(nav));
     };
     const open = () => nav.push('lesson', { id: l.id });
