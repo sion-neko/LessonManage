@@ -21,6 +21,18 @@ button:active { opacity: .55; }
 @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
 .head { padding: 54px 16px 4px; display: flex; gap: 8px; align-items: center; }
+.fold-t { flex: 1; min-width: 0; display: flex; align-items: center; gap: 4px; padding: 2px 4px; font-size: 26px; font-weight: 800; color: var(--fg); text-align: left; }
+.fold-t span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fold-t svg { flex: none; color: var(--muted); margin-top: 3px; }
+.fold-t:disabled { opacity: 1; cursor: default; }
+.fmenu-dim { position: absolute; inset: 0; z-index: 60; }
+.fmenu { position: absolute; min-width: 230px; background: rgba(255,255,255,.98); border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.18), 0 0 0 .5px rgba(0,0,0,.06); overflow: hidden; transform-origin: top left; animation: fmenu .18s ease both; }
+.fmenu button { display: flex; width: 100%; align-items: center; gap: 8px; padding: 12px 16px 12px 12px; font-size: 16px; text-align: left; border-top: .5px solid var(--line); }
+.fmenu button:first-child { border-top: 0; }
+.fmenu .ck { width: 20px; flex: none; display: grid; place-items: center; color: var(--accent); }
+.fmenu .ck svg { width: 16px; height: 16px; }
+.fmenu .add { color: var(--accent-d); }
+@keyframes fmenu { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: none; } }
 .seg { position: relative; flex: 1; display: flex; background: var(--seg); border-radius: 10px; padding: 2px; }
 .seg .knob { position: absolute; top: 2px; bottom: 2px; left: 2px; border-radius: 8px; background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,.12); transition: transform .38s cubic-bezier(.3,.8,.3,1), width .38s; }
 .seg button { position: relative; flex: 1; padding: 7px 0; font-size: 14px; font-weight: 600; color: var(--fg); z-index: 1; }
@@ -506,11 +518,26 @@ function segment(items, value, onPick, cls) {
 }
 function head(nav) {
   const hd = h('<div class="head"></div>');
-  // 種類が1つのときは切り替えを出さない（2つ以上習っている人は少ないため）
-  if (D.S.types.length > 1) hd.appendChild(segment(D.S.types.map((t) => [t.id, t.name]), cur, (k) => { cur = k; nav.refresh(); fadeIn(); }));
-  else hd.appendChild(h('<div style="flex:1"></div>'));
+  // 左上の見出し＝今のフォルダ。2つ以上あるときは▾付きで、押すとメニューで切り替える（1つのときは見出しだけ）
+  const t = D.type(cur); const many = D.S.types.length > 1;
+  const ft = h('<button class="fold-t"' + (many ? '' : ' disabled') + '><span>' + esc(t ? t.name : '') + '</span>' + (many ? icDownS : '') + '</button>');
+  if (many) ft.onclick = () => foldMenu(ft, nav);
+  hd.appendChild(ft);
   const g = h('<button class="ic" aria-label="フォルダの編集">' + I.gear + '</button>'); g.onclick = () => typesSheet(nav); hd.appendChild(g);
   return hd;
+}
+const icDownS = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+// フォルダを切り替えるメニュー：見出しの真下に開く。今のフォルダにチェック、いちばん下に「フォルダを追加」
+function foldMenu(anchor, nav) {
+  const dim = h('<div class="fmenu-dim"><div class="fmenu">' + D.S.types.map((x) => '<button data-t="' + x.id + '"><span class="ck">' + (x.id === cur ? check : '') + '</span>' + esc(x.name) + '</button>').join('') +
+    '<button class="add" data-act="add"><span class="ck">' + I.plus + '</span>フォルダを追加</button></div></div>');
+  const m = dim.querySelector('.fmenu'); const ar = anchor.getBoundingClientRect(), or = app.getBoundingClientRect();
+  m.style.top = (ar.bottom - or.top + 6) + 'px'; m.style.left = (ar.left - or.left) + 'px';
+  const shut = () => dim.remove();
+  dim.onclick = (e) => { if (e.target === dim) shut(); };
+  dim.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => { shut(); if (b.dataset.t !== cur) { cur = b.dataset.t; nav.refresh(); fadeIn(); } }));
+  dim.querySelector('[data-act=add]').onclick = () => { shut(); typeEdit(nav, null); };
+  app.appendChild(dim);
 }
 const fadeIn = () => requestAnimationFrame(() => { const s = document.querySelector('.screen.in .scroll'); if (s) { s.classList.remove('fade'); void s.offsetWidth; s.classList.add('fade'); } });
 function recBar(nav) {
