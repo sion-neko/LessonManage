@@ -138,10 +138,10 @@
 
   // 疑似再生。id＝読み込んでいる録音（一時停止中も残る）、playing＝流れているか
   const Play = {
-    id: null, rec: null, pos: 0, len: 0, playing: false, speed: 1, timer: null, listeners: new Set(),
+    id: null, rec: null, pos: 0, len: 0, playing: false, started: false, speed: 1, timer: null, listeners: new Set(),
     // 録音を読み込む。at から、play=false なら一時停止のまま
     load(rec, at, play) {
-      if (Play.id !== rec.id) { Play.stop(true); Play.id = rec.id; Play.rec = rec; Play.len = rec.dur; }
+      if (Play.id !== rec.id) { Play.stop(true); Play.id = rec.id; Play.rec = rec; Play.len = rec.dur; Play.started = false; }
       Play.pos = Math.max(0, Math.min(at || 0, rec.dur - 1));
       if (play === false) Play.pause(); else Play.resume();
     },
@@ -151,7 +151,7 @@
     },
     resume() {
       if (!Play.id) return; if (Play.pos >= Play.len) Play.pos = 0;
-      clearInterval(Play.timer); Play.playing = true;
+      clearInterval(Play.timer); Play.playing = true; Play.started = true;
       Play.timer = setInterval(() => { Play.pos = Math.min(Play.len, Play.pos + Play.speed); if (Play.pos >= Play.len) { clearInterval(Play.timer); Play.playing = false; } Play.emit(); }, 1000);
       Play.emit();
     },
