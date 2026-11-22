@@ -76,6 +76,13 @@ button:active { opacity: .55; }
 #app[data-pb=tab] .mini { bottom: 86px; }
 #app[data-pb=tabdock] .mini { bottom: 162px; }
 #app[data-pb=dock] .mini { bottom: 100px; }
+/* 下に録音ボタンがある画面：再生バーが出ている間は、録音ボタンを丸いマイクに縮めて再生バーの左に並べる（再生バーの高さはいつも同じ） */
+#app.pb-on[data-pb=dock] .mini { bottom: 28px; left: 80px; }
+#app.pb-on[data-pb=tabdock] .mini { bottom: 86px; left: 80px; }
+#app.pb-on .ls-dock { left: 12px; right: auto; bottom: 28px; padding: 0; background: none; }
+#app.pb-on .dock { padding: 10px 16px 12px 12px; background: none; }
+#app.pb-on .ls-dock .go, #app.pb-on .dock .go { width: 60px; height: 58px; border-radius: 50%; gap: 0; font-size: 0; }
+#app.pb-on .ls-dock .go svg, #app.pb-on .dock .go svg { width: 24px; height: 24px; }
 .mini .mt { flex: 1; min-width: 0; }
 .mini .mt b { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mini .mt > span { display: block; margin-top: 1px; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
@@ -1093,7 +1100,9 @@ function miniBar() {
   app.appendChild(el);
   let shownId = null;
   const draw = () => {
-    if (!Play.id || !Play.started) { el.hidden = true; shownId = null; return; }
+    // 録音中は出さない（流していた録音は一時停止になっている）
+    const show = !!(Play.id && Play.started && !Rec.on); app.classList.toggle('pb-on', show);
+    if (!show) { el.hidden = true; shownId = null; return; }
     if (shownId !== Play.id) { shownId = Play.id; el.hidden = false; el.classList.remove('gone'); el.style.transform = ''; }
     const r = Play.rec; const sub = recSub(r, Play.pos);
     el.querySelector('b').innerHTML = recTitle(r);
@@ -1113,7 +1122,7 @@ function miniBar() {
     el.style.transform = '';
     if (dy < 6 && e.type === 'pointerup' && Play.rec) openDetail(Play.rec);
   };
-  Play.sub(draw); draw();
+  Play.sub(draw); Rec.sub(draw); draw();
 }
 
 // ── 画面 ──
