@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-import type { AppData, Folder, Lesson, Line, Song, Topic } from '@/data/types';
+import type { AppData, Folder, Lesson, Line, Memo, Song, Topic } from '@/data/types';
 import { newId } from '@/lib/id';
 
 // SQLite とアプリのデータの形の行き来。画面からは state/app-state.tsx を通して使う
@@ -34,7 +34,10 @@ export async function loadAll(db: SQLiteDatabase): Promise<AppData> {
     const line: Line = { id: r.id, text: r.text, topicKey: r.topic_key, ...(r.at != null ? { at: r.at } : {}) };
     byId.get(r.lesson_id)?.[r.kind].push(line);
   }
-  return { folders, songs, lessons };
+  const memos = await db.getAllAsync<Memo>(
+    'SELECT id, folder_id AS folderId, lesson_id AS lessonId, song_id AS songId, date, text FROM memos ORDER BY date DESC, created_at',
+  );
+  return { folders, songs, lessons, memos };
 }
 
 export async function addFolder(db: SQLiteDatabase, name: string, teacher: string): Promise<string> {
@@ -75,4 +78,83 @@ export async function getSetting(db: SQLiteDatabase, key: string): Promise<strin
 
 export async function setSetting(db: SQLiteDatabase, key: string, value: string) {
   await db.runAsync('INSERT INTO app_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', key, value);
+}
+
+// ── 曲 ──
+
+export async function addSong(db: SQLiteDatabase, folderId: string, title: string): Promise<string> {
+  const id = newId('s');
+  await db.runAsync('INSERT INTO songs (id, folder_id, title, created_at) VALUES (?, ?, ?, ?)', id, folderId, title, Date.now());
+  return id;
+}
+
+// ── レッスンのトピック ──
+
+async function nextTopicPos(db: SQLiteDatabase, lessonId: string) {
+  const r = await db.getFirstAsync<{ p: number | null }>('SELECT MAX(pos) AS p FROM lesson_topics WHERE lesson_id = ?', lessonId);
+  return (r?.p ?? -1) + 1;
+}
+
+export async function addSongTopic(db: SQLiteDatabase, lessonId: string, songId: string) {
+  await db.runAsync(
+    'INSERT INTO lesson_topics (lesson_id, key, song_id, label, pos) VALUES (?, ?, ?, NULL, ?)',
+    lessonId, newId('k'), songId, await nextTopicPos(db, lessonId),
+  );
+}
+
+export async function addWordTopic(db: SQLiteDatabase, lessonId: string, label: string) {
+  await db.runAsync(
+    'INSERT INTO lesson_topics (lesson_id, key, song_id, label, pos) VALUES (?, ?, NULL, ?, ?)',
+    lessonId, newId('k'), label, await nextTopicPos(db, lessonId),
+  );
+}
+
+export async function renameWordTopic(db: SQLiteDatabase, lessonId: string, key: string, label: string) {
+  await db.runAsync('UPDATE lesson_topics SET label = ? WHERE lesson_id = ? AND key = ? AND song_id IS NULL', label, lessonId, key);
+}
+
+/** トピックを外す。その下に書いた行は「トピックなし」に戻す */
+export async function removeTopic(db: SQLiteDatabase, lessonId: string, key: string) {
+  await db.withTransactionAsync(async () => {
+    await db.runAsync('UPDATE lines SET topic_key = NULL WHERE lesson_id = ? AND topic_key = ?', lessonId, key);
+    await db.runAsync('DELETE FROM lesson_topics WHERE lesson_id = ? AND key = ?', lessonId, key);
+  });
+}
+
+// ── やること・学んだことの行 ──
+
+export async function addLine(db: SQLiteDatabase, lessonId: string, kind: 'homework' | 'learned', topicKey: string | null, text: string) {
+  const r = await db.getFirstAsync<{ p: number | null }>('SELECT MAX(pos) AS p FROM lines WHERE lesson_id = ?', lessonId);
+  await db.runAsync(
+    'INSERT INTO lines (id, lesson_id, kind, topic_key, text, at, pos) VALUES (?, ?, ?, ?, ?, NULL, ?)',
+    newId('n'), lessonId, kind, topicKey, text, (r?.p ?? -1) + 1,
+  );
+}
+
+export async function updateLine(db: SQLiteDatabase, id: string, text: string) {
+  await db.runAsync('UPDATE lines SET text = ? WHERE id = ?', text, id);
+}
+
+export async function deleteLine(db: SQLiteDatabase, id: string) {
+  await db.runAsync('DELETE FROM lines WHERE id = ?', id);
+}
+
+// ── メモ ──
+
+export async function addMemo(
+  db: SQLiteDatabase,
+  m: { folderId: string; lessonId: string | null; songId: string | null; date: string; text: string },
+) {
+  await db.runAsync(
+    'INSERT INTO memos (id, folder_id, lesson_id, song_id, date, text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    newId('m'), m.folderId, m.lessonId, m.songId, m.date, m.text, Date.now(),
+  );
+}
+
+export async function updateMemo(db: SQLiteDatabase, id: string, text: string) {
+  await db.runAsync('UPDATE memos SET text = ? WHERE id = ?', text, id);
+}
+
+export async function deleteMemo(db: SQLiteDatabase, id: string) {
+  await db.runAsync('DELETE FROM memos WHERE id = ?', id);
 }

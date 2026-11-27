@@ -50,6 +50,7 @@ export default function HomeScreen() {
             </Pressable>
           </View>
           <Text style={styles.heroTitle}>やること</Text>
+          {lesson.homework.length === 0 && <Text style={styles.hwEmpty}>レッスンのページで書くと、ここに出ます</Text>}
           {lesson.homework.map((h) => (
             <View key={h.id} style={styles.hwRow}>
               <View style={styles.hwDot} />
@@ -87,6 +88,7 @@ const styles = StyleSheet.create({
   heroTitle: { marginTop: 4, marginBottom: 6, fontSize: 22, fontWeight: '800', color: C.fg },
   hwRow: { flexDirection: 'row', paddingVertical: 5 },
   hwDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.accent, marginTop: 10, marginLeft: 2, marginRight: 8 },
+  hwEmpty: { paddingVertical: 5, fontSize: 15, color: '#b8a36a' },
   hwText: { flex: 1, fontSize: 17, fontWeight: '600', lineHeight: 25, color: C.fg },
   groups: { marginTop: 14, marginHorizontal: 16, gap: 10 },
   group: { backgroundColor: C.card, borderRadius: 14, paddingTop: 12, paddingHorizontal: 14, paddingBottom: 8 },

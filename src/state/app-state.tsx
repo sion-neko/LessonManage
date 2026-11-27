@@ -1,4 +1,4 @@
-import { useSQLiteContext } from 'expo-sqlite';
+import { useSQLiteContext, type SQLiteDatabase } from 'expo-sqlite';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import * as repo from '@/db/repo';
@@ -18,6 +18,8 @@ type AppState = {
   deleteFolder: (id: string) => Promise<void>;
   /** 今日のレッスンを作り、その ID を返す */
   addLesson: (folderId: string) => Promise<string>;
+  /** db/repo.ts の書き込みを走らせ、読み直す。例：act((db) => repo.addLine(db, ...)) */
+  act: <T>(write: (db: SQLiteDatabase) => Promise<T>) => Promise<T>;
 };
 
 const Ctx = createContext<AppState | null>(null);
@@ -70,6 +72,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         const id = await repo.addLesson(db, fid, todayYmd());
         await reload();
         return id;
+      },
+      act: async (write) => {
+        const r = await write(db);
+        await reload();
+        return r;
       },
     };
   }, [data, folderId, db, reload, setFolderId]);

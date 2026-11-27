@@ -39,8 +39,20 @@ export type Lesson = {
   learned: Line[];
 };
 
+/** メモ：レッスン後の個人練のメモ（lessonId）か、曲ページの自分のメモ（songId） */
+export type Memo = {
+  id: string;
+  folderId: string;
+  lessonId: string | null;
+  songId: string | null;
+  /** YYYY-MM-DD */
+  date: string;
+  text: string;
+};
+
 export type AppData = {
   folders: Folder[];
   songs: Song[];
   lessons: Lesson[];
+  memos: Memo[];
 };

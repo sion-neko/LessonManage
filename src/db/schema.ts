@@ -52,6 +52,20 @@ const MIGRATIONS: string[] = [
     value TEXT NOT NULL
   );
   `,
+  // 2：メモ（レッスン後の個人練のメモ、曲ページの自分のメモ）。日付ごとにまとめて見せる
+  `
+  CREATE TABLE memos (
+    id TEXT PRIMARY KEY NOT NULL,
+    folder_id TEXT NOT NULL REFERENCES folders(id) ON DELETE CASCADE,
+    lesson_id TEXT REFERENCES lessons(id) ON DELETE CASCADE,
+    song_id TEXT REFERENCES songs(id) ON DELETE CASCADE,
+    date TEXT NOT NULL,
+    text TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  );
+  CREATE INDEX memos_lesson ON memos(lesson_id);
+  CREATE INDEX memos_song ON memos(song_id);
+  `,
 ];
 
 export async function migrate(db: SQLiteDatabase) {
