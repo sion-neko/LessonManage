@@ -31,6 +31,11 @@ button:active { opacity: .55; }
 .fmenu .ck { width: 20px; flex: none; display: grid; place-items: center; color: var(--accent); }
 .fmenu .ck svg { width: 16px; height: 16px; }
 .fmenu .add { color: var(--accent-d); }
+.fm-row { display: flex; align-items: stretch; border-top: .5px solid var(--line); }
+.fm-row:first-child { border-top: 0; }
+.fmenu .fm-row button { border-top: 0; }
+.fmenu .fm-row [data-t] { flex: 1; min-width: 0; padding-right: 4px; }
+.fmenu .fm-row .fm-more { width: auto; flex: none; padding: 0 14px; font-size: 13px; letter-spacing: 1px; color: var(--muted); }
 .st-soon { margin: 0 0 4px; font-size: 13px; color: var(--muted); }
 .st-plan { padding: 13px 16px; border-radius: 14px; background: var(--field, var(--card)); font-size: 15px; color: #aeaeb2; }
 @keyframes fmenu { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: none; } }
@@ -414,18 +419,17 @@ function head(nav) {
   return hd;
 }
 const icDownS = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
-const icPen = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>';
-// フォルダを切り替えるメニュー：見出しの真下に開く。今のフォルダにチェック、いちばん下に「フォルダを追加」「このフォルダを編集」
+// フォルダを切り替えるメニュー：見出しの真下に開く。今のフォルダにチェック、各行の右端の⋯で編集、いちばん下に「フォルダを追加」
 function foldMenu(anchor, nav) {
-  const dim = h('<div class="fmenu-dim"><div class="fmenu">' + D.S.types.map((x) => '<button data-t="' + x.id + '"><span class="ck">' + (x.id === cur ? check : '') + '</span>' + esc(x.name) + '</button>').join('') +
-    '<button class="add" data-act="add"><span class="ck">' + I.plus + '</span>フォルダを追加</button><button class="add" data-act="edit"><span class="ck">' + icPen + '</span>このフォルダを編集</button></div></div>');
+  const dim = h('<div class="fmenu-dim"><div class="fmenu">' + D.S.types.map((x) => '<div class="fm-row"><button data-t="' + x.id + '"><span class="ck">' + (x.id === cur ? check : '') + '</span>' + esc(x.name) + '</button><button class="fm-more" data-ed="' + x.id + '" aria-label="' + esc(x.name) + 'を編集">•••</button></div>').join('') +
+    '<button class="add" data-act="add"><span class="ck">' + I.plus + '</span>フォルダを追加</button></div></div>');
   const m = dim.querySelector('.fmenu'); const ar = anchor.getBoundingClientRect(), or = app.getBoundingClientRect();
   m.style.top = (ar.bottom - or.top + 6) + 'px'; m.style.left = (ar.left - or.left) + 'px';
   const shut = () => dim.remove();
   dim.onclick = (e) => { if (e.target === dim) shut(); };
   dim.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => { shut(); if (b.dataset.t !== cur) { cur = b.dataset.t; nav.refresh(); fadeIn(); } }));
   dim.querySelector('[data-act=add]').onclick = () => { shut(); typeEdit(nav, null); };
-  dim.querySelector('[data-act=edit]').onclick = () => { shut(); typeEdit(nav, D.type(cur)); };
+  dim.querySelectorAll('[data-ed]').forEach((b) => (b.onclick = () => { shut(); typeEdit(nav, D.type(b.dataset.ed)); }));
   app.appendChild(dim);
 }
 const fadeIn = () => requestAnimationFrame(() => { const s = document.querySelector('.screen.in .scroll'); if (s) { s.classList.remove('fade'); void s.offsetWidth; s.classList.add('fade'); } });
