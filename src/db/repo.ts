@@ -247,3 +247,8 @@ export async function deleteRecording(db: SQLiteDatabase, id: string): Promise<s
   });
   return r.file;
 }
+
+/** 曲ページから録った録音：直近のレッスン後の個人練にするか、曲だけの録音にするか */
+export async function setRecordingLesson(db: SQLiteDatabase, id: string, lessonId: string | null) {
+  await db.runAsync('UPDATE recordings SET lesson_id = ?, kind = ? WHERE id = ?', lessonId, lessonId ? 'practice' : 'song', id);
+}

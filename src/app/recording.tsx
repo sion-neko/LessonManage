@@ -27,6 +27,9 @@ export default function RecordingScreen() {
   const last = useRef(-1);
   // この画面で止めている間は、録音がなくなっても閉じない（止めたあとに一言を書くため）
   const [stopping, setStopping] = useState(false);
+  // 曲ページから録ったとき：直近のレッスン後の個人練にするか（既定はする。外すと曲だけの録音）
+  const [fromSong, setFromSong] = useState(false);
+  const [linkLesson, setLinkLesson] = useState(true);
 
   // 音の大きさを右から流す
   useEffect(() => {
@@ -50,6 +53,7 @@ export default function RecordingScreen() {
 
   const stop = async () => {
     const kind = rec.target?.kind;
+    setFromSong(!!rec.target?.fromSong);
     setStopping(true);
     const id = await rec.stop();
     if (id && kind !== 'lesson') setSaved(id);
@@ -62,6 +66,7 @@ export default function RecordingScreen() {
     const finish = async () => {
       const v = note.trim();
       if (v) await act((db) => repo.setRecordingNote(db, savedRec.id, v));
+      if (fromSong && savedRec.lessonId && !linkLesson) await act((db) => repo.setRecordingLesson(db, savedRec.id, null));
       router.back();
     };
     return (
@@ -82,19 +87,33 @@ export default function RecordingScreen() {
             onSubmitEditing={finish}
             accessibilityLabel="一言"
           />
+          {fromSong && lesson && (
+            <Pressable onPress={() => setLinkLesson(!linkLesson)} style={styles.toggle} accessibilityRole="checkbox" accessibilityState={{ checked: linkLesson }}>
+              <View style={[styles.box, linkLesson && styles.boxOn]}>{linkLesson && <Icon name="check" size={13} color="#fff" />}</View>
+              <Text style={styles.toggleText}>{fmtDate(lesson.date)}のレッスン後の個人練</Text>
+            </Pressable>
+          )}
           <GoButton label="閉じる" onPress={finish} />
         </View>
       </KeyboardAvoidingView>
     );
   }
 
-  // 個人練で出すもの：やること、選んだ曲で学んだこと（曲なしなら学んだことをすべて）
+  // 個人練で出すもの：やること、選んだ曲で学んだこと（曲なしなら学んだことをすべて）。
+  // 曲だけの録音は、その曲をトピックにした直近のレッスンで学んだこと
+  const songLesson =
+    ctx.kind === 'song' && ctx.songId
+      ? [...data.lessons]
+          .sort((a, b) => (a.date < b.date ? 1 : -1))
+          .find((l) => l.folderId === ctx.folderId && l.topics.some((x) => x.kind === 'song' && x.songId === ctx.songId))
+      : undefined;
+  const src = ctx.kind === 'practice' ? lesson : songLesson;
   const homework = ctx.kind === 'practice' && lesson ? lesson.homework : [];
   const learned =
-    ctx.kind === 'practice' && lesson
-      ? lesson.learned.filter((n) => {
+    ctx.kind !== 'lesson' && src
+      ? src.learned.filter((n) => {
           if (!ctx.songId) return true;
-          const tp = lesson.topics.find((x) => x.key === n.topicKey);
+          const tp = src.topics.find((x) => x.key === n.topicKey);
           return tp?.kind === 'song' && tp.songId === ctx.songId;
         })
       : [];
@@ -112,7 +131,7 @@ export default function RecordingScreen() {
         <View style={{ width: 70 }} />
       </View>
 
-      {ctx.kind === 'practice' ? (
+      {ctx.kind !== 'lesson' ? (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 24, gap: 18 }}>
           <View style={styles.songRow}>
             {song && <Icon name="note" size={20} color="#aeaeb2" />}
@@ -128,11 +147,11 @@ export default function RecordingScreen() {
               ))}
             </View>
           )}
-          {learned.length > 0 && lesson && (
+          {learned.length > 0 && src && (
             <View style={{ gap: 6 }}>
               <Text style={styles.cap}>学んだこと</Text>
               {learned.map((n) => {
-                const tp = lesson.topics.find((x) => x.key === n.topicKey);
+                const tp = src.topics.find((x) => x.key === n.topicKey);
                 return (
                   <Text key={n.id} style={styles.mid}>
                     {!ctx.songId && tp ? `${topicLabel(data, tp)}：` : ''}
@@ -152,7 +171,7 @@ export default function RecordingScreen() {
           <View style={styles.dot} />
           <Text style={styles.stateText}>録音中</Text>
         </View>
-        <Text style={[styles.time, ctx.kind === 'practice' && { fontSize: 40 }]}>{fmtDur(rec.elapsed)}</Text>
+        <Text style={[styles.time, ctx.kind !== 'lesson' && { fontSize: 40 }]}>{fmtDur(rec.elapsed)}</Text>
         <View style={styles.wave}>
           {levels.map((v, i) => (
             <View key={i} style={[styles.waveBar, { height: `${Math.round(v * 100)}%` }]} />
@@ -196,5 +215,9 @@ const styles = StyleSheet.create({
   stopLabel: { color: '#fff', fontSize: 13 },
   savedTitle: { color: '#fff', fontSize: 22, fontWeight: '800' },
   savedSub: { color: '#aeaeb2', fontSize: 15 },
+  toggle: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 6 },
+  box: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: '#636366', alignItems: 'center', justifyContent: 'center' },
+  boxOn: { backgroundColor: C.accent, borderColor: C.accent },
+  toggleText: { color: '#fff', fontSize: 15 },
   noteInput: { backgroundColor: '#2c2c2e', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, fontSize: 17, color: '#fff' },
 });

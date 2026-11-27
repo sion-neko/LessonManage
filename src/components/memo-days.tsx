@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { C } from '@/constants/colors';
 import type { Memo } from '@/data/types';
@@ -12,7 +13,10 @@ export function MemoDays({
   onAdd,
   onEdit,
   onDelete,
+  foldAfter,
 }: {
+  /** この日数まで見せて、残りは「…もっと見る」で開く（曲ページ） */
+  foldAfter?: number;
   memos: Memo[];
   onAdd: (text: string) => void;
   onEdit: (id: string, text: string) => void;
@@ -26,10 +30,13 @@ export function MemoDays({
     else days.push({ date: m.date, items: [m] });
   }
   if (days[0]?.date !== today) days.unshift({ date: today, items: [] });
+  const [open, setOpen] = useState(false);
+  const folded = foldAfter != null && !open && days.length > foldAfter;
+  const visible = folded ? days.slice(0, foldAfter) : days;
 
   return (
     <View>
-      {days.map((d) => {
+      {visible.map((d) => {
         const isToday = d.date === today;
         return (
           <View key={d.date}>
@@ -41,7 +48,19 @@ export function MemoDays({
           </View>
         );
       })}
+      {foldAfter != null && days.length > foldAfter && (
+        <FoldButton open={open} rest={days.length - foldAfter} onPress={() => setOpen(!open)} />
+      )}
     </View>
+  );
+}
+
+/** 「…もっと見る（ほか2日）」と「閉じる」 */
+export function FoldButton({ open, rest, onPress }: { open: boolean; rest: number; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} style={{ paddingHorizontal: 20, paddingVertical: 8 }} hitSlop={4}>
+      <Text style={{ fontSize: 13, color: C.muted }}>{open ? '閉じる' : `…もっと見る（ほか${rest}日）`}</Text>
+    </Pressable>
   );
 }
 

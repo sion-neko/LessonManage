@@ -26,6 +26,8 @@ export type RecTarget = {
   folderId: string;
   lessonId: string | null;
   songId: string | null;
+  /** 曲ページから録ったか（止めたあとに、直近のレッスン後の個人練にするかを選べる） */
+  fromSong?: boolean;
 };
 
 type RecorderState = {
@@ -98,7 +100,8 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
       }
       const id = newId('r');
       const file = await keepRecording(uri, id);
-      await act((db) => repo.addRecording(db, { id, ...target, date: todayYmd(), duration, note: '', file }));
+      const { kind, folderId, lessonId, songId } = target;
+      await act((db) => repo.addRecording(db, { id, kind, folderId, lessonId, songId, date: todayYmd(), duration, note: '', file }));
       return id;
     } catch (e) {
       Alert.alert('録音を保存できませんでした', String(e));
