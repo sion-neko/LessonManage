@@ -15,6 +15,9 @@ const NAMES = {
   pen: { ios: 'pencil', android: 'edit', web: 'edit' },
   gear: { ios: 'gearshape', android: 'settings', web: 'settings' },
   mic: { ios: 'mic.fill', android: 'mic', web: 'mic' },
+  play: { ios: 'play.fill', android: 'play_arrow', web: 'play_arrow' },
+  stop: { ios: 'stop.fill', android: 'stop', web: 'stop' },
+  closeDown: { ios: 'chevron.down', android: 'keyboard_arrow_down', web: 'keyboard_arrow_down' },
 } as const;
 
 export type IconName = keyof typeof NAMES;

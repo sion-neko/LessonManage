@@ -11,17 +11,17 @@ export default function FolderEditScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const { data, addFolder, updateFolder, folderContents, deleteFolder } = useLoadedState();
   const folder = id ? data.folders.find((f) => f.id === id) : undefined;
-  const [confirm, setConfirm] = useState<{ lessons: number; songs: number } | null>(null);
+  const [confirm, setConfirm] = useState<{ lessons: number; songs: number; recordings: number } | null>(null);
 
   if (id && !folder) return null; // 削除した直後
 
   if (folder && confirm) {
-    // 確かめてから消す。レッスン・曲もまとめて消えるので、件数を見せる
+    // 確かめてから消す。レッスン・曲・録音もまとめて消えるので、件数を見せる
     return (
       <ScrollView style={styles.screen} contentContainerStyle={styles.body}>
         <Stack.Screen options={{ title: `「${folder.name}」を削除` }} />
         <Text style={styles.warn}>
-          レッスン{confirm.lessons}件、曲{confirm.songs}曲も消えます。元に戻せません。
+          レッスン{confirm.lessons}件、曲{confirm.songs}曲、録音{confirm.recordings}件も消えます。元に戻せません。
         </Text>
         <Pressable
           onPress={async () => {

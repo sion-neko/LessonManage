@@ -2,6 +2,7 @@ import { useSQLiteContext, type SQLiteDatabase } from 'expo-sqlite';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import * as repo from '@/db/repo';
+import { deleteRecordingFiles } from '@/lib/audio-files';
 import type { AppData, Folder, Lesson, Song, Topic } from '@/data/types';
 import { todayYmd } from '@/lib/date';
 
@@ -14,7 +15,7 @@ type AppState = {
   setFolderId: (id: string) => void;
   addFolder: (name: string, teacher: string) => Promise<void>;
   updateFolder: (id: string, name: string, teacher: string) => Promise<void>;
-  folderContents: (id: string) => Promise<{ lessons: number; songs: number }>;
+  folderContents: (id: string) => Promise<{ lessons: number; songs: number; recordings: number }>;
   deleteFolder: (id: string) => Promise<void>;
   /** 今日のレッスンを作り、その ID を返す */
   addLesson: (folderId: string) => Promise<string>;
@@ -65,7 +66,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       },
       folderContents: (id) => repo.folderContents(db, id),
       deleteFolder: async (id) => {
-        await repo.deleteFolder(db, id);
+        const files = await repo.deleteFolder(db, id);
+        deleteRecordingFiles(files);
         await reload();
       },
       addLesson: async (fid) => {

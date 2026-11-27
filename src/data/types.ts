@@ -50,9 +50,32 @@ export type Memo = {
   text: string;
 };
 
+/**
+ * 録音。「どのレッスンの後か」と「どの曲か」をそれぞれ任意で持つ（docs/adr/0003）
+ * - lesson：レッスンの録音（lessonId あり、songId なし）
+ * - practice：個人練の録音（直前のレッスン、弾いた曲は任意）
+ * - song：曲だけの録音（lessonId なし）
+ */
+export type Recording = {
+  id: string;
+  folderId: string;
+  kind: 'lesson' | 'practice' | 'song';
+  lessonId: string | null;
+  songId: string | null;
+  /** YYYY-MM-DD */
+  date: string;
+  /** 長さ（秒） */
+  duration: number;
+  /** 録音のあとに書く一言 */
+  note: string;
+  /** 端末のファイル。iOS ではアプリの場所が変わることがあるので、書類フォルダからの名前だけを持つ（Web は blob の URL） */
+  file: string;
+};
+
 export type AppData = {
   folders: Folder[];
   songs: Song[];
   lessons: Lesson[];
   memos: Memo[];
+  recordings: Recording[];
 };

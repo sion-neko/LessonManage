@@ -34,6 +34,12 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "レッスンや個人練を録音するためにマイクを使います"
+        }
       ]
     ],
     "experiments": {

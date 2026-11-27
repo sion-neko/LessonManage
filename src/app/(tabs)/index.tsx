@@ -1,19 +1,27 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { FolderHeader } from '@/components/folder-header';
 import { Icon } from '@/components/icon';
+import { PracticeStart } from '@/components/practice-start';
 import { Blank, GoButton } from '@/components/ui';
 import { C } from '@/constants/colors';
 import type { Line, Topic } from '@/data/types';
 import { fmtDate } from '@/lib/date';
 import { lessonsOf, topicLabel, useLoadedState } from '@/state/app-state';
+import { useRecorder } from '@/state/recorder';
 
 // いま：選んでいるフォルダの直近のレッスンを1画面で
 export default function HomeScreen() {
   const { data, folder, addLesson } = useLoadedState();
   const lesson = lessonsOf(data, folder?.id)[0];
-  const recordPractice = () => Alert.alert('個人練を録音', '録音は後の区切りで作ります。');
+  const rec = useRecorder();
+  const [practice, setPractice] = useState(false);
+  const recordPractice = () => {
+    if (rec.target) Alert.alert('録音中です', 'ほかの録音を止めてから');
+    else setPractice(true);
+  };
 
   if (!lesson) {
     return (
@@ -75,6 +83,7 @@ export default function HomeScreen() {
       <View style={styles.dock}>
         <GoButton label="個人練を録音" icon="mic" onPress={recordPractice} />
       </View>
+      <PracticeStart lesson={lesson} visible={practice} onClose={() => setPractice(false)} />
     </View>
   );
 }

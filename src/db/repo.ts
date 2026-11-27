@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-import type { AppData, Folder, Lesson, Line, Memo, Song, Topic } from '@/data/types';
+import type { AppData, Folder, Lesson, Line, Memo, Recording, Song, Topic } from '@/data/types';
 import { newId } from '@/lib/id';
 
 // SQLite とアプリのデータの形の行き来。画面からは state/app-state.tsx を通して使う
@@ -37,7 +37,11 @@ export async function loadAll(db: SQLiteDatabase): Promise<AppData> {
   const memos = await db.getAllAsync<Memo>(
     'SELECT id, folder_id AS folderId, lesson_id AS lessonId, song_id AS songId, date, text FROM memos ORDER BY date DESC, created_at',
   );
-  return { folders, songs, lessons, memos };
+  const recordings = await db.getAllAsync<Recording>(
+    `SELECT id, folder_id AS folderId, kind, lesson_id AS lessonId, song_id AS songId, date, duration, note, file
+     FROM recordings ORDER BY date DESC, created_at DESC`,
+  );
+  return { folders, songs, lessons, memos, recordings };
 }
 
 export async function addFolder(db: SQLiteDatabase, name: string, teacher: string): Promise<string> {
@@ -52,17 +56,20 @@ export async function updateFolder(db: SQLiteDatabase, id: string, name: string,
 
 /** フォルダを消すと一緒に消えるものの件数（削除の前に見せる） */
 export async function folderContents(db: SQLiteDatabase, id: string) {
-  const r = await db.getFirstAsync<{ lessons: number; songs: number }>(
+  const r = await db.getFirstAsync<{ lessons: number; songs: number; recordings: number }>(
     `SELECT (SELECT COUNT(*) FROM lessons WHERE folder_id = $id) AS lessons,
-            (SELECT COUNT(*) FROM songs WHERE folder_id = $id) AS songs`,
+            (SELECT COUNT(*) FROM songs WHERE folder_id = $id) AS songs,
+            (SELECT COUNT(*) FROM recordings WHERE folder_id = $id) AS recordings`,
     { $id: id },
   );
-  return { lessons: r?.lessons ?? 0, songs: r?.songs ?? 0 };
+  return { lessons: r?.lessons ?? 0, songs: r?.songs ?? 0, recordings: r?.recordings ?? 0 };
 }
 
-/** フォルダと、そのレッスン・曲・トピック・行をまとめて消す（外部キーの ON DELETE CASCADE） */
-export async function deleteFolder(db: SQLiteDatabase, id: string) {
+/** フォルダと、そのレッスン・曲・トピック・行・メモ・録音をまとめて消す（外部キーの ON DELETE CASCADE）。消した録音のファイル名を返す */
+export async function deleteFolder(db: SQLiteDatabase, id: string): Promise<string[]> {
+  const files = await db.getAllAsync<{ file: string }>('SELECT file FROM recordings WHERE folder_id = ?', id);
   await db.runAsync('DELETE FROM folders WHERE id = ?', id);
+  return files.map((f) => f.file);
 }
 
 export async function addLesson(db: SQLiteDatabase, folderId: string, date: string): Promise<string> {
@@ -157,4 +164,29 @@ export async function updateMemo(db: SQLiteDatabase, id: string, text: string) {
 
 export async function deleteMemo(db: SQLiteDatabase, id: string) {
   await db.runAsync('DELETE FROM memos WHERE id = ?', id);
+}
+
+// ── 録音 ──
+
+export async function addRecording(db: SQLiteDatabase, r: Omit<Recording, 'id'> & { id?: string }): Promise<string> {
+  const id = r.id ?? newId('r');
+  await db.runAsync(
+    `INSERT INTO recordings (id, folder_id, kind, lesson_id, song_id, date, duration, note, file, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    id, r.folderId, r.kind, r.lessonId, r.songId, r.date, r.duration, r.note, r.file, Date.now(),
+  );
+  return id;
+}
+
+export async function setRecordingNote(db: SQLiteDatabase, id: string, note: string) {
+  await db.runAsync('UPDATE recordings SET note = ? WHERE id = ?', note, id);
+}
+
+/** 行に録音の経過時間を付けて足す（レッスンの録音中に書いた行） */
+export async function addLineAt(db: SQLiteDatabase, lessonId: string, topicKey: string | null, text: string, at: number) {
+  const r = await db.getFirstAsync<{ p: number | null }>('SELECT MAX(pos) AS p FROM lines WHERE lesson_id = ?', lessonId);
+  await db.runAsync(
+    "INSERT INTO lines (id, lesson_id, kind, topic_key, text, at, pos) VALUES (?, ?, 'learned', ?, ?, ?, ?)",
+    newId('n'), lessonId, topicKey, text, at, (r?.p ?? -1) + 1,
+  );
 }

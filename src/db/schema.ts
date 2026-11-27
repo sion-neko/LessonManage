@@ -66,6 +66,23 @@ const MIGRATIONS: string[] = [
   CREATE INDEX memos_lesson ON memos(lesson_id);
   CREATE INDEX memos_song ON memos(song_id);
   `,
+  // 3：録音
+  `
+  CREATE TABLE recordings (
+    id TEXT PRIMARY KEY NOT NULL,
+    folder_id TEXT NOT NULL REFERENCES folders(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL CHECK (kind IN ('lesson', 'practice', 'song')),
+    lesson_id TEXT REFERENCES lessons(id) ON DELETE SET NULL,
+    song_id TEXT REFERENCES songs(id) ON DELETE SET NULL,
+    date TEXT NOT NULL,
+    duration REAL NOT NULL,
+    note TEXT NOT NULL DEFAULT '',
+    file TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  );
+  CREATE INDEX recordings_lesson ON recordings(lesson_id);
+  CREATE INDEX recordings_song ON recordings(song_id);
+  `,
 ];
 
 export async function migrate(db: SQLiteDatabase) {

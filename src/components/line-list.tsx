@@ -2,8 +2,9 @@ import { useRef, useState, type ComponentRef } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { C } from '@/constants/colors';
+import { fmtDur } from '@/state/recorder';
 
-export type EditableItem = { id: string; text: string };
+export type EditableItem = { id: string; text: string; at?: number };
 
 // 1行1項目の箇条書き。
 // - いちばん下の余白をタップすると、そこに1行書ける。Enter で同じ場所に続けて書ける
@@ -16,6 +17,7 @@ export function LineList({
   onAdd,
   onEdit,
   onDelete,
+  atStyle = 'saved',
 }: {
   items: EditableItem[];
   /** homework＝やること（太字・点なし）、bullet＝学んだこと・メモ（灰色の小さな丸） */
@@ -24,6 +26,8 @@ export function LineList({
   onAdd: (text: string) => void;
   onEdit: (id: string, text: string) => void;
   onDelete: (id: string) => void;
+  /** 行の時間（▶12:40）の見せ方。live＝録音中に書いたばかり（赤）、saved＝録音あり（金色の▶） */
+  atStyle?: 'live' | 'saved';
 }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
@@ -46,6 +50,7 @@ export function LineList({
           <Pressable key={it.id} onPress={() => setEditing(it.id)} style={styles.row} accessibilityHint="タップで直す">
             {!hw && <Dot />}
             <Text style={[styles.text, hw && styles.hwText]}>{it.text}</Text>
+            {it.at != null && <Text style={[styles.at, atStyle === 'live' && { color: C.rec }]}>{atStyle === 'saved' ? '▶' : ''}{fmtDur(it.at)}</Text>}
           </Pressable>
         ),
       )}
@@ -148,4 +153,5 @@ const styles = StyleSheet.create({
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#aeaeb2' },
   gap: { minHeight: 30, paddingVertical: 4, paddingHorizontal: 20, justifyContent: 'center' },
   placeholder: { color: C.chevron, fontSize: 14 },
+  at: { marginLeft: 6, fontSize: 12, lineHeight: 25, fontWeight: '600', color: C.accent, fontVariant: ['tabular-nums'] },
 });
