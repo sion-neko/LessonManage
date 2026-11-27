@@ -3,7 +3,8 @@ import { useRef, useState, type ComponentRef } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Dock, LsHeading, TopicHeading } from '@/components/lesson-parts';
+import { LsHeading, TopicHeading } from '@/components/lesson-parts';
+import { RecordDock } from '@/components/play-bar';
 import { Icon } from '@/components/icon';
 import { LineList } from '@/components/line-list';
 import { MemoDays } from '@/components/memo-days';
@@ -13,13 +14,14 @@ import { Segment } from '@/components/segment';
 import { TopicPicker } from '@/components/topic-picker';
 import { TopicSheet } from '@/components/topic-sheet';
 import { TopicTags } from '@/components/topic-tags';
-import { GoButton } from '@/components/ui';
 import { C } from '@/constants/colors';
 import * as repo from '@/db/repo';
 import type { Topic } from '@/data/types';
 import { fmtDateLong, todayYmd } from '@/lib/date';
 import { topicLabel, useLoadedState } from '@/state/app-state';
+import { usePlayer } from '@/state/player';
 import { fmtDur, useRecorder } from '@/state/recorder';
+import { fakeWave } from '@/lib/chapters';
 
 type View_ = 'sum' | 'pr';
 
@@ -36,6 +38,7 @@ export default function LessonScreen() {
   const [editTopic, setEditTopic] = useState<Topic | null>(null);
   const [practice, setPractice] = useState(false);
   const rec = useRecorder();
+  const player = usePlayer();
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const headingY = useRef<Record<string, number>>({});
 
@@ -103,15 +106,7 @@ export default function LessonScreen() {
 
         {view === 'sum' ? (
           <>
-            {lessonRec && (
-              <View style={styles.player}>
-                <Pressable onPress={() => Alert.alert('再生', '再生は次の区切りで作ります。')} style={styles.ppl} accessibilityLabel="再生">
-                  <Icon name="play" size={18} color="#fff" />
-                </Pressable>
-                <Text style={styles.playerText}>レッスンの録音</Text>
-                <Text style={styles.playerDur}>{fmtDur(lessonRec.duration)}</Text>
-              </View>
-            )}
+            {lessonRec && <LessonPlayer recId={lessonRec.id} />}
             <LsHeading>やること</LsHeading>
             <LineList
               items={lesson.homework}
@@ -143,7 +138,8 @@ export default function LessonScreen() {
                         : repo.addLine(db, lesson.id, 'learned', t ? t.key : null, text),
                     )
                   }
-                  atStyle={recordingHere ? 'live' : 'saved'}
+                  atStyle={recordingHere ? 'live' : lessonRec ? 'saved' : undefined}
+                  onAtPress={lessonRec ? (at) => player.play(lessonRec, at) : undefined}
                   {...lineActions}
                 />
               </View>
@@ -180,14 +176,10 @@ export default function LessonScreen() {
           </Pressable>
         </Pressable>
       ) : view === 'pr' ? (
-        <Dock bottom={Math.max(insets.bottom, 16) + 8}>
-          <GoButton label="個人練を録音" icon="mic" onPress={() => !busy() && setPractice(true)} />
-        </Dock>
-      ) : !lessonRec ? (
-        <Dock bottom={Math.max(insets.bottom, 16) + 8}>
-          <GoButton label="レッスンを録音" icon="mic" onPress={recordLesson} />
-        </Dock>
-      ) : null}
+        <RecordDock label="個人練を録音" onRecord={() => !busy() && setPractice(true)} shrink bottom={Math.max(insets.bottom, 16) + 8} />
+      ) : (
+        <RecordDock label={lessonRec ? undefined : 'レッスンを録音'} onRecord={lessonRec ? undefined : recordLesson} bottom={Math.max(insets.bottom, 16) + 8} />
+      )}
 
       <TopicPicker lesson={lesson} visible={picker} onClose={() => setPicker(false)} />
       <TopicSheet lesson={lesson} topic={editTopic} onClose={() => setEditTopic(null)} />
@@ -202,7 +194,8 @@ const styles = StyleSheet.create({
   segWrap: { paddingTop: 14, paddingHorizontal: 20 },
   player: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 18, marginHorizontal: 20, padding: 12, borderRadius: 14, backgroundColor: '#f7f3e6' },
   ppl: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' },
-  playerText: { flex: 1, fontSize: 15, fontWeight: '600', color: C.fg },
+  pWave: { flex: 1, height: 28, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  pBar: { width: 2, borderRadius: 1, backgroundColor: '#d8d2bf' },
   playerDur: { fontSize: 13, color: C.muted, fontVariant: ['tabular-nums'] },
   recBar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 14, paddingHorizontal: 20, backgroundColor: '#1c1c1e' },
   recDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.rec },
@@ -210,3 +203,34 @@ const styles = StyleSheet.create({
   recStop: { width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   recStopSq: { width: 14, height: 14, borderRadius: 3, backgroundColor: C.rec },
 });
+
+// まとめのいちばん上のプレーヤー（レッスン録音があるときだけ）。再生ボタンで流し、ほかの場所を押すと再生画面
+function LessonPlayer({ recId }: { recId: string }) {
+  const { data } = useLoadedState();
+  const p = usePlayer();
+  const r = data.recordings.find((x) => x.id === recId);
+  if (!r) return null;
+  const on = p.recId === r.id;
+  const dur = on && p.duration ? p.duration : r.duration;
+  const pct = on && dur > 0 ? p.position / dur : 0;
+  const wave = fakeWave(r.id, 40);
+  return (
+    <Pressable
+      onPress={() => {
+        p.open(r);
+        router.push('/player');
+      }}
+      style={styles.player}
+      accessibilityLabel="再生画面を開く">
+      <Pressable onPress={() => (on ? p.toggle() : p.play(r))} style={styles.ppl} accessibilityLabel={on && p.playing ? '一時停止' : '再生'}>
+        <Icon name={on && p.playing ? 'pause' : 'play'} size={18} color="#fff" />
+      </Pressable>
+      <View style={styles.pWave}>
+        {wave.map((v, i) => (
+          <View key={i} style={[styles.pBar, { height: `${v * 100}%` }, (i + 0.5) / wave.length < pct && { backgroundColor: C.accent }]} />
+        ))}
+      </View>
+      <Text style={styles.playerDur}>{on && p.position > 0 ? `${fmtDur(p.position)} / ${fmtDur(dur)}` : fmtDur(dur)}</Text>
+    </Pressable>
+  );
+}

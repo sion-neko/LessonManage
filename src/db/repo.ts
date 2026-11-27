@@ -1,13 +1,13 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-import type { AppData, Folder, Lesson, Line, Memo, Recording, Song, Topic } from '@/data/types';
+import type { AppData, Folder, Lesson, Line, Memo, RecMark, Recording, Song, Topic } from '@/data/types';
 import { newId } from '@/lib/id';
 
 // SQLite とアプリのデータの形の行き来。画面からは state/app-state.tsx を通して使う
 
 type LessonRow = { id: string; folder_id: string; date: string };
 type TopicRow = { lesson_id: string; key: string; song_id: string | null; label: string | null };
-type LineRow = { id: string; lesson_id: string; kind: 'homework' | 'learned'; topic_key: string | null; text: string; at: number | null };
+type LineRow = { id: string; lesson_id: string; kind: 'homework' | 'learned'; topic_key: string | null; text: string; at: number | null; bookmark: number };
 
 /** 全部読む。量が増えて重くなったら、フォルダごとに読むように変える */
 export async function loadAll(db: SQLiteDatabase): Promise<AppData> {
@@ -15,7 +15,7 @@ export async function loadAll(db: SQLiteDatabase): Promise<AppData> {
   const songs = await db.getAllAsync<Song>('SELECT id, folder_id AS folderId, title, sub FROM songs ORDER BY created_at');
   const lessonRows = await db.getAllAsync<LessonRow>('SELECT id, folder_id, date FROM lessons ORDER BY date DESC, created_at DESC');
   const topicRows = await db.getAllAsync<TopicRow>('SELECT lesson_id, key, song_id, label FROM lesson_topics ORDER BY pos');
-  const lineRows = await db.getAllAsync<LineRow>('SELECT id, lesson_id, kind, topic_key, text, at FROM lines ORDER BY pos');
+  const lineRows = await db.getAllAsync<LineRow>('SELECT id, lesson_id, kind, topic_key, text, at, bookmark FROM lines ORDER BY pos');
 
   const lessons: Lesson[] = lessonRows.map((r) => ({
     id: r.id,
@@ -24,6 +24,7 @@ export async function loadAll(db: SQLiteDatabase): Promise<AppData> {
     topics: [],
     homework: [],
     learned: [],
+    chapterCuts: [],
   }));
   const byId = new Map(lessons.map((l) => [l.id, l]));
   for (const t of topicRows) {
@@ -31,16 +32,24 @@ export async function loadAll(db: SQLiteDatabase): Promise<AppData> {
     byId.get(t.lesson_id)?.topics.push(topic);
   }
   for (const r of lineRows) {
-    const line: Line = { id: r.id, text: r.text, topicKey: r.topic_key, ...(r.at != null ? { at: r.at } : {}) };
+    const line: Line = { id: r.id, text: r.text, topicKey: r.topic_key, ...(r.at != null ? { at: r.at } : {}), ...(r.bookmark ? { bookmark: true } : {}) };
     byId.get(r.lesson_id)?.[r.kind].push(line);
   }
   const memos = await db.getAllAsync<Memo>(
     'SELECT id, folder_id AS folderId, lesson_id AS lessonId, song_id AS songId, date, text FROM memos ORDER BY date DESC, created_at',
   );
-  const recordings = await db.getAllAsync<Recording>(
+  const cuts = await db.getAllAsync<{ lesson_id: string; at: number; topic_key: string | null }>('SELECT lesson_id, at, topic_key FROM lesson_chapters ORDER BY at');
+  for (const c of cuts) byId.get(c.lesson_id)?.chapterCuts.push({ at: c.at, topicKey: c.topic_key });
+  const recRows = await db.getAllAsync<Omit<Recording, 'marks'>>(
     `SELECT id, folder_id AS folderId, kind, lesson_id AS lessonId, song_id AS songId, date, duration, note, file
      FROM recordings ORDER BY date DESC, created_at DESC`,
   );
+  const markRows = await db.getAllAsync<{ id: string; recording_id: string; at: number; text: string; bookmark: number }>(
+    'SELECT id, recording_id, at, text, bookmark FROM rec_marks ORDER BY at',
+  );
+  const recordings: Recording[] = recRows.map((r) => ({ ...r, marks: [] }));
+  const recById = new Map(recordings.map((r) => [r.id, r]));
+  for (const m of markRows) recById.get(m.recording_id)?.marks.push({ id: m.id, at: m.at, text: m.text, bookmark: !!m.bookmark } satisfies RecMark);
   return { folders, songs, lessons, memos, recordings };
 }
 
@@ -138,8 +147,9 @@ export async function addLine(db: SQLiteDatabase, lessonId: string, kind: 'homew
   );
 }
 
+/** 行を直す。名前のないしおりも、名前を書いたらふつうの行になる */
 export async function updateLine(db: SQLiteDatabase, id: string, text: string) {
-  await db.runAsync('UPDATE lines SET text = ? WHERE id = ?', text, id);
+  await db.runAsync('UPDATE lines SET text = ?, bookmark = 0 WHERE id = ?', text, id);
 }
 
 export async function deleteLine(db: SQLiteDatabase, id: string) {
@@ -168,7 +178,7 @@ export async function deleteMemo(db: SQLiteDatabase, id: string) {
 
 // ── 録音 ──
 
-export async function addRecording(db: SQLiteDatabase, r: Omit<Recording, 'id'> & { id?: string }): Promise<string> {
+export async function addRecording(db: SQLiteDatabase, r: Omit<Recording, 'id' | 'marks'> & { id?: string }): Promise<string> {
   const id = r.id ?? newId('r');
   await db.runAsync(
     `INSERT INTO recordings (id, folder_id, kind, lesson_id, song_id, date, duration, note, file, created_at)
@@ -189,4 +199,51 @@ export async function addLineAt(db: SQLiteDatabase, lessonId: string, topicKey: 
     "INSERT INTO lines (id, lesson_id, kind, topic_key, text, at, pos) VALUES (?, ?, 'learned', ?, ?, ?, ?)",
     newId('n'), lessonId, topicKey, text, at, (r?.p ?? -1) + 1,
   );
+}
+
+// ── しおり・チャプター ──
+
+/** レッスン録音のしおり：学んだことの行として入れる */
+export async function addLessonMark(db: SQLiteDatabase, lessonId: string, topicKey: string | null, text: string, at: number, bookmark: boolean) {
+  const r = await db.getFirstAsync<{ p: number | null }>('SELECT MAX(pos) AS p FROM lines WHERE lesson_id = ?', lessonId);
+  await db.runAsync(
+    "INSERT INTO lines (id, lesson_id, kind, topic_key, text, at, pos, bookmark) VALUES (?, ?, 'learned', ?, ?, ?, ?, ?)",
+    newId('n'), lessonId, topicKey, text, at, (r?.p ?? -1) + 1, bookmark ? 1 : 0,
+  );
+}
+
+/** 個人練などのしおり：その録音に付ける */
+export async function addRecMark(db: SQLiteDatabase, recordingId: string, text: string, at: number, bookmark: boolean) {
+  await db.runAsync(
+    'INSERT INTO rec_marks (id, recording_id, at, text, bookmark, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+    newId('k'), recordingId, at, text, bookmark ? 1 : 0, Date.now(),
+  );
+}
+
+/** 「この時間からのトピック」を選び直す */
+export async function setChapterCut(db: SQLiteDatabase, lessonId: string, at: number, topicKey: string | null) {
+  await db.runAsync(
+    'INSERT INTO lesson_chapters (lesson_id, at, topic_key) VALUES (?, ?, ?) ON CONFLICT(lesson_id, at) DO UPDATE SET topic_key = excluded.topic_key',
+    lessonId, at, topicKey,
+  );
+}
+
+/**
+ * 録音を消す。元に戻せない。
+ * - レッスン録音：書いた行は残し（録音の時間は外れる）、名前のないしおりとチャプターの選び直しは消す
+ * - ほかの録音：しおりも一緒に消える
+ * 消したファイル名を返す
+ */
+export async function deleteRecording(db: SQLiteDatabase, id: string): Promise<string | null> {
+  const r = await db.getFirstAsync<{ file: string; kind: string; lesson_id: string | null }>('SELECT file, kind, lesson_id FROM recordings WHERE id = ?', id);
+  if (!r) return null;
+  await db.withTransactionAsync(async () => {
+    if (r.kind === 'lesson' && r.lesson_id) {
+      await db.runAsync('DELETE FROM lines WHERE lesson_id = ? AND bookmark = 1', r.lesson_id);
+      await db.runAsync('UPDATE lines SET at = NULL WHERE lesson_id = ?', r.lesson_id);
+      await db.runAsync('DELETE FROM lesson_chapters WHERE lesson_id = ?', r.lesson_id);
+    }
+    await db.runAsync('DELETE FROM recordings WHERE id = ?', id);
+  });
+  return r.file;
 }

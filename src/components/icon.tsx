@@ -17,6 +17,12 @@ const NAMES = {
   mic: { ios: 'mic.fill', android: 'mic', web: 'mic' },
   play: { ios: 'play.fill', android: 'play_arrow', web: 'play_arrow' },
   stop: { ios: 'stop.fill', android: 'stop', web: 'stop' },
+  pause: { ios: 'pause.fill', android: 'pause', web: 'pause' },
+  fwd15: { ios: 'goforward.15', android: 'forward_10', web: 'forward_10' },
+  back15: { ios: 'gobackward.15', android: 'replay_10', web: 'replay_10' },
+  close: { ios: 'xmark', android: 'close', web: 'close' },
+  eq: { ios: 'waveform', android: 'graphic_eq', web: 'graphic_eq' },
+  flag: { ios: 'flag.fill', android: 'flag', web: 'flag' },
   closeDown: { ios: 'chevron.down', android: 'keyboard_arrow_down', web: 'keyboard_arrow_down' },
 } as const;
 

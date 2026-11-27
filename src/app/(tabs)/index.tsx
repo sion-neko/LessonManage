@@ -4,6 +4,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 
 import { FolderHeader } from '@/components/folder-header';
 import { Icon } from '@/components/icon';
+import { RecordDock } from '@/components/play-bar';
 import { PracticeStart } from '@/components/practice-start';
 import { Blank, GoButton } from '@/components/ui';
 import { C } from '@/constants/colors';
@@ -80,9 +81,7 @@ export default function HomeScreen() {
           ))}
         </View>
       </ScrollView>
-      <View style={styles.dock}>
-        <GoButton label="個人練を録音" icon="mic" onPress={recordPractice} />
-      </View>
+      <RecordDock label="個人練を録音" onRecord={recordPractice} shrink bottom={12} />
       <PracticeStart lesson={lesson} visible={practice} onClose={() => setPractice(false)} />
     </View>
   );

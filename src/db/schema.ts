@@ -83,6 +83,28 @@ const MIGRATIONS: string[] = [
   CREATE INDEX recordings_lesson ON recordings(lesson_id);
   CREATE INDEX recordings_song ON recordings(song_id);
   `,
+  // 4：しおりとチャプター
+  //  - レッスン録音のしおりは、学んだことの行として入る（時間付き）。名前を書かなかったしおり（しおり 1…）は bookmark = 1
+  //  - 個人練などほかの録音のしおりは、その録音に付く（rec_marks）
+  //  - チャプターは時間の付いた行のトピックから作る。違っていたら「この時間からのトピック」を選び直す（lesson_chapters）
+  `
+  ALTER TABLE lines ADD COLUMN bookmark INTEGER NOT NULL DEFAULT 0;
+  CREATE TABLE rec_marks (
+    id TEXT PRIMARY KEY NOT NULL,
+    recording_id TEXT NOT NULL REFERENCES recordings(id) ON DELETE CASCADE,
+    at REAL NOT NULL,
+    text TEXT NOT NULL,
+    bookmark INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL
+  );
+  CREATE INDEX rec_marks_recording ON rec_marks(recording_id);
+  CREATE TABLE lesson_chapters (
+    lesson_id TEXT NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+    at REAL NOT NULL,
+    topic_key TEXT,
+    PRIMARY KEY (lesson_id, at)
+  );
+  `,
 ];
 
 export async function migrate(db: SQLiteDatabase) {

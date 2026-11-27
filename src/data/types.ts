@@ -25,9 +25,14 @@ export type Line = {
   text: string;
   /** 学んだことのトピック。null はトピックなし。やることでは使わない */
   topicKey: string | null;
-  /** レッスン録音の経過時間（秒）。録音中に書いた行だけ持つ */
+  /** レッスン録音の経過時間（秒）。録音中に書いた行と、再生画面で足したしおりが持つ */
   at?: number;
+  /** 名前を書かずに足したしおり（「しおり 1」…）。録音を消すと一緒に消える */
+  bookmark?: boolean;
 };
+
+/** 再生画面で「この時間からのトピック」を選び直したところ */
+export type ChapterCut = { at: number; topicKey: string | null };
 
 export type Lesson = {
   id: string;
@@ -37,6 +42,7 @@ export type Lesson = {
   topics: Topic[];
   homework: Line[];
   learned: Line[];
+  chapterCuts: ChapterCut[];
 };
 
 /** メモ：レッスン後の個人練のメモ（lessonId）か、曲ページの自分のメモ（songId） */
@@ -68,9 +74,13 @@ export type Recording = {
   duration: number;
   /** 録音のあとに書く一言 */
   note: string;
+  /** しおり（レッスン録音以外。レッスン録音のしおりは学んだことの行） */
+  marks: RecMark[];
   /** 端末のファイル。iOS ではアプリの場所が変わることがあるので、書類フォルダからの名前だけを持つ（Web は blob の URL） */
   file: string;
 };
+
+export type RecMark = { id: string; at: number; text: string; bookmark: boolean };
 
 export type AppData = {
   folders: Folder[];

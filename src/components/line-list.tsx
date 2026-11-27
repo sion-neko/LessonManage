@@ -18,6 +18,7 @@ export function LineList({
   onEdit,
   onDelete,
   atStyle = 'saved',
+  onAtPress,
 }: {
   items: EditableItem[];
   /** homework＝やること（太字・点なし）、bullet＝学んだこと・メモ（灰色の小さな丸） */
@@ -28,6 +29,8 @@ export function LineList({
   onDelete: (id: string) => void;
   /** 行の時間（▶12:40）の見せ方。live＝録音中に書いたばかり（赤）、saved＝録音あり（金色の▶） */
   atStyle?: 'live' | 'saved';
+  /** 行の時間を押したとき（その位置から流す） */
+  onAtPress?: (at: number) => void;
 }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
@@ -50,7 +53,14 @@ export function LineList({
           <Pressable key={it.id} onPress={() => setEditing(it.id)} style={styles.row} accessibilityHint="タップで直す">
             {!hw && <Dot />}
             <Text style={[styles.text, hw && styles.hwText]}>{it.text}</Text>
-            {it.at != null && <Text style={[styles.at, atStyle === 'live' && { color: C.rec }]}>{atStyle === 'saved' ? '▶' : ''}{fmtDur(it.at)}</Text>}
+            {it.at != null &&
+              (atStyle === 'saved' && onAtPress ? (
+                <Pressable onPress={() => onAtPress(it.at as number)} hitSlop={8} accessibilityLabel={`${fmtDur(it.at)}から再生`}>
+                  <Text style={styles.at}>▶{fmtDur(it.at)}</Text>
+                </Pressable>
+              ) : (
+                <Text style={[styles.at, atStyle === 'live' ? { color: C.rec } : { color: C.muted }]}>{fmtDur(it.at)}</Text>
+              ))}
           </Pressable>
         ),
       )}

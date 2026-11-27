@@ -15,6 +15,7 @@ import { keepRecording } from '@/lib/audio-files';
 import { todayYmd } from '@/lib/date';
 import { newId } from '@/lib/id';
 import { useAppState } from './app-state';
+import { usePlayer } from './player';
 
 // 録音はアプリに1本だけ。どの画面にいても続く（画面を移っても止まらない）
 // 今の版は Expo Go で動く範囲：画面がロックされると止まるので、録音中は画面を消えないようにしている。
@@ -44,6 +45,7 @@ const KEEP_AWAKE = 'recording';
 
 export function RecorderProvider({ children }: { children: ReactNode }) {
   const { act } = useAppState();
+  const player = usePlayer();
   const recorder = useAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true });
   const status = useAudioRecorderState(recorder, 250);
   const [target, setTarget] = useState<RecTarget | null>(null);
@@ -59,6 +61,8 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
           Alert.alert('マイクが使えません', '設定アプリで、このアプリのマイクをオンにしてください。');
           return false;
         }
+        // 録音を始めると、流していた録音は一時停止になる（再生バーは録音が終わるまで隠れる）
+        player.pauseForRecording();
         await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
         await recorder.prepareToRecordAsync();
         recorder.record();
@@ -72,7 +76,7 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
         busy.current = false;
       }
     },
-    [recorder, target],
+    [recorder, target, player],
   );
 
   const stop = useCallback(async () => {
