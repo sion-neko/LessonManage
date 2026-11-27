@@ -31,6 +31,7 @@ button:active { opacity: .55; }
 .fmenu .ck { width: 20px; flex: none; display: grid; place-items: center; color: var(--accent); }
 .fmenu .ck svg { width: 16px; height: 16px; }
 .fmenu .add { color: var(--accent-d); }
+.fmenu.right { transform-origin: top right; }
 .ic.dots { font-size: 13px; letter-spacing: 1px; font-weight: 700; }
 .st-soon { margin: 0 0 4px; font-size: 13px; color: var(--muted); }
 .st-plan { padding: 13px 16px; border-radius: 14px; background: var(--field, var(--card)); font-size: 15px; color: #aeaeb2; }
@@ -406,13 +407,12 @@ function segment(items, value, onPick, cls) {
 }
 function head(nav) {
   const hd = h('<div class="head"></div>');
-  // 左上の見出し＝今のフォルダ。押すとメニューで切り替え・追加。右上の•••で今のフォルダを編集、歯車で設定
+  // 左上の見出し＝今のフォルダ。押すとメニューで切り替え・追加。右上の•••から今のフォルダの編集と設定
   const t = D.type(cur);
   const ft = h('<button class="fold-t"><span>' + esc(t ? t.name : '') + '</span>' + icDownS + '</button>');
   ft.onclick = () => foldMenu(ft, nav);
   hd.appendChild(ft);
-  const ed = h('<button class="ic dots" aria-label="このフォルダを編集">•••</button>'); ed.onclick = () => typeEdit(nav, D.type(cur)); hd.appendChild(ed);
-  const g = h('<button class="ic" aria-label="設定">' + I.gear + '</button>'); g.onclick = () => settingsSheet(); hd.appendChild(g);
+  const mo = h('<button class="ic dots" aria-label="そのほか">•••</button>'); mo.onclick = () => headMenu(mo, nav); hd.appendChild(mo);
   return hd;
 }
 const icDownS = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
@@ -426,6 +426,18 @@ function foldMenu(anchor, nav) {
   dim.onclick = (e) => { if (e.target === dim) shut(); };
   dim.querySelectorAll('[data-t]').forEach((b) => (b.onclick = () => { shut(); if (b.dataset.t !== cur) { cur = b.dataset.t; nav.refresh(); fadeIn(); } }));
   dim.querySelector('[data-act=add]').onclick = () => { shut(); typeEdit(nav, null); };
+  app.appendChild(dim);
+}
+// 右上の•••：今のフォルダの編集と設定。•••の真下に、右端をそろえて開く
+const icPen = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>';
+function headMenu(anchor, nav) {
+  const dim = h('<div class="fmenu-dim"><div class="fmenu right"><button data-act="edit"><span class="ck">' + icPen + '</span>このフォルダを編集</button><button data-act="set"><span class="ck">' + I.gear + '</span>設定</button></div></div>');
+  const m = dim.querySelector('.fmenu'); const ar = anchor.getBoundingClientRect(), or = app.getBoundingClientRect();
+  m.style.top = (ar.bottom - or.top + 6) + 'px'; m.style.right = (or.right - ar.right) + 'px';
+  const shut = () => dim.remove();
+  dim.onclick = (e) => { if (e.target === dim) shut(); };
+  dim.querySelector('[data-act=edit]').onclick = () => { shut(); typeEdit(nav, D.type(cur)); };
+  dim.querySelector('[data-act=set]').onclick = () => { shut(); settingsSheet(); };
   app.appendChild(dim);
 }
 const fadeIn = () => requestAnimationFrame(() => { const s = document.querySelector('.screen.in .scroll'); if (s) { s.classList.remove('fade'); void s.offsetWidth; s.classList.add('fade'); } });
