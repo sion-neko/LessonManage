@@ -3,12 +3,12 @@ import { ScrollView, StyleSheet, Text } from 'react-native';
 
 import { C } from '@/constants/colors';
 import { fmtDateLong } from '@/lib/date';
-import { useAppState } from '@/state/app-state';
+import { useLoadedState } from '@/state/app-state';
 
 // レッスンページ。中身は後の区切りで作る
 export default function LessonScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data } = useAppState();
+  const { data } = useLoadedState();
   const lesson = data.lessons.find((l) => l.id === id);
   return (
     <ScrollView style={styles.screen} contentContainerStyle={{ padding: 20 }}>

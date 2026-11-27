@@ -16,3 +16,10 @@ export function fmtDateLong(ymd: string) {
   const d = parse(ymd);
   return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}（${WEEK[d.getDay()]}）`;
 }
+
+/** 今日の日付（端末の時刻で YYYY-MM-DD） */
+export function todayYmd() {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}

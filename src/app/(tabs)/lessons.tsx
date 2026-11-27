@@ -5,10 +5,10 @@ import { FolderHeader } from '@/components/folder-header';
 import { Blank, ListGroup, ListRow, SectionLabel } from '@/components/ui';
 import { C } from '@/constants/colors';
 import { fmtDateLong } from '@/lib/date';
-import { lessonsOf, useAppState } from '@/state/app-state';
+import { lessonsOf, useLoadedState } from '@/state/app-state';
 
 export default function LessonsScreen() {
-  const { data, folder } = useAppState();
+  const { data, folder } = useLoadedState();
   const lessons = lessonsOf(data, folder?.id);
   return (
     <View style={styles.screen}>

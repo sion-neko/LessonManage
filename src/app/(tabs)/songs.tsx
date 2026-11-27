@@ -4,10 +4,10 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { FolderHeader } from '@/components/folder-header';
 import { Blank, ListGroup, ListRow, SectionLabel } from '@/components/ui';
 import { C } from '@/constants/colors';
-import { songsOf, useAppState } from '@/state/app-state';
+import { songsOf, useLoadedState } from '@/state/app-state';
 
 export default function SongsScreen() {
-  const { data, folder } = useAppState();
+  const { data, folder } = useLoadedState();
   const songs = songsOf(data, folder?.id);
   return (
     <View style={styles.screen}>

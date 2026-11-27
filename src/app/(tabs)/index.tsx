@@ -7,11 +7,11 @@ import { Blank, GoButton } from '@/components/ui';
 import { C } from '@/constants/colors';
 import type { Line, Topic } from '@/data/types';
 import { fmtDate } from '@/lib/date';
-import { lessonsOf, topicLabel, useAppState } from '@/state/app-state';
+import { lessonsOf, topicLabel, useLoadedState } from '@/state/app-state';
 
 // いま：選んでいるフォルダの直近のレッスンを1画面で
 export default function HomeScreen() {
-  const { data, folder } = useAppState();
+  const { data, folder, addLesson } = useLoadedState();
   const lesson = lessonsOf(data, folder?.id)[0];
   const recordPractice = () => Alert.alert('個人練を録音', '録音は後の区切りで作ります。');
 
@@ -21,7 +21,11 @@ export default function HomeScreen() {
         <FolderHeader />
         <ScrollView>
           <Blank title={`${folder?.name ?? ''}のレッスンはまだありません`} body="レッスンの日に作ると、学んだこととやることがここに出ます。">
-            <GoButton label="最初のレッスン" icon="plus" onPress={() => Alert.alert('最初のレッスン', 'レッスンの作成は後の区切りで作ります。')} />
+            <GoButton label="最初のレッスン" icon="plus" onPress={async () => {
+                if (!folder) return;
+                const id = await addLesson(folder.id);
+                router.push({ pathname: '/lesson/[id]', params: { id } });
+              }} />
           </Blank>
         </ScrollView>
       </View>

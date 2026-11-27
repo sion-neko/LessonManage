@@ -2,12 +2,12 @@ import { useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 
 import { C } from '@/constants/colors';
-import { useAppState } from '@/state/app-state';
+import { useLoadedState } from '@/state/app-state';
 
 // 曲ページ。中身は後の区切りで作る
 export default function SongScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data } = useAppState();
+  const { data } = useLoadedState();
   const song = data.songs.find((s) => s.id === id);
   return (
     <ScrollView style={styles.screen} contentContainerStyle={{ padding: 20 }}>

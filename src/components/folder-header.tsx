@@ -1,17 +1,17 @@
 import { router } from 'expo-router';
 import { useRef, useState, type ComponentRef } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { C } from '@/constants/colors';
-import { useAppState } from '@/state/app-state';
+import { useLoadedState } from '@/state/app-state';
 import { Icon } from './icon';
 import { PopupMenu, type Anchor, type MenuItem } from './popup-menu';
 
 // 各タブの左上：今のフォルダの名前を見出しに。押すと真下に切り替えのメニュー。
 // 右上の•••：このフォルダを編集・設定
 export function FolderHeader() {
-  const { data, folder, setFolderId } = useAppState();
+  const { data, folder, setFolderId } = useLoadedState();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const titleRef = useRef<ComponentRef<typeof Pressable>>(null);
@@ -27,8 +27,6 @@ export function FolderHeader() {
     });
   };
 
-  const notYet = (what: string) => Alert.alert(what, '次の区切り（データの保存）で作ります。');
-
   const folderItems: MenuItem[] = [
     ...data.folders.map((f) => ({
       key: f.id,
@@ -36,10 +34,10 @@ export function FolderHeader() {
       checked: f.id === folder?.id,
       onPress: () => setFolderId(f.id),
     })),
-    { key: 'add', label: 'フォルダを追加', icon: 'plus', accent: true, onPress: () => notYet('フォルダを追加') },
+    { key: 'add', label: 'フォルダを追加', icon: 'plus', accent: true, onPress: () => router.push('/folder-edit') },
   ];
   const moreItems: MenuItem[] = [
-    { key: 'edit', label: 'このフォルダを編集', icon: 'pen', onPress: () => notYet('このフォルダを編集') },
+    { key: 'edit', label: 'このフォルダを編集', icon: 'pen', onPress: () => folder && router.push({ pathname: '/folder-edit', params: { id: folder.id } }) },
     { key: 'settings', label: '設定', icon: 'gear', onPress: () => router.push('/settings') },
   ];
 
