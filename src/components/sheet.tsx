@@ -34,7 +34,8 @@ export function Sheet({ visible, onClose, children }: { visible: boolean; onClos
         </Animated.View>
         <Animated.View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) + 10, transform: [{ translateY }] }]}>
           <View style={styles.grip} />
-          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 20 }}>
+          {/* 下の余白は、いちばん下のボタンの厚み（影）がスクロールの枠で切れないように */}
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 8 }}>
             {children}
           </ScrollView>
         </Animated.View>
