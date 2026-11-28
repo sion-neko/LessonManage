@@ -29,6 +29,7 @@ export default function RecordingScreen() {
   const [note, setNote] = useState(rec.target?.note ?? '');
   const [linkLesson, setLinkLesson] = useState(rec.target?.linkLesson ?? true);
   const [picker, setPicker] = useState(false);
+  const [memoOpen, setMemoOpen] = useState(false);
   const [levels, setLevels] = useState<number[]>(() => Array(BARS).fill(0.06));
   const last = useRef(-1);
   const [stopping, setStopping] = useState(false);
@@ -117,8 +118,9 @@ export default function RecordingScreen() {
         <View style={{ width: 70 }} />
       </View>
 
-      {ctx.kind !== 'lesson' ? (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 24, gap: 18 }} keyboardShouldPersistTaps="handled">
+      {/* 上：曲名と、その下に小さくメモ（タップするとその場で書ける） */}
+      {ctx.kind !== 'lesson' && (
+        <View style={styles.head}>
           {/* 録る前は押して曲を選べる。録り始めたら変えない */}
           <Pressable
             disabled={recording}
@@ -126,27 +128,60 @@ export default function RecordingScreen() {
             style={styles.songRow}
             accessibilityRole="button"
             accessibilityLabel={recording ? undefined : '録音内容を選ぶ'}>
-            {song && <Icon name="note" size={20} color={C.muted} />}
-            <Text style={styles.song}>{song ? song.title : songTitle(data.songs, ctx.songId)}</Text>
-            {!recording && <Icon name="down" size={20} color={C.muted} />}
+            {song && <Icon name="note" size={18} color={C.muted} />}
+            <Text style={styles.song} numberOfLines={2}>
+              {song ? song.title : songTitle(data.songs, ctx.songId)}
+            </Text>
+            {!recording && <Icon name="down" size={18} color={C.muted} />}
           </Pressable>
-          <TextInput
-            value={note}
-            onChangeText={changeNote}
-            placeholder="一言（なくてもいい）"
-            placeholderTextColor={C.muted}
-            style={styles.noteInput}
-            returnKeyType="done"
-            accessibilityLabel="一言"
-          />
+          {memoOpen ? (
+            <TextInput
+              value={note}
+              onChangeText={changeNote}
+              autoFocus
+              onBlur={() => setMemoOpen(false)}
+              onSubmitEditing={() => setMemoOpen(false)}
+              returnKeyType="done"
+              style={styles.memoInput}
+              accessibilityLabel="メモ"
+            />
+          ) : (
+            <Pressable onPress={() => setMemoOpen(true)} style={styles.memo} hitSlop={8} accessibilityRole="button" accessibilityLabel="メモを書く">
+              <Icon name="pen" size={13} color={note ? C.fg : C.muted} />
+              <Text style={[styles.memoText, !!note && { color: C.fg }]} numberOfLines={2}>
+                {note || 'メモ'}
+              </Text>
+            </Pressable>
+          )}
           {ctx.fromSong && lesson && (
             <Pressable onPress={changeLink} style={styles.toggle} accessibilityRole="checkbox" accessibilityState={{ checked: linked }}>
-              <View style={[styles.box, linked && styles.boxOn]}>{linked && <Icon name="check" size={13} color="#fff" />}</View>
+              <View style={[styles.box, linked && styles.boxOn]}>{linked && <Icon name="check" size={12} color="#fff" />}</View>
               <Text style={styles.toggleText}>{fmtDate(lesson.date)}のレッスン後の個人練</Text>
             </Pressable>
           )}
+        </View>
+      )}
+
+      {/* 真ん中：時間と波形を大きく */}
+      <View style={styles.meter}>
+        <View style={[styles.state, !recording && { opacity: 0 }]}>
+          <View style={styles.dot} />
+          <Text style={styles.stateText}>録音中</Text>
+        </View>
+        <Text style={[styles.time, !recording && { color: C.chevron }]}>{fmtDur(rec.elapsed)}</Text>
+        <View style={styles.wave}>
+          {levels.map((v, i) => (
+            <View key={i} style={[styles.waveBar, { height: `${Math.round(v * 100)}%` }, !recording && { backgroundColor: C.line }]} />
+          ))}
+        </View>
+        <Text style={[styles.hint, !recording && { opacity: 0 }]}>録音中は画面が消えないようにしています</Text>
+      </View>
+
+      {/* 下：やること・学んだこと（練習しながら見られるように）。多いときはこの中でスクロール */}
+      {(homework.length > 0 || (learned.length > 0 && src)) && (
+        <ScrollView style={styles.notes} contentContainerStyle={{ padding: 16, gap: 14 }}>
           {homework.length > 0 && (
-            <View style={{ gap: 6 }}>
+            <View style={{ gap: 4 }}>
               <Text style={styles.cap}>やること</Text>
               {homework.map((h) => (
                 <Text key={h.id} style={styles.big}>
@@ -156,7 +191,7 @@ export default function RecordingScreen() {
             </View>
           )}
           {learned.length > 0 && src && (
-            <View style={{ gap: 6 }}>
+            <View style={{ gap: 4 }}>
               <Text style={styles.cap}>学んだこと</Text>
               {learned.map((n) => {
                 const tp = src.topics.find((x) => x.key === n.topicKey);
@@ -170,23 +205,7 @@ export default function RecordingScreen() {
             </View>
           )}
         </ScrollView>
-      ) : (
-        <View style={{ flex: 1 }} />
       )}
-
-      <View style={styles.meter}>
-        <View style={[styles.state, !recording && { opacity: 0 }]}>
-          <View style={styles.dot} />
-          <Text style={styles.stateText}>録音中</Text>
-        </View>
-        <Text style={[styles.time, ctx.kind !== 'lesson' && { fontSize: 40 }, !recording && { color: C.chevron }]}>{fmtDur(rec.elapsed)}</Text>
-        <View style={styles.wave}>
-          {levels.map((v, i) => (
-            <View key={i} style={[styles.waveBar, { height: `${Math.round(v * 100)}%` }, !recording && { backgroundColor: C.line }]} />
-          ))}
-        </View>
-        <Text style={[styles.hint, !recording && { opacity: 0 }]}>録音中は画面が消えないようにしています</Text>
-      </View>
 
       <View style={[styles.btnWrap, { paddingBottom: insets.bottom + 24 }]}>
         <Pressable
@@ -240,25 +259,29 @@ const styles = StyleSheet.create({
   close: { width: 70, flexDirection: 'row', alignItems: 'center', gap: 2 },
   closeText: { color: C.accent, fontSize: 16 },
   barTitle: { flex: 1, textAlign: 'center', color: C.fg, fontSize: 16, fontWeight: '700' },
-  songRow: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start' },
-  song: { color: C.fg, fontSize: 26, fontWeight: '800', flexShrink: 1 },
-  cap: { color: C.accent, fontSize: 13, fontWeight: '700' },
-  big: { color: C.fg, fontSize: 21, fontWeight: '700', lineHeight: 30 },
-  mid: { color: '#3a3a3c', fontSize: 17, lineHeight: 26 },
-  meter: { alignItems: 'center', gap: 10, paddingVertical: 16 },
+  head: { alignItems: 'center', gap: 10, paddingHorizontal: 24, paddingTop: 12 },
+  songRow: { flexDirection: 'row', alignItems: 'center', gap: 6, maxWidth: '100%' },
+  song: { color: C.fg, fontSize: 26, fontWeight: '800', flexShrink: 1, textAlign: 'center' },
+  memo: { flexDirection: 'row', alignItems: 'center', gap: 5, maxWidth: '100%', paddingVertical: 2 },
+  memoText: { color: C.muted, fontSize: 15, flexShrink: 1 },
+  memoInput: { alignSelf: 'stretch', textAlign: 'center', fontSize: 15, color: C.fg, paddingVertical: 4, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.line },
+  cap: { color: C.accent, fontSize: 12, fontWeight: '700' },
+  big: { color: C.fg, fontSize: 18, fontWeight: '700', lineHeight: 26 },
+  mid: { color: '#3a3a3c', fontSize: 15, lineHeight: 22 },
+  notes: { flexGrow: 0, maxHeight: '34%', marginHorizontal: 16, borderRadius: 16, backgroundColor: C.bg },
+  meter: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingVertical: 16 },
   state: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.rec },
   stateText: { color: C.rec, fontSize: 14, fontWeight: '600' },
-  time: { color: C.fg, fontSize: 56, fontWeight: '300', fontVariant: ['tabular-nums'] },
-  wave: { flexDirection: 'row', alignItems: 'center', gap: 2, height: 56, paddingHorizontal: 24, alignSelf: 'stretch', justifyContent: 'center' },
+  time: { color: C.fg, fontSize: 64, fontWeight: '300', fontVariant: ['tabular-nums'] },
+  wave: { flexDirection: 'row', alignItems: 'center', gap: 2, height: 80, paddingHorizontal: 24, alignSelf: 'stretch', justifyContent: 'center' },
   waveBar: { width: 3, borderRadius: 2, backgroundColor: C.accent },
   hint: { color: C.muted, fontSize: 12 },
   btnWrap: { alignItems: 'center', gap: 6, paddingTop: 8 },
   ring: { width: 76, height: 76, borderRadius: 38, borderWidth: 4, borderColor: C.line, alignItems: 'center', justifyContent: 'center' },
   btnLabel: { color: C.muted, fontSize: 13 },
-  toggle: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 2 },
-  box: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: C.chevron, alignItems: 'center', justifyContent: 'center' },
+  toggle: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 2 },
+  box: { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: C.chevron, alignItems: 'center', justifyContent: 'center' },
   boxOn: { backgroundColor: C.accent, borderColor: C.accent },
-  toggleText: { color: C.fg, fontSize: 15 },
-  noteInput: { backgroundColor: C.bg, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, fontSize: 17, color: C.fg },
+  toggleText: { color: C.muted, fontSize: 14 },
 });
