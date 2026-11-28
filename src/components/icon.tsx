@@ -1,0 +1,43 @@
+import { SymbolView } from 'expo-symbols';
+import type { ColorValue, StyleProp, ViewStyle } from 'react-native';
+
+// iOS は SF Symbols、Android と Web は Material Symbols
+const NAMES = {
+  home: { ios: 'house', android: 'home', web: 'home' },
+  list: { ios: 'list.bullet', android: 'list', web: 'list' },
+  note: { ios: 'music.note', android: 'music_note', web: 'music_note' },
+  timeline: { ios: 'text.bubble', android: 'forum', web: 'forum' },
+  more: { ios: 'ellipsis', android: 'more_horiz', web: 'more_horiz' },
+  down: { ios: 'chevron.down', android: 'expand_more', web: 'expand_more' },
+  chevron: { ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' },
+  check: { ios: 'checkmark', android: 'check', web: 'check' },
+  plus: { ios: 'plus', android: 'add', web: 'add' },
+  pen: { ios: 'pencil', android: 'edit', web: 'edit' },
+  gear: { ios: 'gearshape', android: 'settings', web: 'settings' },
+  mic: { ios: 'mic.fill', android: 'mic', web: 'mic' },
+  play: { ios: 'play.fill', android: 'play_arrow', web: 'play_arrow' },
+  stop: { ios: 'stop.fill', android: 'stop', web: 'stop' },
+  pause: { ios: 'pause.fill', android: 'pause', web: 'pause' },
+  fwd15: { ios: 'goforward.15', android: 'forward_10', web: 'forward_10' },
+  back15: { ios: 'gobackward.15', android: 'replay_10', web: 'replay_10' },
+  close: { ios: 'xmark', android: 'close', web: 'close' },
+  eq: { ios: 'waveform', android: 'graphic_eq', web: 'graphic_eq' },
+  flag: { ios: 'flag.fill', android: 'flag', web: 'flag' },
+  closeDown: { ios: 'chevron.down', android: 'keyboard_arrow_down', web: 'keyboard_arrow_down' },
+} as const;
+
+export type IconName = keyof typeof NAMES;
+
+export function Icon({
+  name,
+  size = 22,
+  color,
+  style,
+}: {
+  name: IconName;
+  size?: number;
+  color: ColorValue;
+  style?: StyleProp<ViewStyle>;
+}) {
+  return <SymbolView name={NAMES[name]} size={size} tintColor={color} style={style} />;
+}
