@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 import { SQLiteProvider } from 'expo-sqlite';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
@@ -14,65 +15,67 @@ import { RecorderProvider } from '@/state/recorder';
 
 export default function RootLayout() {
   return (
-    <SQLiteProvider databaseName="lessonmanage.db" onInit={migrate}>
-      <AppStateProvider>
-        <StatusBar style="dark" />
-        <WhenLoaded>
-          <PlayerProvider>
-            <RecorderProvider>
-              <PlayerSheetProvider>
-                <WithRecBar>
-                  <Stack
-                    screenOptions={{
-                      contentStyle: { backgroundColor: C.bg },
-                      headerTintColor: C.accent,
-                      headerBackTitle: '戻る',
-                      headerShadowVisible: false,
-                      headerStyle: { backgroundColor: C.card },
-                      headerTitleStyle: { color: C.fg },
-                    }}>
-                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                    <Stack.Screen
-                      name="welcome"
-                      options={{
-                        headerShown: false,
-                        gestureEnabled: false,
-                        animation: 'fade',
-                      }}
-                    />
-                    <Stack.Screen name="lesson/[id]" options={{ title: '' }} />
-                    <Stack.Screen name="song/[id]" options={{ title: '' }} />
-                    <Stack.Screen
-                      name="folder-edit"
-                      options={{
-                        presentation: 'formSheet',
-                        sheetAllowedDetents: [0.6, 1],
-                      }}
-                    />
-                    <Stack.Screen
-                      name="settings"
-                      options={{
-                        title: '設定',
-                        presentation: 'formSheet',
-                        sheetAllowedDetents: [0.6, 1],
-                      }}
-                    />
-                    <Stack.Screen
-                      name="recording"
-                      options={{
-                        headerShown: false,
-                        presentation: 'fullScreenModal',
-                        gestureEnabled: false,
-                      }}
-                    />
-                  </Stack>
-                </WithRecBar>
-              </PlayerSheetProvider>
-            </RecorderProvider>
-          </PlayerProvider>
-        </WhenLoaded>
-      </AppStateProvider>
-    </SQLiteProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SQLiteProvider databaseName="lessonmanage.db" onInit={migrate}>
+        <AppStateProvider>
+          <StatusBar style="dark" />
+          <WhenLoaded>
+            <PlayerProvider>
+              <RecorderProvider>
+                <PlayerSheetProvider>
+                  <WithRecBar>
+                    <Stack
+                      screenOptions={{
+                        contentStyle: { backgroundColor: C.bg },
+                        headerTintColor: C.accent,
+                        headerBackTitle: '戻る',
+                        headerShadowVisible: false,
+                        headerStyle: { backgroundColor: C.card },
+                        headerTitleStyle: { color: C.fg },
+                      }}>
+                      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                      <Stack.Screen
+                        name="welcome"
+                        options={{
+                          headerShown: false,
+                          gestureEnabled: false,
+                          animation: 'fade',
+                        }}
+                      />
+                      <Stack.Screen name="lesson/[id]" options={{ title: '' }} />
+                      <Stack.Screen name="song/[id]" options={{ title: '' }} />
+                      <Stack.Screen
+                        name="folder-edit"
+                        options={{
+                          presentation: 'formSheet',
+                          sheetAllowedDetents: [0.6, 1],
+                        }}
+                      />
+                      <Stack.Screen
+                        name="settings"
+                        options={{
+                          title: '設定',
+                          presentation: 'formSheet',
+                          sheetAllowedDetents: [0.6, 1],
+                        }}
+                      />
+                      <Stack.Screen
+                        name="recording"
+                        options={{
+                          headerShown: false,
+                          presentation: 'fullScreenModal',
+                          gestureEnabled: false,
+                        }}
+                      />
+                    </Stack>
+                  </WithRecBar>
+                </PlayerSheetProvider>
+              </RecorderProvider>
+            </PlayerProvider>
+          </WhenLoaded>
+        </AppStateProvider>
+      </SQLiteProvider>
+    </GestureHandlerRootView>
   );
 }
 

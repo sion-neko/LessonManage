@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type GestureResponderEvent, type GestureResponderHandlers } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type GestureResponderEvent } from 'react-native';
+import { GestureDetector, type PanGesture } from 'react-native-gesture-handler';
 
 import { Icon } from './icon';
 import { PopupMenu, type Anchor } from './popup-menu';
@@ -21,8 +22,8 @@ const RATES = [0.5, 0.75, 1, 1.25, 1.5];
 // 再生画面の中身。どの録音でも同じ画面で、違うのはチャプターの有無だけ（レッスン録音にだけある）。
 // 録音が主役で、しおりがコメントのように流れる（ライブ配信のアーカイブのような画面）。
 // 画面としては開かず、ミニプレーヤーから広がる層（player-sheet.tsx）の中に出す
-// drag：上の帯（つまみと「閉じる」の行）を下に引くと閉じる
-export function PlayerView({ onClose, drag }: { onClose: () => void; drag: GestureResponderHandlers }) {
+// gesture：上の黒いところを下に引くと閉じる
+export function PlayerView({ onClose, gesture }: { onClose: () => void; gesture: PanGesture }) {
   const { data, act } = useLoadedState();
   const p = usePlayer();
   const rec = data.recordings.find((r) => r.id === p.recId);
@@ -31,19 +32,19 @@ export function PlayerView({ onClose, drag }: { onClose: () => void; drag: Gestu
     if (!rec) onClose();
   }, [rec, onClose]);
   if (!rec) return <View style={{ flex: 1, backgroundColor: DARK }} />;
-  return <PlayerBody rec={rec} act={act} onClose={onClose} drag={drag} />;
+  return <PlayerBody rec={rec} act={act} onClose={onClose} gesture={gesture} />;
 }
 
 function PlayerBody({
   rec,
   act,
   onClose,
-  drag,
+  gesture,
 }: {
   rec: Recording;
   act: ReturnType<typeof useLoadedState>['act'];
   onClose: () => void;
-  drag: GestureResponderHandlers;
+  gesture: PanGesture;
 }) {
   const { data } = useLoadedState();
   const p = usePlayer();
@@ -104,91 +105,94 @@ function PlayerBody({
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.card }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={[styles.top, { paddingTop: insets.top }]}>
-        <View {...drag}>
-        <View style={styles.grip} />
-        <View style={styles.bar}>
-          <Pressable onPress={onClose} style={styles.close} hitSlop={8} accessibilityRole="button">
-            <Icon name="closeDown" size={18} color="#fff" />
-            <Text style={styles.closeText}>閉じる</Text>
-          </Pressable>
-          <Text style={styles.title} numberOfLines={1}>
-            {recTitle(data, rec)}
-          </Text>
-          <Pressable
-            ref={moreRef}
-            onPress={() => moreRef.current?.measureInWindow((x, y, w, h) => setMenu({ top: y + h + 6, right: 12 }))}
-            style={styles.more}
-            hitSlop={8}
-            accessibilityLabel="そのほか">
-            <Icon name="more" size={22} color="#fff" />
-          </Pressable>
-        </View>
-        </View>
-
-        <Text style={styles.now}>{fmtDur(pos)}</Text>
-        {lesson ? (
-          <Pressable onPress={() => setChapSheet(true)} style={styles.chip} accessibilityLabel="この時間からのトピックを選ぶ">
-            <Text style={styles.chipText} numberOfLines={1}>
-              {recSub(data, rec, pos)}
+      {/* 上の黒いところのどこを下に引いても閉じる（横に動かす波形の操作とは、縦か横かで分ける） */}
+      <GestureDetector gesture={gesture}>
+        <View style={[styles.top, { paddingTop: insets.top }]}>
+          <View>
+          <View style={styles.grip} />
+          <View style={styles.bar}>
+            <Pressable onPress={onClose} style={styles.close} hitSlop={8} accessibilityRole="button">
+              <Icon name="closeDown" size={18} color="#fff" />
+              <Text style={styles.closeText}>閉じる</Text>
+            </Pressable>
+            <Text style={styles.title} numberOfLines={1}>
+              {recTitle(data, rec)}
             </Text>
-            <Icon name="down" size={12} color="#fff" />
-          </Pressable>
-        ) : (
-          <Text style={styles.sub}>{recSub(data, rec, pos)}</Text>
-        )}
-
-        <View
-          style={styles.wave}
-          onLayout={(e) => setWaveW(e.nativeEvent.layout.width)}
-          onStartShouldSetResponder={() => true}
-          onMoveShouldSetResponder={() => true}
-          onResponderGrant={seekAt}
-          onResponderMove={seekAt}
-          accessibilityLabel="再生する位置">
-          {wave.map((v, i) => (
-            <View key={i} pointerEvents="none" style={[styles.waveBar, { height: `${v * 100}%` }, (i + 0.5) / BARS < pct && { backgroundColor: C.accent }]} />
-          ))}
-          {waveW > 0 &&
-            marks.map((m) => <View key={m.id} pointerEvents="none" style={[styles.flag, { left: (m.at / dur) * waveW - 2 }]} />)}
-          {waveW > 0 && <View pointerEvents="none" style={[styles.head, { left: pct * waveW - 1 }]} />}
-        </View>
-        {lesson && waveW > 0 && (
-          <View style={styles.cuts}>
-            {segs.map((s) => {
-              const on = pos >= s.from && pos < s.to;
-              const left = (s.from / dur) * waveW;
-              const width = ((s.to - s.from) / dur) * waveW;
-              return (
-                <View key={s.from} style={{ position: 'absolute', left: left + 1, width: Math.max(0, width - 2), top: 0 }}>
-                  <View style={[styles.cut, on && { backgroundColor: C.accent }]} />
-                  {width > waveW * 0.14 && (
-                    <Text style={[styles.cutLabel, on && { color: '#fff' }]} numberOfLines={1}>
-                      {label(s.topicKey)}
-                    </Text>
-                  )}
-                </View>
-              );
-            })}
+            <Pressable
+              ref={moreRef}
+              onPress={() => moreRef.current?.measureInWindow((x, y, w, h) => setMenu({ top: y + h + 6, right: 12 }))}
+              style={styles.more}
+              hitSlop={8}
+              accessibilityLabel="そのほか">
+              <Icon name="more" size={22} color="#fff" />
+            </Pressable>
           </View>
-        )}
-        <View style={styles.ends}>
-          <Text style={styles.endText}>0:00</Text>
-          <Text style={styles.endText}>{fmtDur(dur)}</Text>
+          </View>
+
+          <Text style={styles.now}>{fmtDur(pos)}</Text>
+          {lesson ? (
+            <Pressable onPress={() => setChapSheet(true)} style={styles.chip} accessibilityLabel="この時間からのトピックを選ぶ">
+              <Text style={styles.chipText} numberOfLines={1}>
+                {recSub(data, rec, pos)}
+              </Text>
+              <Icon name="down" size={12} color="#fff" />
+            </Pressable>
+          ) : (
+            <Text style={styles.sub}>{recSub(data, rec, pos)}</Text>
+          )}
+
+          <View
+            style={styles.wave}
+            onLayout={(e) => setWaveW(e.nativeEvent.layout.width)}
+            onStartShouldSetResponder={() => true}
+            onMoveShouldSetResponder={() => true}
+            onResponderGrant={seekAt}
+            onResponderMove={seekAt}
+            accessibilityLabel="再生する位置">
+            {wave.map((v, i) => (
+              <View key={i} pointerEvents="none" style={[styles.waveBar, { height: `${v * 100}%` }, (i + 0.5) / BARS < pct && { backgroundColor: C.accent }]} />
+            ))}
+            {waveW > 0 &&
+              marks.map((m) => <View key={m.id} pointerEvents="none" style={[styles.flag, { left: (m.at / dur) * waveW - 2 }]} />)}
+            {waveW > 0 && <View pointerEvents="none" style={[styles.head, { left: pct * waveW - 1 }]} />}
+          </View>
+          {lesson && waveW > 0 && (
+            <View style={styles.cuts}>
+              {segs.map((s) => {
+                const on = pos >= s.from && pos < s.to;
+                const left = (s.from / dur) * waveW;
+                const width = ((s.to - s.from) / dur) * waveW;
+                return (
+                  <View key={s.from} style={{ position: 'absolute', left: left + 1, width: Math.max(0, width - 2), top: 0 }}>
+                    <View style={[styles.cut, on && { backgroundColor: C.accent }]} />
+                    {width > waveW * 0.14 && (
+                      <Text style={[styles.cutLabel, on && { color: '#fff' }]} numberOfLines={1}>
+                        {label(s.topicKey)}
+                      </Text>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          )}
+          <View style={styles.ends}>
+            <Text style={styles.endText}>0:00</Text>
+            <Text style={styles.endText}>{fmtDur(dur)}</Text>
+          </View>
+          <View style={styles.ctl}>
+            <Pressable onPress={() => p.skip(-15)} hitSlop={8} accessibilityLabel="15秒戻る">
+              <Icon name="back15" size={30} color="#fff" />
+            </Pressable>
+            <Pressable onPress={() => (p.playing ? p.toggle() : p.play(rec))} style={styles.pp} accessibilityLabel={p.playing ? '一時停止' : '再生'}>
+              <Icon name={p.playing ? 'pause' : 'play'} size={30} color={DARK} />
+            </Pressable>
+            <Pressable onPress={() => p.skip(15)} hitSlop={8} accessibilityLabel="15秒進む">
+              <Icon name="fwd15" size={30} color="#fff" />
+            </Pressable>
+          </View>
+          {p.rate !== 1 && <Text style={styles.rate}>{p.rate}倍</Text>}
         </View>
-        <View style={styles.ctl}>
-          <Pressable onPress={() => p.skip(-15)} hitSlop={8} accessibilityLabel="15秒戻る">
-            <Icon name="back15" size={30} color="#fff" />
-          </Pressable>
-          <Pressable onPress={() => (p.playing ? p.toggle() : p.play(rec))} style={styles.pp} accessibilityLabel={p.playing ? '一時停止' : '再生'}>
-            <Icon name={p.playing ? 'pause' : 'play'} size={30} color={DARK} />
-          </Pressable>
-          <Pressable onPress={() => p.skip(15)} hitSlop={8} accessibilityLabel="15秒進む">
-            <Icon name="fwd15" size={30} color="#fff" />
-          </Pressable>
-        </View>
-        {p.rate !== 1 && <Text style={styles.rate}>{p.rate}倍</Text>}
-      </View>
+      </GestureDetector>
 
       <Text style={styles.listHead}>ここまでのしおり</Text>
       <ScrollView ref={listRef} style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 12 }}>

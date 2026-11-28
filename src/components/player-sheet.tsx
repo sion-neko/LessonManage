@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { BackHandler, PanResponder, StyleSheet, useWindowDimensions } from 'react-native';
+import { BackHandler, StyleSheet, useWindowDimensions } from 'react-native';
+import { usePanGesture } from 'react-native-gesture-handler';
 import Animated, { Easing, interpolate, interpolateColor, runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
 import { BarContent, BAR_BG } from './play-bar';
@@ -68,16 +69,39 @@ export function PlayerSheetProvider({ children }: { children: ReactNode }) {
     drag.value = 0;
   }, [drag]);
 
-  const collapse = useCallback(async () => {
-    setExpanded(false);
-    // いちばん新しく登録された（＝いま見えている画面の）再生バーへ戻す
+  // 戻す先：いちばん新しく登録された（＝いま見えている画面の）再生バー
+  const measureBar = useCallback(async () => {
     const measure = bars.current[bars.current.length - 1];
-    const r = measure ? await measure() : null;
-    setFrom(r);
-    progress.value = withTiming(0, { duration: CLOSE_MS, easing: Easing.inOut(Easing.cubic) }, (done) => {
-      if (done) runOnJS(finishClose)();
-    });
-  }, [setFrom, progress, finishClose]);
+    return measure ? await measure() : null;
+  }, []);
+  // 下に引き始めたときに、戻す先を先に測っておく（指を離した瞬間に止まらず縮み始められるように）
+  const target = useRef<Promise<Rect | null> | null>(null);
+  const prepare = useCallback(() => {
+    target.current = measureBar();
+  }, [measureBar]);
+
+  // velocity：下に引いて離したときの指の速さ（px/秒）。勢いを引き継いで縮める
+  const collapse = useCallback(
+    async (velocity = 0) => {
+      setExpanded(false);
+      const r = await (target.current ?? measureBar());
+      target.current = null;
+      setFrom(r);
+      const done = (finished?: boolean) => {
+        'worklet';
+        if (finished) runOnJS(finishClose)();
+      };
+      if (velocity > 0) {
+        // 指を離したあとも勢いのまま吸い込まれるように、バネで縮める（行き過ぎはしない）
+        progress.value = withSpring(0, { velocity: -velocity / H, damping: 28, stiffness: 240, overshootClamping: true }, done);
+      } else {
+        progress.value = withTiming(0, { duration: CLOSE_MS, easing: Easing.inOut(Easing.cubic) }, done);
+      }
+    },
+    [setFrom, progress, finishClose, measureBar, H],
+  );
+
+  const close = useCallback(() => collapse(), [collapse]);
 
   const registerBar = useCallback((m: () => Promise<Rect | null>) => {
     bars.current.push(m);
@@ -90,34 +114,32 @@ export function PlayerSheetProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!expanded) return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      collapse();
+      close();
       return true;
     });
     return () => sub.remove();
-  }, [expanded, collapse]);
+  }, [expanded, close]);
 
-  // 上の帯を下に引くと閉じる。少しだけなら元に戻す
-  const collapseRef = useRef(collapse);
-  useEffect(() => {
-    collapseRef.current = collapse;
+  // 上の黒いところを下に引くと閉じる。少しだけなら元に戻す。
+  // 指の動きは画面を描く側（UI スレッド）で追うので、引いている間もなめらかに動く
+  const pan = usePanGesture({
+    activeOffsetY: 8,
+    failOffsetX: [-14, 14],
+    onActivate: () => {
+      'worklet';
+      runOnJS(prepare)();
+    },
+    onUpdate: (e) => {
+      'worklet';
+      drag.value = Math.max(0, e.translationY);
+    },
+    onDeactivate: (e) => {
+      'worklet';
+      // 120px 引くか、さっと下に払ったら閉じる
+      if (e.translationY > 120 || e.velocityY > 800) runOnJS(collapse)(Math.max(0, e.velocityY));
+      else drag.value = withSpring(0, { velocity: e.velocityY, damping: 22, stiffness: 260 });
+    },
   });
-  const pan = useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponder: (_, g) => g.dy > 6 && Math.abs(g.dy) > Math.abs(g.dx),
-        onPanResponderMove: (_, g) => {
-          drag.value = Math.max(0, g.dy);
-        },
-        onPanResponderRelease: (_, g) => {
-          if (g.dy > 110 || g.vy > 0.9) collapseRef.current();
-          else drag.value = withSpring(0, { damping: 20, stiffness: 220 });
-        },
-        onPanResponderTerminate: () => {
-          drag.value = withSpring(0, { damping: 20, stiffness: 220 });
-        },
-      }),
-    [drag],
-  );
 
   const box = useAnimatedStyle(() => {
     const p = progress.value;
@@ -141,7 +163,7 @@ export function PlayerSheetProvider({ children }: { children: ReactNode }) {
     transform: [{ scale: interpolate(progress.value, [0, 1], [from.value.w / W, 1]) }],
   }));
 
-  const value = useMemo<SheetState>(() => ({ open, expand, collapse, registerBar }), [open, expand, collapse, registerBar]);
+  const value = useMemo<SheetState>(() => ({ open, expand, collapse: close, registerBar }), [open, expand, close, registerBar]);
 
   return (
     <Ctx.Provider value={value}>
@@ -153,7 +175,7 @@ export function PlayerSheetProvider({ children }: { children: ReactNode }) {
             <BarContent />
           </Animated.View>
           <Animated.View style={[{ width: W, height: H, transformOrigin: 'top left' }, full]} pointerEvents={expanded ? 'auto' : 'none'}>
-            <PlayerView onClose={collapse} drag={pan.panHandlers} />
+            <PlayerView onClose={close} gesture={pan} />
           </Animated.View>
         </Animated.View>
       )}
