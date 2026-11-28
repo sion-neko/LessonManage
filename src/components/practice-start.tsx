@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { C } from '@/constants/colors';
@@ -27,6 +27,14 @@ export function PracticeStart({ lesson, visible, onClose }: { lesson: Lesson; vi
   const [choice, setChoice] = useState<Choice>(initial);
   const [listOpen, setListOpen] = useState(false);
   const [newSong, setNewSong] = useState<string | null>(null);
+  // 閉じきってからやること。閉じてすぐ次の画面を出すと、iOS がシートを暗い背景ごと下へずらして片付けてしまう
+  const afterSheet = useRef<(() => void) | null>(null);
+  const afterList = useRef<(() => void) | null>(null);
+  const run = (r: { current: (() => void) | null }) => {
+    const f = r.current;
+    r.current = null;
+    f?.();
+  };
   useEffect(() => {
     if (visible) setChoice(initial);
     // 開くたびに既定に戻す
@@ -46,13 +54,13 @@ export function PracticeStart({ lesson, visible, onClose }: { lesson: Lesson; vi
     }
     const ok = await rec.start({ kind: 'practice', folderId: lesson.folderId, lessonId: lesson.id, songId });
     if (ok) {
+      afterSheet.current = () => router.push('/recording');
       onClose();
-      router.push('/recording');
     }
   };
 
   return (
-    <Sheet visible={visible} onClose={onClose}>
+    <Sheet visible={visible} onClose={onClose} onClosed={() => run(afterSheet)}>
       <Text style={styles.title}>個人練を録音</Text>
       <Text style={styles.label}>録音内容</Text>
       <Pressable onPress={() => setListOpen(true)} style={styles.select} accessibilityRole="button" accessibilityLabel="録音内容を選ぶ">
@@ -67,7 +75,7 @@ export function PracticeStart({ lesson, visible, onClose }: { lesson: Lesson; vi
       </View>
 
       {/* 選択肢の一覧は画面の真ん中に出す */}
-      <Modal visible={listOpen} transparent animationType="fade" onRequestClose={() => setListOpen(false)}>
+      <Modal visible={listOpen} transparent animationType="fade" onRequestClose={() => setListOpen(false)} onDismiss={() => run(afterList)}>
         <Pressable style={styles.dim} onPress={() => setListOpen(false)} />
         <View style={styles.center} pointerEvents="box-none">
           <View style={styles.list}>
@@ -111,9 +119,10 @@ export function PracticeStart({ lesson, visible, onClose }: { lesson: Lesson; vi
     if (!t) return;
     const id = await act((db) => repo.addSong(db, lesson.folderId, t));
     setNewSong(null);
-    setListOpen(false);
     setChoice(id);
-    await begin(id);
+    // 一覧が消えきってから録音を始める（一覧とシートを同時に片付けると、iOS がまとめて下へずらす）
+    afterList.current = () => void begin(id);
+    setListOpen(false);
   }
 }
 

@@ -1,4 +1,5 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRef } from 'react';
+import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { C } from '@/constants/colors';
 import { Icon, type IconName } from './icon';
@@ -17,6 +18,7 @@ export type MenuItem = {
 export type Anchor = { top: number; left?: number; right?: number };
 
 // 見出しや•••の真下に開く小さなメニュー。外を押すと閉じる
+// 押した項目は、メニューが消えきってから動かす（消える前に次の画面やシートを出すと、iOS がメニューを下へずらして片付けてしまう）
 export function PopupMenu({
   visible,
   anchor,
@@ -28,8 +30,14 @@ export function PopupMenu({
   items: MenuItem[];
   onClose: () => void;
 }) {
+  const pending = useRef<(() => void) | null>(null);
+  const runPending = () => {
+    const f = pending.current;
+    pending.current = null;
+    f?.();
+  };
   return (
-    <Modal visible={visible && !!anchor} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible && !!anchor} transparent animationType="fade" onRequestClose={onClose} onDismiss={runPending}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="メニューを閉じる" />
       {anchor && (
         <View style={[styles.menu, { top: anchor.top, left: anchor.left, right: anchor.right }]}>
@@ -37,8 +45,10 @@ export function PopupMenu({
             <Pressable
               key={it.key}
               onPress={() => {
+                pending.current = it.onPress;
                 onClose();
-                it.onPress();
+                // onDismiss は iOS だけ
+                if (Platform.OS !== 'ios') runPending();
               }}
               style={({ pressed }) => [styles.row, i > 0 && styles.border, pressed && { backgroundColor: C.hl }]}>
               <View style={styles.ck}>

@@ -6,12 +6,28 @@ import { C } from '@/constants/colors';
 
 // 下から出るシート。外（暗いところ）を押すと閉じる
 // 暗い背景ごと下からせり上がるとださいので、背景はその場でふわっと暗くし、シートだけを下から出す
-export function Sheet({ visible, onClose, children }: { visible: boolean; onClose: () => void; children: ReactNode }) {
+// onClosed は閉じきってから呼ぶ。シートを閉じてすぐ次の画面を出すと、iOS がシートを暗い背景ごと下へずらして
+// 片付けてしまうので、画面を移るときや別のシートを出すときは onClosed でやる
+export function Sheet({
+  visible,
+  onClose,
+  onClosed,
+  children,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onClosed?: () => void;
+  children: ReactNode;
+}) {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const anim = useRef(new Animated.Value(0)).current;
+  const [anim] = useState(() => new Animated.Value(0));
   // 閉じるときは動き終わるまで Modal を残す
   const [mounted, setMounted] = useState(visible);
+  const closedRef = useRef(onClosed);
+  useEffect(() => {
+    closedRef.current = onClosed;
+  });
 
   useEffect(() => {
     if (visible) {
@@ -19,7 +35,10 @@ export function Sheet({ visible, onClose, children }: { visible: boolean; onClos
       Animated.timing(anim, { toValue: 1, duration: 300, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
     } else {
       Animated.timing(anim, { toValue: 0, duration: 240, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(({ finished }) => {
-        if (finished) setMounted(false);
+        if (!finished) return;
+        setMounted(false);
+        // iOS は Modal が消えきった onDismiss で呼ぶ
+        if (Platform.OS !== 'ios') closedRef.current?.();
       });
     }
   }, [visible, anim]);
@@ -27,7 +46,7 @@ export function Sheet({ visible, onClose, children }: { visible: boolean; onClos
   const translateY = anim.interpolate({ inputRange: [0, 1], outputRange: [height, 0] });
 
   return (
-    <Modal visible={mounted} transparent animationType="none" onRequestClose={onClose}>
+    <Modal visible={mounted} transparent animationType="none" onRequestClose={onClose} onDismiss={() => closedRef.current?.()}>
       <KeyboardAvoidingView style={styles.wrap} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Animated.View style={[styles.bg, { opacity: anim }]}>
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="閉じる" />

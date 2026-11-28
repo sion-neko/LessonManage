@@ -46,6 +46,13 @@ function PlayerBody({ rec, act }: { rec: Recording; act: ReturnType<typeof useLo
   const [rateSheet, setRateSheet] = useState(false);
   const [chapSheet, setChapSheet] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // 削除の確認シートが閉じきってからやること
+  const afterDelete = useRef<(() => void) | null>(null);
+  const run = (r: { current: (() => void) | null }) => {
+    const f = r.current;
+    r.current = null;
+    f?.();
+  };
   const moreRef = useRef<ComponentRef<typeof Pressable>>(null);
   const listRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const wave = fakeWave(rec.id, BARS);
@@ -240,7 +247,7 @@ function PlayerBody({ rec, act }: { rec: Recording; act: ReturnType<typeof useLo
         </Sheet>
       )}
 
-      <Sheet visible={confirmDelete} onClose={() => setConfirmDelete(false)}>
+      <Sheet visible={confirmDelete} onClose={() => setConfirmDelete(false)} onClosed={() => run(afterDelete)}>
         <Text style={styles.sheetTitle}>「{recTitle(data, rec)}」の録音を削除</Text>
         <Text style={styles.sheetNote}>
           {lesson
@@ -248,11 +255,14 @@ function PlayerBody({ rec, act }: { rec: Recording; act: ReturnType<typeof useLo
             : '元に戻せません。しおりも一緒に消えます。'}
         </Text>
         <Pressable
-          onPress={async () => {
+          onPress={() => {
+            // 消すと再生画面が閉じるので、シートが閉じきってから消す（閉じる途中で画面ごと消すと、シートが下へずれて消える）
+            afterDelete.current = async () => {
+              p.close();
+              const file = await act((db) => repo.deleteRecording(db, rec.id));
+              if (file) deleteRecordingFiles([file]);
+            };
             setConfirmDelete(false);
-            p.close();
-            const file = await act((db) => repo.deleteRecording(db, rec.id));
-            if (file) deleteRecordingFiles([file]);
           }}
           style={styles.danger}
           accessibilityRole="button">
