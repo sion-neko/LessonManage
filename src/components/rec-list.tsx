@@ -10,9 +10,9 @@ import { NoneYet } from './lesson-parts';
 import { usePlayerSheet } from './player-sheet';
 
 // 録音の一覧（レッスンページの個人練、曲ページの録音で同じ形）。
-// 線で区切った行。左に日付、真ん中に一言と曲名など、右に灰色の時間と金色の▶。
+// 線で区切った行。左に日付、真ん中にメモと曲名など、右に灰色の時間と金色の▶。
 // 流れるのは▶を押したときだけ。行のほかの場所を押すと、流さずに再生画面が開く。
-// 流れている行は、左の日付が音の印に、一言が金色に、▶が一時停止に変わる
+// 流れている行は、左の日付が音の印に、メモが金色に、▶が一時停止に変わる
 export function RecList({ recs, sub }: { recs: Recording[]; sub: (r: Recording) => { label: string; song?: boolean } }) {
   const p = usePlayer();
   const sheet = usePlayerSheet();

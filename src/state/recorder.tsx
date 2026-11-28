@@ -30,7 +30,7 @@ export type RecTarget = {
   fromSong?: boolean;
   /** 曲ページから録ったとき、直近のレッスン後の個人練にするか（既定はする） */
   linkLesson?: boolean;
-  /** 一言。録音の画面で、録る前にも録っている間にも書ける */
+  /** メモ。録音の画面で、録る前にも録っている間にも書ける */
   note?: string;
 };
 
@@ -42,7 +42,11 @@ type RecorderState = {
   /** 音の大きさ（0〜1）。波形の表示に使う */
   level: number;
   start: (t: RecTarget) => Promise<boolean>;
-  /** 録っている間に一言などを直す */
+  /** 一時停止中か。一時停止しても同じ録音のまま。再開すると続きを録る */
+  paused: boolean;
+  pause: () => void;
+  resume: () => void;
+  /** 録っている間にメモなどを直す */
   update: (patch: Partial<Pick<RecTarget, 'note' | 'linkLesson'>>) => void;
   /** 止めて保存し、保存した録音の ID を返す */
   stop: () => Promise<string | null>;
@@ -55,8 +59,10 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
   const { act } = useAppState();
   const player = usePlayer();
   const recorder = useAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true });
-  const status = useAudioRecorderState(recorder, 250);
+  // 0.1秒ごとに音の大きさと時間を取る（iPhone のボイスメモと同じくらいの細かさで波形を流すため）
+  const status = useAudioRecorderState(recorder, 100);
   const [target, setTarget] = useState<RecTarget | null>(null);
+  const [paused, setPaused] = useState(false);
   const busy = useRef(false);
 
   const start = useCallback(
@@ -87,9 +93,22 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
     [recorder, target, player],
   );
 
+  // 一時停止・再開：同じ録音のまま止めて、続きから録る（時間も続きから数える）
+  const pause = useCallback(() => {
+    if (!target || paused) return;
+    recorder.pause();
+    setPaused(true);
+  }, [recorder, target, paused]);
+  const resume = useCallback(() => {
+    if (!target || !paused) return;
+    recorder.record();
+    setPaused(false);
+  }, [recorder, target, paused]);
+
   const stop = useCallback(async () => {
     if (!target || busy.current) return null;
     busy.current = true;
+    setPaused(false);
     try {
       const duration = recorder.currentTime || status.durationMillis / 1000;
       await recorder.stop();
@@ -130,8 +149,8 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
   // metering は dB（-160〜0）。-60dB 以下を 0 として 0〜1 に
   const level = status.metering == null ? 0 : Math.max(0, Math.min(1, (status.metering + 60) / 60));
   const value = useMemo<RecorderState>(
-    () => ({ target, elapsed: target ? status.durationMillis / 1000 : 0, level: target ? level : 0, start, update, stop }),
-    [target, status.durationMillis, level, start, update, stop],
+    () => ({ target, elapsed: target ? status.durationMillis / 1000 : 0, level: target && !paused ? level : 0, start, paused, pause, resume, update, stop }),
+    [target, status.durationMillis, level, start, paused, pause, resume, update, stop],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

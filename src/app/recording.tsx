@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type TextStyle } from 'react-native';
 
 import { Icon } from '@/components/icon';
 import { SongPicker, songTitle, type SongChoice } from '@/components/song-picker';
@@ -8,29 +8,37 @@ import { useScreenInsets } from '@/components/rec-bar';
 import { C } from '@/constants/colors';
 import { fmtDate } from '@/lib/date';
 import { lessonsOf, topicLabel, useLoadedState } from '@/state/app-state';
-import { fmtDur, useRecorder, type RecTarget } from '@/state/recorder';
+import { useRecorder, type RecTarget } from '@/state/recorder';
 
-const BARS = 48;
+// 波形の棒の数。0.1秒に1本。右端から左へ流す（iPhone のボイスメモと同じ）。画面の幅より多めに持って、はみ出たぶんは切る
+const BARS = 80;
 
 // 録音の画面（白。ほかの画面と同じ）。録音中はふつう操作しないので、画面はできるだけ単純にする。
-// 左上の「閉じる」で、録音したまま前の画面に戻れる。
-// 個人練・曲の録音は、録る前の状態で開く：曲を選び、一言を書いて、赤丸で録り始める（docs/requirements.md「録音」）。
+// 左上の「閉じる」：録っている間は録音したまま前の画面に戻る（下に赤い帯が出る）。一時停止中は保存して閉じる。
+// 個人練・曲の録音は、録る前の状態で開く：曲を選び、メモを書いて、赤丸で録り始める（docs/requirements.md「録音」）。
 // 選んだ曲名と、やること・その曲で学んだことを大きく出す（練習しながら見られるように）。止めたら保存して閉じる
 // 開き方：個人練は ?lessonId=、曲ページからは ?songId=。何も付けないと、録っている録音を出す
 export default function RecordingScreen() {
   const { data } = useLoadedState();
   const rec = useRecorder();
   const insets = useScreenInsets();
-  const params = useLocalSearchParams<{ lessonId?: string; songId?: string }>();
+  const params = useLocalSearchParams<{ lessonId?: string; songId?: string; from?: string }>();
 
-  // 録る前に決めておく録音の中身。録っている間は rec.target が持つ
-  const [draft] = useState<RecTarget | null>(() => (rec.target ? null : draftFrom(data, params)));
-  const [choice, setChoice] = useState<SongChoice>(draft?.songId ?? null);
+  // 録る前に決めておく録音の中身。録っている間は rec.target が持つ。
+  // 録っている途中で開いたときは、その録音の中身を元にする（止めたあとに続けて録れるように）。レッスンの録音は続けて録らない
+  const [draft] = useState<RecTarget | null>(() => {
+    const cur = rec.target;
+    if (!cur) return draftFrom(data, params);
+    if (cur.kind === 'lesson') return null;
+    return { kind: cur.kind, folderId: cur.folderId, lessonId: cur.lessonId, songId: cur.songId, fromSong: cur.fromSong };
+  });
+  const [choice, setChoice] = useState<SongChoice>(rec.target?.songId ?? draft?.songId ?? null);
   const [note, setNote] = useState(rec.target?.note ?? '');
   const [linkLesson, setLinkLesson] = useState(rec.target?.linkLesson ?? true);
   const [picker, setPicker] = useState(false);
   const [memoOpen, setMemoOpen] = useState(false);
-  const [levels, setLevels] = useState<number[]>(() => Array(BARS).fill(0.06));
+  // 録り始めは空。新しい音は右端に出て、左へ流れていく（iPhone のボイスメモと同じ）
+  const [levels, setLevels] = useState<number[]>([]);
   const last = useRef(-1);
   const [stopping, setStopping] = useState(false);
 
@@ -41,20 +49,14 @@ export default function RecordingScreen() {
   useEffect(() => {
     if (!t || rec.elapsed === last.current) return;
     last.current = rec.elapsed;
-    setLevels((v) => [...v.slice(1), Math.max(0.06, rec.level)]);
+    setLevels((v) => [...v.slice(-(BARS - 1)), Math.max(0.06, rec.level)]);
   }, [rec.elapsed, rec.level, t]);
 
-  // 録っておらず、録る前でもないなら閉じる（別の画面で止めたときなど）
-  const [started, setStarted] = useState(false);
+  // 録っておらず、録る前でもない（別の画面で完了したなど）なら閉じる
   useEffect(() => {
-    if (!t && !stopping && (started || !draft)) router.back();
-  }, [t, stopping, started, draft]);
-
-  // 赤丸 → 赤い四角（停止）に形を変える
-  const shape = useRef(new Animated.Value(recording ? 1 : 0)).current;
-  useEffect(() => {
-    Animated.timing(shape, { toValue: recording ? 1 : 0, duration: 260, useNativeDriver: false }).start();
-  }, [recording, shape]);
+    if (!t && !stopping && !draft) router.back();
+  }, [t, stopping, draft]);
+  const paused = recording && rec.paused;
 
   const ctx: RecTarget | null = t ?? (draft ? { ...draft, songId: choice } : null);
   if (!ctx) return <View style={styles.screen} />;
@@ -66,13 +68,25 @@ export default function RecordingScreen() {
 
   const begin = async () => {
     if (!draft) return;
-    const ok = await rec.start({ ...draft, songId: choice, note, linkLesson });
-    if (ok) setStarted(true);
+    setLevels([]);
+    await rec.start({ ...draft, songId: choice, note, linkLesson });
   };
-  const stop = async () => {
+  // 真ん中のボタン：録る前は録り始め、録っている間は一時停止、一時停止中は続きを録る（iPhone のボイスメモと同じ）
+  const main = () => (!recording ? begin() : paused ? rec.resume() : rec.pause());
+  // 閉じる：録っている間は録音したまま戻る（どの画面にも赤い帯が出る）。一時停止中は、録り終えたものとして保存して閉じる。
+  // ホームから録ったときは、保存した録音が並ぶところ（曲ページの録音、曲なしならレッスンページの個人練）を開く
+  const close = async () => {
+    if (!paused) {
+      router.back();
+      return;
+    }
     setStopping(true);
-    await rec.stop();
+    const saved = rec.target;
+    const id = await rec.stop();
     router.back();
+    if (!id || !saved || params.from !== 'home') return;
+    if (saved.songId) router.push({ pathname: '/song/[id]', params: { id: saved.songId, view: 'rec' } });
+    else if (saved.lessonId) router.push({ pathname: '/lesson/[id]', params: { id: saved.lessonId, view: 'pr' } });
   };
   const changeNote = (v: string) => {
     setNote(v);
@@ -102,13 +116,10 @@ export default function RecordingScreen() {
         })
       : [];
 
-  const size = shape.interpolate({ inputRange: [0, 1], outputRange: [60, 30] });
-  const radius = shape.interpolate({ inputRange: [0, 1], outputRange: [30, 6] });
-
   return (
     <KeyboardAvoidingView style={[styles.screen, { paddingTop: insets.top }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.bar}>
-        <Pressable onPress={() => router.back()} style={styles.close} hitSlop={8} accessibilityRole="button">
+        <Pressable onPress={close} disabled={stopping} style={styles.close} hitSlop={8} accessibilityRole="button">
           <Icon name="closeDown" size={18} color={C.accent} />
           <Text style={styles.closeText}>閉じる</Text>
         </Pressable>
@@ -165,13 +176,14 @@ export default function RecordingScreen() {
       {/* 真ん中：時間と波形を大きく */}
       <View style={styles.meter}>
         <View style={[styles.state, !recording && { opacity: 0 }]}>
-          <View style={styles.dot} />
-          <Text style={styles.stateText}>録音中</Text>
+          <View style={[styles.dot, paused && { backgroundColor: C.muted }]} />
+          <Text style={[styles.stateText, paused && { color: C.muted }]}>{paused ? '一時停止中' : '録音中'}</Text>
         </View>
-        <Text style={[styles.time, !recording && { color: C.chevron }]}>{fmtDur(rec.elapsed)}</Text>
+        <RecTime elapsed={rec.elapsed} running={recording && !paused} style={[styles.time, !recording && { color: C.chevron }]} />
+        {/* 波形：新しい音は右端に出て、左へ流れていく（真ん中の線はなし） */}
         <View style={styles.wave}>
           {levels.map((v, i) => (
-            <View key={i} style={[styles.waveBar, { height: `${Math.round(v * 100)}%` }, !recording && { backgroundColor: C.line }]} />
+            <View key={i} style={[styles.waveBar, { height: `${Math.round(v * 100)}%` }]} />
           ))}
         </View>
         <Text style={[styles.hint, !recording && { opacity: 0 }]}>録音中は画面が消えないようにしています</Text>
@@ -207,16 +219,28 @@ export default function RecordingScreen() {
         </ScrollView>
       )}
 
+      {/* いちばん下：真ん中に録音・一時停止・再開のボタン */}
       <View style={[styles.btnWrap, { paddingBottom: insets.bottom + 24 }]}>
-        <Pressable
-          onPress={recording ? stop : begin}
-          disabled={stopping}
-          style={styles.ring}
-          accessibilityRole="button"
-          accessibilityLabel={recording ? '録音を止める' : '録音を始める'}>
-          <Animated.View style={{ width: size, height: size, borderRadius: radius, backgroundColor: C.rec }} />
-        </Pressable>
-        <Text style={styles.btnLabel}>{recording ? '停止' : '録音'}</Text>
+        <View style={styles.side} />
+        <View style={styles.mainCol}>
+          <Pressable
+            onPress={main}
+            disabled={stopping}
+            style={styles.ring}
+            accessibilityRole="button"
+            accessibilityLabel={!recording ? '録音を始める' : paused ? '続きを録る' : '一時停止'}>
+            {recording && !paused ? (
+              <View style={styles.pauseIcon}>
+                <View style={styles.pauseBar} />
+                <View style={styles.pauseBar} />
+              </View>
+            ) : (
+              <View style={styles.recDot} />
+            )}
+          </Pressable>
+          <Text style={styles.btnLabel}>{!recording ? '録音' : paused ? '再開' : '一時停止'}</Text>
+        </View>
+        <View style={styles.side} />
       </View>
 
       {draft && (
@@ -231,6 +255,39 @@ export default function RecordingScreen() {
       )}
     </KeyboardAvoidingView>
   );
+}
+
+// 録音中の時間。iPhone のボイスメモと同じく 00:05.43 の形で、0.01秒まで刻々と進める。
+// 録音から時間を受け取るのは0.1秒ごとなので、その間は画面の描きかえごとに、受け取ってからの経過を足して数える
+// （画面全体を描きかえないよう、時間の文字だけをこの中で動かす）
+function RecTime({ elapsed, running, style }: { elapsed: number; running: boolean; style: StyleProp<TextStyle> }) {
+  const [shown, setShown] = useState(elapsed);
+  const base = useRef({ sec: elapsed, at: Date.now() });
+  useEffect(() => {
+    base.current = { sec: elapsed, at: Date.now() };
+    if (!running) setShown(elapsed);
+  }, [elapsed, running]);
+  useEffect(() => {
+    if (!running) return;
+    let id = 0;
+    const tick = () => {
+      const b = base.current;
+      // 次の時間が届くまでに数えすぎないよう、0.15秒より先には進めない
+      setShown(b.sec + Math.min((Date.now() - b.at) / 1000, 0.15));
+      id = requestAnimationFrame(tick);
+    };
+    id = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(id);
+  }, [running]);
+  return <Text style={style}>{fmtRecTime(shown)}</Text>;
+}
+
+function fmtRecTime(sec: number) {
+  const cs = Math.max(0, Math.floor(sec * 100));
+  const m = Math.floor(cs / 6000);
+  const ss = Math.floor((cs % 6000) / 100);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(m)}:${pad(ss)}.${pad(cs % 100)}`;
 }
 
 // 開いたときの録音の中身。
@@ -274,10 +331,15 @@ const styles = StyleSheet.create({
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.rec },
   stateText: { color: C.rec, fontSize: 14, fontWeight: '600' },
   time: { color: C.fg, fontSize: 64, fontWeight: '300', fontVariant: ['tabular-nums'] },
-  wave: { flexDirection: 'row', alignItems: 'center', gap: 2, height: 80, paddingHorizontal: 24, alignSelf: 'stretch', justifyContent: 'center' },
-  waveBar: { width: 3, borderRadius: 2, backgroundColor: C.accent },
+  wave: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 2, height: 80, alignSelf: 'stretch', paddingHorizontal: 16, overflow: 'hidden' },
+  waveBar: { width: 3, borderRadius: 2, backgroundColor: '#3a3a3c' },
   hint: { color: C.muted, fontSize: 12 },
-  btnWrap: { alignItems: 'center', gap: 6, paddingTop: 8 },
+  btnWrap: { flexDirection: 'row', alignItems: 'center', paddingTop: 12, paddingHorizontal: 16 },
+  side: { flex: 1, alignItems: 'center', paddingBottom: 22 },
+  mainCol: { alignItems: 'center', gap: 6 },
+  recDot: { width: 60, height: 60, borderRadius: 30, backgroundColor: C.rec },
+  pauseIcon: { flexDirection: 'row', gap: 8 },
+  pauseBar: { width: 9, height: 28, borderRadius: 2, backgroundColor: C.rec },
   ring: { width: 76, height: 76, borderRadius: 38, borderWidth: 4, borderColor: C.line, alignItems: 'center', justifyContent: 'center' },
   btnLabel: { color: C.muted, fontSize: 13 },
   toggle: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 2 },

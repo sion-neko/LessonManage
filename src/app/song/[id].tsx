@@ -22,12 +22,13 @@ const FOLD = 3;
 // 曲ページ（docs/requirements.md「曲ページ」）。見た目はレッスンページに合わせる。
 // 曲名の下で「まとめ／録音」を切り替える。開くたびに「まとめ」から
 export default function SongScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // view=rec：録音のタブから開く（ホームから録った録音を保存したあと）
+  const { id, view: initialView } = useLocalSearchParams<{ id: string; view?: string }>();
   const { data, act } = useLoadedState();
   const insets = useSafeAreaInsets();
   const rec = useRecorder();
   const player = usePlayer();
-  const [view, setView] = useState<'sum' | 'rec'>('sum');
+  const [view, setView] = useState<'sum' | 'rec'>(initialView === 'rec' ? 'rec' : 'sum');
   const [learnedOpen, setLearnedOpen] = useState(false);
   const song = data.songs.find((s) => s.id === id);
   if (!song) {

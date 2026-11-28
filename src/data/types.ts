@@ -72,7 +72,7 @@ export type Recording = {
   date: string;
   /** 長さ（秒） */
   duration: number;
-  /** 録音のあとに書く一言 */
+  /** 録音のメモ（録る前・録っている間に書く） */
   note: string;
   /** しおり（レッスン録音以外。レッスン録音のしおりは学んだことの行） */
   marks: RecMark[];

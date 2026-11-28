@@ -19,7 +19,7 @@ export default function HomeScreen() {
   // 個人練：録る前の録音の画面を開き、そこで曲を選んで録り始める
   const recordPractice = () => {
     if (rec.target) Alert.alert('録音中です', 'ほかの録音を止めてから');
-    else if (lesson) router.push({ pathname: '/recording', params: { lessonId: lesson.id } });
+    else if (lesson) router.push({ pathname: '/recording', params: { lessonId: lesson.id, from: 'home' } });
   };
 
   if (!lesson) {

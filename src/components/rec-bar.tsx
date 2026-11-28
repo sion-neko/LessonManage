@@ -9,7 +9,7 @@ import { useLoadedState } from '@/state/app-state';
 import { fmtDur, useRecorder } from '@/state/recorder';
 
 // 録音中の赤い帯。録っている間は、どの画面でもいちばん下に出す（レッスンでも個人練でも）。
-// 押すと録音の画面、右の停止で止める。
+// 押すと録音の画面、右の停止で完了（保存）する。一時停止中はそう出す。
 // 帯のぶん、下の画面（タブや録音ボタン）が帯の上に乗るように、下の余白（セーフエリア）を 0 にして渡す。
 // 全画面の録音・再生の画面やシートは帯の上に重なるので、本当の余白を useScreenInsets で取る
 
@@ -56,12 +56,12 @@ function RecBar({ bottom }: { bottom: number }) {
         : (song?.title ?? '録音');
   return (
     <Pressable onPress={() => router.push('/recording')} style={[styles.bar, { paddingBottom: Math.max(bottom, 10) + 4 }]} accessibilityLabel="録音の画面を開く">
-      <View style={styles.dot} />
-      <Text style={styles.time}>{fmtDur(rec.elapsed)}</Text>
+      <View style={[styles.dot, rec.paused && { opacity: 0.5 }]} />
+      <Text style={styles.time}>{rec.paused ? `一時停止中 ${fmtDur(rec.elapsed)}` : fmtDur(rec.elapsed)}</Text>
       <Text style={styles.what} numberOfLines={1}>
         {what}
       </Text>
-      <Pressable onPress={() => rec.stop()} style={styles.stop} hitSlop={8} accessibilityRole="button" accessibilityLabel="録音を止める">
+      <Pressable onPress={() => rec.stop()} style={styles.stop} hitSlop={8} accessibilityRole="button" accessibilityLabel="録音を止めて保存する">
         <View style={styles.stopSq} />
       </Pressable>
     </Pressable>

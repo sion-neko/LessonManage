@@ -28,12 +28,13 @@ type View_ = 'sum' | 'pr';
 // レッスンページ（docs/requirements.md「レッスンページ」）。
 // 白一色。上から 日付 → このレッスンのトピック → 「まとめ／個人練」の切り替え
 export default function LessonScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // view=pr：個人練のタブから開く（ホームから曲なしで録った録音を保存したあと）
+  const { id, view: initialView } = useLocalSearchParams<{ id: string; view?: string }>();
   const { data, act } = useLoadedState();
   const insets = useSafeAreaInsets();
   const lesson = data.lessons.find((l) => l.id === id);
-  // 開くたびに「まとめ」から
-  const [view, setView] = useState<View_>('sum');
+  // 開くたびに「まとめ」から（view=pr のときだけ個人練から）
+  const [view, setView] = useState<View_>(initialView === 'pr' ? 'pr' : 'sum');
   const [picker, setPicker] = useState(false);
   const [editTopic, setEditTopic] = useState<Topic | null>(null);
   const rec = useRecorder();
