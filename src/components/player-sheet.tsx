@@ -25,7 +25,7 @@ type SheetState = {
 
 const Ctx = createContext<SheetState | null>(null);
 
-const OPEN_MS = 420;
+const OPEN_MS = 900;
 const CLOSE_MS = 380;
 const BAR_RADIUS = 14;
 
