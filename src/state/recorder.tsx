@@ -26,8 +26,12 @@ export type RecTarget = {
   folderId: string;
   lessonId: string | null;
   songId: string | null;
-  /** 曲ページから録ったか（止めたあとに、直近のレッスン後の個人練にするかを選べる） */
+  /** 曲ページから録ったか（録音の画面で、直近のレッスン後の個人練にするかを選べる） */
   fromSong?: boolean;
+  /** 曲ページから録ったとき、直近のレッスン後の個人練にするか（既定はする） */
+  linkLesson?: boolean;
+  /** 一言。録音の画面で、録る前にも録っている間にも書ける */
+  note?: string;
 };
 
 type RecorderState = {
@@ -38,6 +42,8 @@ type RecorderState = {
   /** 音の大きさ（0〜1）。波形の表示に使う */
   level: number;
   start: (t: RecTarget) => Promise<boolean>;
+  /** 録っている間に一言などを直す */
+  update: (patch: Partial<Pick<RecTarget, 'note' | 'linkLesson'>>) => void;
   /** 止めて保存し、保存した録音の ID を返す */
   stop: () => Promise<string | null>;
 };
@@ -100,8 +106,13 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
       }
       const id = newId('r');
       const file = await keepRecording(uri, id);
-      const { kind, folderId, lessonId, songId } = target;
-      await act((db) => repo.addRecording(db, { id, kind, folderId, lessonId, songId, date: todayYmd(), duration, note: '', file }));
+      const { folderId, songId } = target;
+      // 曲ページから録って「レッスン後の個人練」を外したときは、レッスンと関係ない曲の録音にする
+      const unlink = target.fromSong && target.linkLesson === false;
+      const kind = unlink ? 'song' : target.kind;
+      const lessonId = unlink ? null : target.lessonId;
+      const note = target.note?.trim() ?? '';
+      await act((db) => repo.addRecording(db, { id, kind, folderId, lessonId, songId, date: todayYmd(), duration, note, file }));
       return id;
     } catch (e) {
       Alert.alert('録音を保存できませんでした', String(e));
@@ -112,11 +123,15 @@ export function RecorderProvider({ children }: { children: ReactNode }) {
     }
   }, [act, recorder, status.durationMillis, target]);
 
+  const update = useCallback((patch: Partial<Pick<RecTarget, 'note' | 'linkLesson'>>) => {
+    setTarget((t) => (t ? { ...t, ...patch } : t));
+  }, []);
+
   // metering は dB（-160〜0）。-60dB 以下を 0 として 0〜1 に
   const level = status.metering == null ? 0 : Math.max(0, Math.min(1, (status.metering + 60) / 60));
   const value = useMemo<RecorderState>(
-    () => ({ target, elapsed: target ? status.durationMillis / 1000 : 0, level: target ? level : 0, start, stop }),
-    [target, status.durationMillis, level, start, stop],
+    () => ({ target, elapsed: target ? status.durationMillis / 1000 : 0, level: target ? level : 0, start, update, stop }),
+    [target, status.durationMillis, level, start, update, stop],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

@@ -8,7 +8,6 @@ import { RecordDock } from '@/components/play-bar';
 import { Icon } from '@/components/icon';
 import { LineList } from '@/components/line-list';
 import { MemoDays } from '@/components/memo-days';
-import { PracticeStart } from '@/components/practice-start';
 import { RecList } from '@/components/rec-list';
 import { Segment } from '@/components/segment';
 import { TopicPicker } from '@/components/topic-picker';
@@ -36,7 +35,6 @@ export default function LessonScreen() {
   const [view, setView] = useState<View_>('sum');
   const [picker, setPicker] = useState(false);
   const [editTopic, setEditTopic] = useState<Topic | null>(null);
-  const [practice, setPractice] = useState(false);
   const rec = useRecorder();
   const player = usePlayer();
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
@@ -176,14 +174,13 @@ export default function LessonScreen() {
           </Pressable>
         </Pressable>
       ) : view === 'pr' ? (
-        <RecordDock label="個人練を録音" onRecord={() => !busy() && setPractice(true)} shrink bottom={Math.max(insets.bottom, 16) + 8} />
+        <RecordDock label="個人練を録音" onRecord={() => !busy() && router.push({ pathname: '/recording', params: { lessonId: lesson.id } })} shrink bottom={Math.max(insets.bottom, 16) + 8} />
       ) : (
         <RecordDock label={lessonRec ? undefined : 'レッスンを録音'} onRecord={lessonRec ? undefined : recordLesson} bottom={Math.max(insets.bottom, 16) + 8} />
       )}
 
       <TopicPicker lesson={lesson} visible={picker} onClose={() => setPicker(false)} />
       <TopicSheet lesson={lesson} topic={editTopic} onClose={() => setEditTopic(null)} />
-      <PracticeStart lesson={lesson} visible={practice} onClose={() => setPractice(false)} />
     </View>
   );
 }

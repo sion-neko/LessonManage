@@ -1,11 +1,9 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { FolderHeader } from '@/components/folder-header';
 import { Icon } from '@/components/icon';
 import { RecordDock } from '@/components/play-bar';
-import { PracticeStart } from '@/components/practice-start';
 import { Blank, GoButton } from '@/components/ui';
 import { C } from '@/constants/colors';
 import type { Line, Topic } from '@/data/types';
@@ -18,10 +16,10 @@ export default function HomeScreen() {
   const { data, folder, addLesson } = useLoadedState();
   const lesson = lessonsOf(data, folder?.id)[0];
   const rec = useRecorder();
-  const [practice, setPractice] = useState(false);
+  // 個人練：録る前の録音の画面を開き、そこで曲を選んで録り始める
   const recordPractice = () => {
     if (rec.target) Alert.alert('録音中です', 'ほかの録音を止めてから');
-    else setPractice(true);
+    else if (lesson) router.push({ pathname: '/recording', params: { lessonId: lesson.id } });
   };
 
   if (!lesson) {
@@ -82,7 +80,6 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
       <RecordDock label="個人練を録音" onRecord={recordPractice} shrink bottom={12} />
-      <PracticeStart lesson={lesson} visible={practice} onClose={() => setPractice(false)} />
     </View>
   );
 }

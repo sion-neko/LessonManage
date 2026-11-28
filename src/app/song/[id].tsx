@@ -52,21 +52,10 @@ export default function SongScreen() {
   const recs = data.recordings.filter((r) => r.songId === song.id);
   const lessonRecOf = (lessonId: string) => data.recordings.find((r) => r.kind === 'lesson' && r.lessonId === lessonId);
 
-  // この曲を録音：既定でそのフォルダの直近のレッスン後の個人練になる（止めたあとに外せる）
-  const recordSong = async () => {
-    if (rec.target) {
-      Alert.alert('録音中です', 'ほかの録音を止めてから');
-      return;
-    }
-    const latest = lessonsOf(data, song.folderId)[0];
-    const ok = await rec.start({
-      kind: latest ? 'practice' : 'song',
-      folderId: song.folderId,
-      lessonId: latest?.id ?? null,
-      songId: song.id,
-      fromSong: true,
-    });
-    if (ok) router.push('/recording');
+  // この曲を録音：録る前の録音の画面を開く。既定でそのフォルダの直近のレッスン後の個人練になる（録音の画面で外せる）
+  const recordSong = () => {
+    if (rec.target) Alert.alert('録音中です', 'ほかの録音を止めてから');
+    else router.push({ pathname: '/recording', params: { songId: song.id } });
   };
 
   return (
