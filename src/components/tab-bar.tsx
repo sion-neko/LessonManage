@@ -7,7 +7,7 @@ import { Icon, type IconName } from './icon';
 import { PlayBar } from './play-bar';
 
 const TABS: Record<string, { label: string; icon: IconName }> = {
-  index: { label: 'いま', icon: 'home' },
+  index: { label: 'ホーム', icon: 'home' },
   lessons: { label: 'レッスン', icon: 'list' },
   songs: { label: '曲', icon: 'note' },
   timeline: { label: 'タイムライン', icon: 'timeline' },

@@ -13,7 +13,7 @@ import { fmtDate } from '@/lib/date';
 import { lessonsOf, topicLabel, useLoadedState } from '@/state/app-state';
 import { useRecorder } from '@/state/recorder';
 
-// いま：選んでいるフォルダの直近のレッスンを1画面で
+// ホーム：選んでいるフォルダの直近のレッスンを1画面で
 export default function HomeScreen() {
   const { data, folder, addLesson } = useLoadedState();
   const lesson = lessonsOf(data, folder?.id)[0];

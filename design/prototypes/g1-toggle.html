@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="core.css">
 <link rel="stylesheet" href="flows.css">
 <style>
-/* G1（採用案）：下のタブは いま／レッスン／曲／タイムライン。レッスンページは「まとめ／個人練」、曲ページは「まとめ／録音」。再生は画面の下の再生バー。仕様は docs/requirements.md */
+/* G1（採用案）：下のタブは ホーム／レッスン／曲／タイムライン。レッスンページは「まとめ／個人練」、曲ページは「まとめ／録音」。再生は画面の下の再生バー。仕様は docs/requirements.md */
 :root {
   --desk: #e7e7ec; --bg: #f2f2f7; --card: #ffffff; --fg: #1c1c1e; --muted: #8a8a8e; --line: #dcdce1;
   --accent: #d29b00; --accent-d: #a87a00; --on-accent: #fff; --rec: #ff3b30; --field: #ffffff; --sheet: #f2f2f7; --bullet: #c7c7cc;
@@ -392,7 +392,7 @@ let tlSong = null; let tlPeriod = 'all'; // タイムラインの絞り込み（
 // ── 共通部品 ──
 const icTl = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 3v18"/><circle cx="7" cy="8" r="2.2" fill="currentColor"/><circle cx="7" cy="16" r="2.2" fill="currentColor"/><path d="M12 8h8M12 16h8"/></svg>';
 function tabbar(nav) {
-  const el = h('<div class="tabbar">' + [['home', 'いま', I.home], ['lessons', 'レッスン', I.list], ['songs', '曲', I.note], ['tl', 'タイムライン', icTl]].map(([k, n, ic]) => '<button class="tab' + (tab === k ? ' on' : '') + '" data-k="' + k + '">' + ic + n + '</button>').join('') + '</div>');
+  const el = h('<div class="tabbar">' + [['home', 'ホーム', I.home], ['lessons', 'レッスン', I.list], ['songs', '曲', I.note], ['tl', 'タイムライン', icTl]].map(([k, n, ic]) => '<button class="tab' + (tab === k ? ' on' : '') + '" data-k="' + k + '">' + ic + n + '</button>').join('') + '</div>');
   el.querySelectorAll('[data-k]').forEach((b) => (b.onclick = () => { if (tab !== b.dataset.k) { tab = b.dataset.k; nav.root(tab); } }));
   return el;
 }
