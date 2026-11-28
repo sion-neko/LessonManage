@@ -8,7 +8,7 @@ import { PlayBar } from './play-bar';
 
 const TABS: Record<string, { label: string; icon: IconName }> = {
   index: { label: 'ホーム', icon: 'home' },
-  lessons: { label: 'レッスン', icon: 'list' },
+  lessons: { label: 'レッスンの記録', icon: 'list' },
   songs: { label: '曲の記録', icon: 'note' },
   timeline: { label: 'タイムライン', icon: 'timeline' },
 };
