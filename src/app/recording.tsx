@@ -10,10 +10,9 @@ import { fmtDate } from '@/lib/date';
 import { lessonsOf, topicLabel, useLoadedState } from '@/state/app-state';
 import { fmtDur, useRecorder, type RecTarget } from '@/state/recorder';
 
-const DARK = '#1c1c1e';
 const BARS = 48;
 
-// 録音の画面（暗い色）。録音中はふつう操作しないので、画面はできるだけ単純にする。
+// 録音の画面（白。ほかの画面と同じ）。録音中はふつう操作しないので、画面はできるだけ単純にする。
 // 左上の「閉じる」で、録音したまま前の画面に戻れる。
 // 個人練・曲の録音は、録る前の状態で開く：曲を選び、一言を書いて、赤丸で録り始める（docs/requirements.md「録音」）。
 // 選んだ曲名と、やること・その曲で学んだことを大きく出す（練習しながら見られるように）。止めたら保存して閉じる
@@ -109,7 +108,7 @@ export default function RecordingScreen() {
     <KeyboardAvoidingView style={[styles.screen, { paddingTop: insets.top }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.bar}>
         <Pressable onPress={() => router.back()} style={styles.close} hitSlop={8} accessibilityRole="button">
-          <Icon name="closeDown" size={18} color="#fff" />
+          <Icon name="closeDown" size={18} color={C.accent} />
           <Text style={styles.closeText}>閉じる</Text>
         </Pressable>
         <Text style={styles.barTitle} numberOfLines={1}>
@@ -127,15 +126,15 @@ export default function RecordingScreen() {
             style={styles.songRow}
             accessibilityRole="button"
             accessibilityLabel={recording ? undefined : '録音内容を選ぶ'}>
-            {song && <Icon name="note" size={20} color="#aeaeb2" />}
+            {song && <Icon name="note" size={20} color={C.muted} />}
             <Text style={styles.song}>{song ? song.title : songTitle(data.songs, ctx.songId)}</Text>
-            {!recording && <Icon name="down" size={20} color="#aeaeb2" />}
+            {!recording && <Icon name="down" size={20} color={C.muted} />}
           </Pressable>
           <TextInput
             value={note}
             onChangeText={changeNote}
             placeholder="一言（なくてもいい）"
-            placeholderTextColor="#8e8e93"
+            placeholderTextColor={C.muted}
             style={styles.noteInput}
             returnKeyType="done"
             accessibilityLabel="一言"
@@ -180,10 +179,10 @@ export default function RecordingScreen() {
           <View style={styles.dot} />
           <Text style={styles.stateText}>録音中</Text>
         </View>
-        <Text style={[styles.time, ctx.kind !== 'lesson' && { fontSize: 40 }, !recording && { color: '#636366' }]}>{fmtDur(rec.elapsed)}</Text>
+        <Text style={[styles.time, ctx.kind !== 'lesson' && { fontSize: 40 }, !recording && { color: C.chevron }]}>{fmtDur(rec.elapsed)}</Text>
         <View style={styles.wave}>
           {levels.map((v, i) => (
-            <View key={i} style={[styles.waveBar, { height: `${Math.round(v * 100)}%` }, !recording && { backgroundColor: '#48484a' }]} />
+            <View key={i} style={[styles.waveBar, { height: `${Math.round(v * 100)}%` }, !recording && { backgroundColor: C.line }]} />
           ))}
         </View>
         <Text style={[styles.hint, !recording && { opacity: 0 }]}>録音中は画面が消えないようにしています</Text>
@@ -236,30 +235,30 @@ function draftFrom(data: ReturnType<typeof useLoadedState>['data'], params: { le
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: DARK },
+  screen: { flex: 1, backgroundColor: C.card },
   bar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10 },
   close: { width: 70, flexDirection: 'row', alignItems: 'center', gap: 2 },
-  closeText: { color: '#fff', fontSize: 16 },
-  barTitle: { flex: 1, textAlign: 'center', color: '#fff', fontSize: 16, fontWeight: '700' },
+  closeText: { color: C.accent, fontSize: 16 },
+  barTitle: { flex: 1, textAlign: 'center', color: C.fg, fontSize: 16, fontWeight: '700' },
   songRow: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start' },
-  song: { color: '#fff', fontSize: 26, fontWeight: '800', flexShrink: 1 },
+  song: { color: C.fg, fontSize: 26, fontWeight: '800', flexShrink: 1 },
   cap: { color: C.accent, fontSize: 13, fontWeight: '700' },
-  big: { color: '#fff', fontSize: 21, fontWeight: '700', lineHeight: 30 },
-  mid: { color: '#e5e5ea', fontSize: 17, lineHeight: 26 },
+  big: { color: C.fg, fontSize: 21, fontWeight: '700', lineHeight: 30 },
+  mid: { color: '#3a3a3c', fontSize: 17, lineHeight: 26 },
   meter: { alignItems: 'center', gap: 10, paddingVertical: 16 },
   state: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.rec },
-  stateText: { color: '#ff6961', fontSize: 14, fontWeight: '600' },
-  time: { color: '#fff', fontSize: 56, fontWeight: '300', fontVariant: ['tabular-nums'] },
+  stateText: { color: C.rec, fontSize: 14, fontWeight: '600' },
+  time: { color: C.fg, fontSize: 56, fontWeight: '300', fontVariant: ['tabular-nums'] },
   wave: { flexDirection: 'row', alignItems: 'center', gap: 2, height: 56, paddingHorizontal: 24, alignSelf: 'stretch', justifyContent: 'center' },
   waveBar: { width: 3, borderRadius: 2, backgroundColor: C.accent },
-  hint: { color: '#8e8e93', fontSize: 12 },
+  hint: { color: C.muted, fontSize: 12 },
   btnWrap: { alignItems: 'center', gap: 6, paddingTop: 8 },
-  ring: { width: 76, height: 76, borderRadius: 38, borderWidth: 4, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  btnLabel: { color: '#fff', fontSize: 13 },
+  ring: { width: 76, height: 76, borderRadius: 38, borderWidth: 4, borderColor: C.line, alignItems: 'center', justifyContent: 'center' },
+  btnLabel: { color: C.muted, fontSize: 13 },
   toggle: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 2 },
-  box: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: '#636366', alignItems: 'center', justifyContent: 'center' },
+  box: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: C.chevron, alignItems: 'center', justifyContent: 'center' },
   boxOn: { backgroundColor: C.accent, borderColor: C.accent },
-  toggleText: { color: '#fff', fontSize: 15 },
-  noteInput: { backgroundColor: '#2c2c2e', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, fontSize: 17, color: '#fff' },
+  toggleText: { color: C.fg, fontSize: 15 },
+  noteInput: { backgroundColor: C.bg, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13, fontSize: 17, color: C.fg },
 });
