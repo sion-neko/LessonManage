@@ -9,7 +9,8 @@ import { DARK, PlayerView } from './player-view';
 // 再生画面を、ミニプレーヤー（再生バー）から広げて出し、閉じるとミニプレーヤーへ縮めて戻す層。
 // 別の画面として下から出すと、ミニプレーヤーと違うところから出てきて気持ち悪いので、
 // ミニプレーヤーの位置・大きさから全画面まで、同じ1枚の箱を伸び縮みさせる（音楽アプリのミニプレーヤーと同じ）。
-// ミニプレーヤーが出ていないとき（一覧から開いたときなど）は、画面の下から出して下へ戻す
+// 中身は縦横比を保ったまま、ミニプレーヤーの幅から全画面まで拡大する（ズームイン・ズームアウト）。
+// ミニプレーヤーが出ていないとき（一覧から開いたときなど）は、画面の真ん中から少し小さい状態でふわっと拡大し、縮みながら消える
 
 export type Rect = { x: number; y: number; w: number; h: number };
 
@@ -25,7 +26,7 @@ type SheetState = {
 
 const Ctx = createContext<SheetState | null>(null);
 
-const OPEN_MS = 900;
+const OPEN_MS = 600;
 const CLOSE_MS = 380;
 const BAR_RADIUS = 14;
 
@@ -38,19 +39,28 @@ export function PlayerSheetProvider({ children }: { children: ReactNode }) {
   // progress：0＝再生バーの大きさ、1＝全画面。drag：下に引いている量
   const progress = useSharedValue(0);
   const drag = useSharedValue(0);
-  const from = useSharedValue<Rect>({ x: 0, y: H, w: W, h: H });
+  const from = useSharedValue<Rect>({ x: 0, y: 0, w: W, h: H });
+  // 1＝ミニプレーヤーから。0＝ミニプレーヤーがなく、真ん中からふわっと出す
+  const fromBar = useSharedValue(0);
 
-  const offscreen = useCallback((): Rect => ({ x: 0, y: H, w: W, h: H }), [W, H]);
+  const center = useCallback((): Rect => ({ x: W * 0.08, y: H * 0.08, w: W * 0.84, h: H * 0.84 }), [W, H]);
+  const setFrom = useCallback(
+    (r: Rect | null) => {
+      from.value = r ?? center();
+      fromBar.value = r ? 1 : 0;
+    },
+    [from, fromBar, center],
+  );
 
   const expand = useCallback(
     (r?: Rect | null) => {
-      from.value = r ?? offscreen();
+      setFrom(r ?? null);
       drag.value = 0;
       setOpen(true);
       setExpanded(true);
       progress.value = withTiming(1, { duration: OPEN_MS, easing: Easing.out(Easing.cubic) });
     },
-    [from, drag, progress, offscreen],
+    [setFrom, drag, progress],
   );
 
   const finishClose = useCallback(() => {
@@ -63,11 +73,11 @@ export function PlayerSheetProvider({ children }: { children: ReactNode }) {
     // いちばん新しく登録された（＝いま見えている画面の）再生バーへ戻す
     const measure = bars.current[bars.current.length - 1];
     const r = measure ? await measure() : null;
-    from.value = r ?? offscreen();
+    setFrom(r);
     progress.value = withTiming(0, { duration: CLOSE_MS, easing: Easing.inOut(Easing.cubic) }, (done) => {
       if (done) runOnJS(finishClose)();
     });
-  }, [from, progress, offscreen, finishClose]);
+  }, [setFrom, progress, finishClose]);
 
   const registerBar = useCallback((m: () => Promise<Rect | null>) => {
     bars.current.push(m);
@@ -118,12 +128,18 @@ export function PlayerSheetProvider({ children }: { children: ReactNode }) {
       width: interpolate(p, [0, 1], [f.w, W]),
       height: interpolate(p, [0, 1], [f.h, H]),
       borderRadius: interpolate(p, [0, 1], [BAR_RADIUS, 0]) + Math.min(drag.value / 8, 24),
-      backgroundColor: interpolateColor(p, [0, 0.5], [BAR_BG, DARK]),
+      backgroundColor: fromBar.value ? interpolateColor(p, [0, 0.5], [BAR_BG, DARK]) : DARK,
+      // ミニプレーヤーがないときは、ふわっと出して、ふわっと消す
+      opacity: fromBar.value ? 1 : interpolate(p, [0, 0.6], [0, 1], 'clamp'),
     };
   });
   // 再生バーの中身はすぐ消し、再生画面の中身は少し遅れて出す（入れ替わりを1枚の箱の中で）
   const mini = useAnimatedStyle(() => ({ opacity: interpolate(progress.value, [0, 0.22], [1, 0], 'clamp') }));
-  const full = useAnimatedStyle(() => ({ opacity: interpolate(progress.value, [0.12, 0.6], [0, 1], 'clamp') }));
+  // 再生画面の中身は、箱の幅に合わせて縦横比を保ったまま縮めておき、全画面まで拡大する
+  const full = useAnimatedStyle(() => ({
+    opacity: fromBar.value ? interpolate(progress.value, [0.12, 0.6], [0, 1], 'clamp') : 1,
+    transform: [{ scale: interpolate(progress.value, [0, 1], [from.value.w / W, 1]) }],
+  }));
 
   const value = useMemo<SheetState>(() => ({ open, expand, collapse, registerBar }), [open, expand, collapse, registerBar]);
 
@@ -136,7 +152,7 @@ export function PlayerSheetProvider({ children }: { children: ReactNode }) {
           <Animated.View style={[styles.mini, mini]} pointerEvents="none">
             <BarContent />
           </Animated.View>
-          <Animated.View style={[{ width: W, height: H }, full]} pointerEvents={expanded ? 'auto' : 'none'}>
+          <Animated.View style={[{ width: W, height: H, transformOrigin: 'top left' }, full]} pointerEvents={expanded ? 'auto' : 'none'}>
             <PlayerView onClose={collapse} drag={pan.panHandlers} />
           </Animated.View>
         </Animated.View>
