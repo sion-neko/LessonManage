@@ -8,6 +8,7 @@ import { RecordDock } from '@/components/play-bar';
 import { Icon } from '@/components/icon';
 import { LineList } from '@/components/line-list';
 import { MemoDays } from '@/components/memo-days';
+import { usePlayerSheet } from '@/components/player-sheet';
 import { RecList } from '@/components/rec-list';
 import { Segment } from '@/components/segment';
 import { TopicPicker } from '@/components/topic-picker';
@@ -192,6 +193,7 @@ const styles = StyleSheet.create({
 function LessonPlayer({ recId }: { recId: string }) {
   const { data } = useLoadedState();
   const p = usePlayer();
+  const sheet = usePlayerSheet();
   const r = data.recordings.find((x) => x.id === recId);
   if (!r) return null;
   const on = p.recId === r.id;
@@ -202,7 +204,7 @@ function LessonPlayer({ recId }: { recId: string }) {
     <Pressable
       onPress={() => {
         p.open(r);
-        router.push('/player');
+        sheet.expand();
       }}
       style={styles.player}
       accessibilityLabel="再生画面を開く">

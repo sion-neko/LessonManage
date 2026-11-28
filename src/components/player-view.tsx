@@ -1,11 +1,10 @@
-import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type GestureResponderEvent } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type GestureResponderEvent, type GestureResponderHandlers } from 'react-native';
 
-import { Icon } from '@/components/icon';
-import { PopupMenu, type Anchor } from '@/components/popup-menu';
-import { Sheet } from '@/components/sheet';
-import { useScreenInsets } from '@/components/rec-bar';
+import { Icon } from './icon';
+import { PopupMenu, type Anchor } from './popup-menu';
+import { Sheet } from './sheet';
+import { useScreenInsets } from './rec-bar';
 import { C } from '@/constants/colors';
 import * as repo from '@/db/repo';
 import type { Recording } from '@/data/types';
@@ -15,24 +14,37 @@ import { topicLabel, useLoadedState } from '@/state/app-state';
 import { recSub, recTitle, usePlayer } from '@/state/player';
 import { fmtDur } from '@/state/recorder';
 
-const DARK = '#1c1c1e';
+export const DARK = '#1c1c1e';
 const BARS = 56;
 const RATES = [0.5, 0.75, 1, 1.25, 1.5];
 
-// 再生画面。どの録音でも同じ画面で、違うのはチャプターの有無だけ（レッスン録音にだけある）。
-// 録音が主役で、しおりがコメントのように流れる（ライブ配信のアーカイブのような画面）
-export default function PlayerScreen() {
+// 再生画面の中身。どの録音でも同じ画面で、違うのはチャプターの有無だけ（レッスン録音にだけある）。
+// 録音が主役で、しおりがコメントのように流れる（ライブ配信のアーカイブのような画面）。
+// 画面としては開かず、ミニプレーヤーから広がる層（player-sheet.tsx）の中に出す
+// drag：上の帯（つまみと「閉じる」の行）を下に引くと閉じる
+export function PlayerView({ onClose, drag }: { onClose: () => void; drag: GestureResponderHandlers }) {
   const { data, act } = useLoadedState();
   const p = usePlayer();
   const rec = data.recordings.find((r) => r.id === p.recId);
+  // 録音が消えたら閉じる（削除したときなど）
   useEffect(() => {
-    if (!rec) router.back();
-  }, [rec]);
+    if (!rec) onClose();
+  }, [rec, onClose]);
   if (!rec) return <View style={{ flex: 1, backgroundColor: DARK }} />;
-  return <PlayerBody rec={rec} act={act} />;
+  return <PlayerBody rec={rec} act={act} onClose={onClose} drag={drag} />;
 }
 
-function PlayerBody({ rec, act }: { rec: Recording; act: ReturnType<typeof useLoadedState>['act'] }) {
+function PlayerBody({
+  rec,
+  act,
+  onClose,
+  drag,
+}: {
+  rec: Recording;
+  act: ReturnType<typeof useLoadedState>['act'];
+  onClose: () => void;
+  drag: GestureResponderHandlers;
+}) {
   const { data } = useLoadedState();
   const p = usePlayer();
   const insets = useScreenInsets();
@@ -93,8 +105,10 @@ function PlayerBody({ rec, act }: { rec: Recording; act: ReturnType<typeof useLo
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.card }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[styles.top, { paddingTop: insets.top }]}>
+        <View {...drag}>
+        <View style={styles.grip} />
         <View style={styles.bar}>
-          <Pressable onPress={() => router.back()} style={styles.close} hitSlop={8} accessibilityRole="button">
+          <Pressable onPress={onClose} style={styles.close} hitSlop={8} accessibilityRole="button">
             <Icon name="closeDown" size={18} color="#fff" />
             <Text style={styles.closeText}>閉じる</Text>
           </Pressable>
@@ -109,6 +123,7 @@ function PlayerBody({ rec, act }: { rec: Recording; act: ReturnType<typeof useLo
             accessibilityLabel="そのほか">
             <Icon name="more" size={22} color="#fff" />
           </Pressable>
+        </View>
         </View>
 
         <Text style={styles.now}>{fmtDur(pos)}</Text>
@@ -278,6 +293,7 @@ function PlayerBody({ rec, act }: { rec: Recording; act: ReturnType<typeof useLo
 
 const styles = StyleSheet.create({
   top: { backgroundColor: DARK, paddingBottom: 16 },
+  grip: { alignSelf: 'center', width: 36, height: 5, borderRadius: 3, backgroundColor: '#48484a', marginTop: 6 },
   bar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10 },
   close: { width: 70, flexDirection: 'row', alignItems: 'center', gap: 2 },
   closeText: { color: '#fff', fontSize: 16 },

@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { C } from '@/constants/colors';
@@ -8,6 +7,7 @@ import { usePlayer } from '@/state/player';
 import { fmtDur } from '@/state/recorder';
 import { Icon } from './icon';
 import { NoneYet } from './lesson-parts';
+import { usePlayerSheet } from './player-sheet';
 
 // 録音の一覧（レッスンページの個人練、曲ページの録音で同じ形）。
 // 線で区切った行。左に日付、真ん中に一言と曲名など、右に灰色の時間と金色の▶。
@@ -15,6 +15,7 @@ import { NoneYet } from './lesson-parts';
 // 流れている行は、左の日付が音の印に、一言が金色に、▶が一時停止に変わる
 export function RecList({ recs, sub }: { recs: Recording[]; sub: (r: Recording) => { label: string; song?: boolean } }) {
   const p = usePlayer();
+  const sheet = usePlayerSheet();
   if (recs.length === 0) return <NoneYet />;
   return (
     <View>
@@ -26,7 +27,7 @@ export function RecList({ recs, sub }: { recs: Recording[]; sub: (r: Recording) 
             key={r.id}
             onPress={() => {
               p.open(r);
-              router.push('/player');
+              sheet.expand();
             }}
             style={({ pressed }) => [styles.row, i > 0 && styles.border, pressed && { backgroundColor: C.hl }]}>
             {playing ? (

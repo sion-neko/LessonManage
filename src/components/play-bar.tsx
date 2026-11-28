@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useRef } from 'react';
+import { useIsFocused } from 'expo-router';
+import { useEffect, useRef, type ComponentRef } from 'react';
 import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { C } from '@/constants/colors';
@@ -7,9 +7,11 @@ import { useLoadedState } from '@/state/app-state';
 import { recSub, recTitle, usePlayer } from '@/state/player';
 import { fmtDur, useRecorder } from '@/state/recorder';
 import { Icon } from './icon';
+import { usePlayerSheet, type Rect } from './player-sheet';
 import { GoButton } from './ui';
 
 export const PLAY_BAR_HEIGHT = 58;
+export const BAR_BG = '#fbfbfd';
 
 /** 再生バーを出すか：何かを流したあとで、録音中でないとき */
 export function usePlayBarVisible() {
@@ -18,11 +20,15 @@ export function usePlayBarVisible() {
   return p.barShown && !!p.recId && !rec.target;
 }
 
-// 画面の下に出る小さな明るい帯。押すと再生画面。下にスワイプするか×で閉じる（再生も止まる）
+// 画面の下に出る小さな明るい帯。押すと、その場から再生画面に広がる（player-sheet.tsx）。
+// 下にスワイプするか×で閉じる（再生も止まる）
 export function PlayBar({ style }: { style?: object }) {
   const { data } = useLoadedState();
   const p = usePlayer();
+  const sheet = usePlayerSheet();
   const visible = usePlayBarVisible();
+  const focused = useIsFocused();
+  const ref = useRef<ComponentRef<typeof Animated.View>>(null);
   const dy = useRef(new Animated.Value(0)).current;
   const pan = useRef(
     PanResponder.create({
@@ -42,12 +48,45 @@ export function PlayBar({ style }: { style?: object }) {
   pClose.current = p.close;
 
   const r = visible ? data.recordings.find((x) => x.id === p.recId) : undefined;
+
+  // 再生画面を縮めて戻す先として、見えている画面の再生バーの位置を知らせる
+  const shown = !!r;
+  const { registerBar } = sheet;
+  useEffect(() => {
+    if (!focused || !shown) return;
+    return registerBar(() => measure(ref.current));
+  }, [focused, shown, registerBar]);
+
+  if (!r) return null;
+  const openSheet = async () => sheet.expand(await measure(ref.current));
+  return (
+    <Animated.View
+      ref={ref}
+      style={[styles.bar, { transform: [{ translateY: dy }] }, sheet.open && { opacity: 0 }, style]}
+      {...pan.panHandlers}>
+      <BarContent onOpen={openSheet} />
+    </Animated.View>
+  );
+}
+
+function measure(v: ComponentRef<typeof Animated.View> | null): Promise<Rect | null> {
+  return new Promise((res) => {
+    if (!v) return res(null);
+    v.measureInWindow((x, y, w, h) => res(w > 0 ? { x, y, w, h } : null));
+  });
+}
+
+/** 再生バーの中身。再生バーと、再生画面が広がり始め・縮み終わりのところで同じものを出す */
+export function BarContent({ onOpen }: { onOpen?: () => void }) {
+  const { data } = useLoadedState();
+  const p = usePlayer();
+  const r = data.recordings.find((x) => x.id === p.recId);
   if (!r) return null;
   const dur = p.duration || r.duration;
   const pct = dur > 0 ? Math.min(1, p.position / dur) : 0;
   return (
-    <Animated.View style={[styles.bar, { transform: [{ translateY: dy }] }, style]} {...pan.panHandlers}>
-      <Pressable style={styles.body} onPress={() => router.push('/player')} accessibilityLabel="再生画面を開く">
+    <View style={styles.inner}>
+      <Pressable style={styles.body} onPress={onOpen} accessibilityLabel="再生画面を開く">
         <Text style={styles.title} numberOfLines={1}>
           {recTitle(data, r)}
         </Text>
@@ -67,7 +106,7 @@ export function PlayBar({ style }: { style?: object }) {
       <View style={styles.track}>
         <View style={[styles.fill, { width: `${pct * 100}%` }]} />
       </View>
-    </Animated.View>
+    </View>
   );
 }
 
@@ -103,13 +142,8 @@ export function RecordDock({ label, onRecord, shrink, bottom }: { label?: string
 const styles = StyleSheet.create({
   bar: {
     height: PLAY_BAR_HEIGHT,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    paddingLeft: 14,
-    paddingRight: 6,
     borderRadius: 14,
-    backgroundColor: '#fbfbfd',
+    backgroundColor: BAR_BG,
     shadowColor: '#000',
     shadowOpacity: 0.14,
     shadowRadius: 10,
@@ -117,6 +151,7 @@ const styles = StyleSheet.create({
     elevation: 4,
     overflow: 'hidden',
   },
+  inner: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 2, paddingLeft: 14, paddingRight: 6 },
   body: { flex: 1, minWidth: 0, justifyContent: 'center' },
   title: { fontSize: 14, fontWeight: '700', color: C.fg },
   sub: { fontSize: 12, color: C.muted, fontVariant: ['tabular-nums'] },
