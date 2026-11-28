@@ -1,10 +1,10 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/icon';
 import { SongPicker, songTitle, type SongChoice } from '@/components/song-picker';
+import { useScreenInsets } from '@/components/rec-bar';
 import { C } from '@/constants/colors';
 import { fmtDate } from '@/lib/date';
 import { lessonsOf, topicLabel, useLoadedState } from '@/state/app-state';
@@ -20,7 +20,7 @@ const BARS = 48;
 export default function RecordingScreen() {
   const { data } = useLoadedState();
   const rec = useRecorder();
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
   const params = useLocalSearchParams<{ lessonId?: string; songId?: string }>();
 
   // 録る前に決めておく録音の中身。録っている間は rec.target が持つ

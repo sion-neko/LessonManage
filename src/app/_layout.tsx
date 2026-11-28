@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
+import { WithRecBar } from '@/components/rec-bar';
 import { C } from '@/constants/colors';
 import { migrate } from '@/db/schema';
 import { AppStateProvider, useAppState } from '@/state/app-state';
@@ -18,57 +19,59 @@ export default function RootLayout() {
         <WhenLoaded>
           <PlayerProvider>
             <RecorderProvider>
-              <Stack
-                screenOptions={{
-                  contentStyle: { backgroundColor: C.bg },
-                  headerTintColor: C.accent,
-                  headerBackTitle: '戻る',
-                  headerShadowVisible: false,
-                  headerStyle: { backgroundColor: C.card },
-                  headerTitleStyle: { color: C.fg },
-                }}>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen
-                  name="welcome"
-                  options={{
-                    headerShown: false,
-                    gestureEnabled: false,
-                    animation: 'fade',
-                  }}
-                />
-                <Stack.Screen name="lesson/[id]" options={{ title: '' }} />
-                <Stack.Screen name="song/[id]" options={{ title: '' }} />
-                <Stack.Screen
-                  name="folder-edit"
-                  options={{
-                    presentation: 'formSheet',
-                    sheetAllowedDetents: [0.6, 1],
-                  }}
-                />
-                <Stack.Screen
-                  name="settings"
-                  options={{
-                    title: '設定',
-                    presentation: 'formSheet',
-                    sheetAllowedDetents: [0.6, 1],
-                  }}
-                />
-                <Stack.Screen
-                  name="recording"
-                  options={{
-                    headerShown: false,
-                    presentation: 'fullScreenModal',
-                    gestureEnabled: false,
-                  }}
-                />
-                <Stack.Screen
-                  name="player"
-                  options={{
-                    headerShown: false,
-                    presentation: 'fullScreenModal',
-                  }}
-                />
-              </Stack>
+              <WithRecBar>
+                <Stack
+                  screenOptions={{
+                    contentStyle: { backgroundColor: C.bg },
+                    headerTintColor: C.accent,
+                    headerBackTitle: '戻る',
+                    headerShadowVisible: false,
+                    headerStyle: { backgroundColor: C.card },
+                    headerTitleStyle: { color: C.fg },
+                  }}>
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen
+                    name="welcome"
+                    options={{
+                      headerShown: false,
+                      gestureEnabled: false,
+                      animation: 'fade',
+                    }}
+                  />
+                  <Stack.Screen name="lesson/[id]" options={{ title: '' }} />
+                  <Stack.Screen name="song/[id]" options={{ title: '' }} />
+                  <Stack.Screen
+                    name="folder-edit"
+                    options={{
+                      presentation: 'formSheet',
+                      sheetAllowedDetents: [0.6, 1],
+                    }}
+                  />
+                  <Stack.Screen
+                    name="settings"
+                    options={{
+                      title: '設定',
+                      presentation: 'formSheet',
+                      sheetAllowedDetents: [0.6, 1],
+                    }}
+                  />
+                  <Stack.Screen
+                    name="recording"
+                    options={{
+                      headerShown: false,
+                      presentation: 'fullScreenModal',
+                      gestureEnabled: false,
+                    }}
+                  />
+                  <Stack.Screen
+                    name="player"
+                    options={{
+                      headerShown: false,
+                      presentation: 'fullScreenModal',
+                    }}
+                  />
+                </Stack>
+              </WithRecBar>
             </RecorderProvider>
           </PlayerProvider>
         </WhenLoaded>

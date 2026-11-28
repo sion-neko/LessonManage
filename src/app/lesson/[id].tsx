@@ -164,16 +164,8 @@ export default function LessonScreen() {
         )}
       </ScrollView>
 
-      {/* 画面の下：まとめ＝録る前は「レッスンを録音」、録音中は暗い帯、録り終わったら何も置かない。個人練＝「個人練を録音」 */}
-      {recordingHere ? (
-        <Pressable onPress={() => router.push('/recording')} style={[styles.recBar, { paddingBottom: Math.max(insets.bottom, 12) + 8 }]} accessibilityLabel="録音の画面を開く">
-          <View style={styles.recDot} />
-          <Text style={styles.recText}>録音中 {fmtDur(rec.elapsed)}</Text>
-          <Pressable onPress={() => rec.stop()} style={styles.recStop} hitSlop={8} accessibilityRole="button" accessibilityLabel="録音を止める">
-            <View style={styles.recStopSq} />
-          </Pressable>
-        </Pressable>
-      ) : view === 'pr' ? (
+      {/* 画面の下：まとめ＝録る前は「レッスンを録音」、録音中は何も置かない（どの画面にも出る赤い帯があるため）、録り終わったら何も置かない。個人練＝「個人練を録音」 */}
+      {recordingHere ? null : view === 'pr' ? (
         <RecordDock label="個人練を録音" onRecord={() => !busy() && router.push({ pathname: '/recording', params: { lessonId: lesson.id } })} shrink bottom={Math.max(insets.bottom, 16) + 8} />
       ) : (
         <RecordDock label={lessonRec ? undefined : 'レッスンを録音'} onRecord={lessonRec ? undefined : recordLesson} bottom={Math.max(insets.bottom, 16) + 8} />
@@ -194,11 +186,6 @@ const styles = StyleSheet.create({
   pWave: { flex: 1, height: 28, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   pBar: { width: 2, borderRadius: 1, backgroundColor: '#d8d2bf' },
   playerDur: { fontSize: 13, color: C.muted, fontVariant: ['tabular-nums'] },
-  recBar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 14, paddingHorizontal: 20, backgroundColor: '#1c1c1e' },
-  recDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.rec },
-  recText: { flex: 1, color: '#fff', fontSize: 16, fontWeight: '600', fontVariant: ['tabular-nums'] },
-  recStop: { width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  recStopSq: { width: 14, height: 14, borderRadius: 3, backgroundColor: C.rec },
 });
 
 // まとめのいちばん上のプレーヤー（レッスン録音があるときだけ）。再生ボタンで流し、ほかの場所を押すと再生画面

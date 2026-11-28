@@ -1,11 +1,11 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type GestureResponderEvent } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/icon';
 import { PopupMenu, type Anchor } from '@/components/popup-menu';
 import { Sheet } from '@/components/sheet';
+import { useScreenInsets } from '@/components/rec-bar';
 import { C } from '@/constants/colors';
 import * as repo from '@/db/repo';
 import type { Recording } from '@/data/types';
@@ -35,7 +35,7 @@ export default function PlayerScreen() {
 function PlayerBody({ rec, act }: { rec: Recording; act: ReturnType<typeof useLoadedState>['act'] }) {
   const { data } = useLoadedState();
   const p = usePlayer();
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
   const lesson = rec.kind === 'lesson' ? data.lessons.find((l) => l.id === rec.lessonId) : undefined;
   const dur = p.duration || rec.duration;
   const pos = Math.min(p.position, dur);

@@ -1,8 +1,8 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { C } from '@/constants/colors';
+import { useScreenInsets } from './rec-bar';
 
 // 下から出るシート。外（暗いところ）を押すと閉じる
 // 暗い背景ごと下からせり上がるとださいので、背景はその場でふわっと暗くし、シートだけを下から出す
@@ -19,7 +19,7 @@ export function Sheet({
   onClosed?: () => void;
   children: ReactNode;
 }) {
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
   const { height } = useWindowDimensions();
   const [anim] = useState(() => new Animated.Value(0));
   // 閉じるときは動き終わるまで Modal を残す
